@@ -118,7 +118,7 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
         if (typeof(newArray) != "array") { error = "newArray isn't Array"; nextfile }
 
         for (n = 1; n <= newArray["length"]; ++n) {
-            m = newArray[n] OFS
+            m = m newArray[n] ORS
         }
         return $0 = m
     }
@@ -173,16 +173,31 @@ function Index_pop(    h, i) {
     return Index_reset()
 }
 
-function Index_prepend(i, value) {
+#function Index_prependOrNot(i, value, ifNot) {
+#    if (i == 1) return Index_reset()
+#    return Index_prepend(i, value, ifNot)
+#}
+
+function Index_prepend(i, value, ifNot,    p, q, r) {
     if (typeof(value) == "untyped") { error = "value is untyped"; nextfile }
-    $i = value OFS $i
-    return Index_reset()
+    r = 0
+    if (typeof(ifNot) == "untyped" || $(i - 1) != ifNot) {
+        $i = value OFS $i
+        r = length(value)
+    }
+    Index_reset()
+    return r
 }
 
-function Index_append(i, value) {
+function Index_append(i, value, ifNot,    p, q, r) {
     if (typeof(value) == "untyped") { error = "value is untyped"; nextfile }
-    $i = $i OFS value
-    return Index_reset()
+    r = 0
+    if (typeof(ifNot) == "untyped" || $(i + 1) != ifNot) {
+        $i = $i OFS value
+        r = length(value)
+    }
+    Index_reset()
+    return r
 }
 
 function Index_remove(i) {
@@ -203,6 +218,16 @@ function Index_reset() {
     return $0 = $0
 }
 
+function Index_save(oldRecords) {
+    if (!oldRecords) return $0
+    return oldRecords ORS $0
+}
+
+function Index_nextRecord(    p, q, r) {
+    r = 0
+    if ((r = getline) <= 0) r = 0
+    return r
+}
 
 function get_FileName(fileName,    h, i, reture) {
     Index_push(fileName, "/", "")

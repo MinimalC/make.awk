@@ -1,17 +1,15 @@
 
-
     AWA="haha
 
-	#	define HAHA
 
+
+		#		define HAHA
  # define string write
-
 #define struct(name)  struct __ff(struct,name)
 
-    void HeyIchBinDer()
+    void Hey_Ich_Bin_Der_µ ()
 
-    /* HAHA /* AWA  */
+    /* HAHA /* AWA */ */    ohoho
 
-    so="ja
-
-    oho=oho
+    so		=		"ja
+    oho = "oho"fix
