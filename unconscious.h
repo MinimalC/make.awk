@@ -1,15 +1,13 @@
 
-    AWA="haha
-
-
 
 		#		define HAHA
  # define string write
 #define struct(name)  struct __ff(struct,name)
 
-    void Hey_Ich_Bin_Der_µ ()
+    void Hey_Ich_Bin_Der_µ		()	__noreturn;
 
-    /* HAHA /* AWA */ */    ohoho
+    typedef struct_class_AWA
+    {__int32 name}*AWA
 
-    so		=		"ja
-    oho = "oho"fix
+    void IMA(__int32*text)__noreturn;
+

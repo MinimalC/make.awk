@@ -128,23 +128,18 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
 function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
     # save old Index
     i = Array_add(Index)
-    if (typeof(newORS) != "untyped") {
-        if (newORS != ORS) Index[i]["OUTPUTRECORDSEP"] = ORS
-        ORS = newORS
-    }
-    if (typeof(newRS) != "untyped") {
-        if (newRS != RS) Index[i]["RECORDSEP"] = RS
-        RS = newRS
-    }
-    if (typeof(newOFS) != "untyped") {
-        if (newOFS != OFS) Index[i]["OUTPUTFIELDSEP"] = OFS
-        OFS = newOFS
-    }
-    if (typeof(newFS) != "untyped") {
-        if (newFS != FS) Index[i]["FIELDSEP"] = FS
-        FS = newFS
-    }
+
     Index[i][0] = $0
+
+    Index[i]["OUTPUTRECORDSEP"] = ORS
+    Index[i]["RECORDSEP"] = RS
+    Index[i]["OUTPUTFIELDSEP"] = OFS
+    Index[i]["FIELDSEP"] = FS
+
+    if (typeof(newORS) != "untyped") ORS = newORS
+    if (typeof(newRS) != "untyped") RS = newRS
+    if (typeof(newOFS) != "untyped") OFS = newOFS
+    if (typeof(newFS) != "untyped") FS = newFS
 
     # new Index
     if (typeof(newIndex) != "untyped") {
@@ -157,14 +152,10 @@ function Index_pop(    h, i) {
 
     if (i = Array_length(Index)) {
 
-        if (typeof(Index[i]["OUTPUTRECORDSEP"]) != "untyped")
-            ORS  = Index[i]["OUTPUTRECORDSEP"]
-        if (typeof(Index[i]["RECORDSEP"]) != "untyped")
-            RS   = Index[i]["RECORDSEP"]
-        if (typeof(Index[i]["OUTPUTFIELDSEP"]) != "untyped")
-            OFS  = Index[i]["OUTPUTFIELDSEP"]
-        if (typeof(Index[i]["FIELDSEP"]) != "untyped")
-            FS   = Index[i]["FIELDSEP"]
+        ORS  = Index[i]["OUTPUTRECORDSEP"]
+        RS   = Index[i]["RECORDSEP"]
+        OFS  = Index[i]["OUTPUTFIELDSEP"]
+        FS   = Index[i]["FIELDSEP"]
 
         $0 = Index[i][0]
 
