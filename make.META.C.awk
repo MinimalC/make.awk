@@ -13,7 +13,7 @@ BEGIN {
 
     make = "make_print"
     includeDirs["length"] = 0
-    useFS = "\\x01+"
+    useFS = "[\\x01]+"
     use = "\x01"
     indent = 1
 
@@ -165,21 +165,32 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if ($i == use) continue
         if ($i ~ /[ \b\f\n\r\t\v]/) {
-            if (i == 1) {
-                $i = ""
-                # eliminiere LeerZeichen
-                for (n = i; ++n <= NF; ) {
-                    if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
-                    break
-                } --n; --i
-                Index_reset()
-                continue
-            }
+#            if (i == 1) {
+#                $i = ""
+#                # eliminiere beginnende LeerZeichen
+#                for (n = i; ++n <= NF; ) {
+#                    if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
+#                    break
+#                } --n; --i
+#                Index_reset()
+#                continue
+#            }
             # lies LeerZeichen
-            for (; ++i <= NF; ) {
-                if ($i ~ /[ \b\f\n\r\t\v]/) continue
+            for (n = i; ++n <= NF; ) {
+                if ($n ~ /[ \b\f\n\r\t\v]/) continue
                 break
-            } --i
+            } --n
+#            if (n == NF) {
+#                $i = ""
+#                # eliminiere endende LeerZeichen
+#                for (; ++i <= NF; ) {
+#                    if ($i ~ /[ \b\f\n\r\t\v]/) { $i = ""; continue }
+#                    break
+#                } --i
+#                Index_reset()
+#                continue
+#            }
+            i = n
             continue
         }
         if ($i == "\"") {
@@ -410,22 +421,22 @@ function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o,
             if ($i ~ /\*\/$/) {
                 inputType = ""
             }
-            $i = " "
+            $i = ""
             continue
         }
         if ($i ~ /^\/\*/) {
             if ($i !~ /\*\/$/) {
                 inputType = "comment"
             }
-            $i = " "
+            $i = ""
             continue
         }
-        # if ($i ~ /^[ \b\f\n\r\t\v]+$/) { $i = ""; continue }
+        if ($i ~ /^[ \b\f\n\r\t\v]+$/) { $i = ""; continue }
 
     } while (++i <= NF)
 
         Index_reset()
-        if ($0 !~ /^[ \b\f\n\r\t\v]*$/)
+        if ($0 !~ /^[ \b\f\n\r\t\v\x01]*$/)
             Array_add(result, $0)
         Index_pop()
     }
@@ -439,15 +450,15 @@ function make_print(    h, i, j, k, l, x, y, z) {
         Index_push(result[z], useFS, " ")
 
         if (DEBUG) {
-            for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]+$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
+            for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]*$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
         }
         else {
 # RELEASE
             if (indent) {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]+$/) ; else printf "%s"OFS, $h } print ""
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]*$/) ; else printf "%s"OFS, $h } print ""
             }
             else {
-                for (h = 1; h <= NF; ++h) { if ($h == use) ; else printf "%s", $h } print ""
+                for (h = 1; h <= NF; ++h) { printf "%s"OFS, $h } print ""
             }
         }
 
