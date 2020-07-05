@@ -431,7 +431,7 @@ function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o,
             $i = ""
             continue
         }
-        if ($i ~ /^[ \b\f\n\r\t\v]+$/) { $i = ""; continue }
+        # if ($i ~ /^[ \b\f\n\r\t\v]+$/) { $i = ""; continue }
 
     } while (++i <= NF)
 
@@ -447,7 +447,7 @@ function make_print(    h, i, j, k, l, x, y, z) {
     if (DEBUG) print ""
 
     for (z = 1; z <= result["length"]; ++z) {
-        Index_push(result[z], useFS, " ")
+        Index_push(result[z], useFS, "")
 
         if (DEBUG) {
             for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]*$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
@@ -455,10 +455,10 @@ function make_print(    h, i, j, k, l, x, y, z) {
         else {
 # RELEASE
             if (indent) {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]*$/) ; else printf "%s"OFS, $h } print ""
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]*$/) ; else printf "%s ", $h } print ""
             }
             else {
-                for (h = 1; h <= NF; ++h) { printf "%s"OFS, $h } print ""
+                for (h = 1; h <= NF; ++h) {  printf "%s", $h } print ""
             }
         }
 
