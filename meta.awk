@@ -65,6 +65,15 @@ function Array_add(array, value,    h, i, j, k, l) {
     return l
 }
 
+function Array_insert(array, i, value,    h, j, k, l) {
+    l = ++array["length"]
+    # TODO: move all above i
+    array[i + 1] = array[i]
+    if (typeof(value) != "untyped") array[i] = value
+    else array[i] # = 0
+    # return i
+}
+
 function Array_remove(array, i) {
     if (typeof(i) == "untyped") { error = "i is no Number"; nextfile }
     if (typeof(i) != "number") { delete array[i]; return }
@@ -215,7 +224,6 @@ function Index_save(oldRecords) {
 }
 
 function Index_nextRecord(    p, q, r) {
-    r = 0
     if ((r = getline) <= 0) r = 0
     return r
 }

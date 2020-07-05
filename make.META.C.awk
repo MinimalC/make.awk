@@ -13,7 +13,9 @@ BEGIN {
 
     make = "make_print"
     includeDirs["length"] = 0
-    use = "\a"
+    useFS = "\\x01+"
+    use = "\x01"
+    indent = 1
 
     for (argI = 1; argI < ARGC; ++argI) {
         # argL = length(ARGV[argI])
@@ -24,18 +26,22 @@ BEGIN {
         }
 
         paramName = ""
-        if (ARGV[argI] ~ /^--.*=.*$/) {
+        if (ARGV[argI] ~ /^.*=.*$/) {
             paramI = index(ARGV[argI], "=")
-            paramName = substr(ARGV[argI], 3, paramI - 1)
+            paramName = substr(ARGV[argI], 1, paramI - 1)
             paramWert = substr(ARGV[argI], paramI + 1)
         } else
-        if (ARGV[argI] ~ /^--.*$/) {
-            paramI = index(ARGV[argI], "=")
-            paramName = substr(ARGV[argI], 3)
+        if (ARGV[argI] ~ /^\+.*$/) {
+            paramName = substr(ARGV[argI], 2)
             paramWert = 1
+        }
+        if (ARGV[argI] ~ /^-.*$/) {
+            paramName = substr(ARGV[argI], 2)
+            paramWert = 0
         }
         if (paramName) {
             # if (paramName == "Namespace") Namespace = paramWert; else
+            if (paramName == "indent") indent = paramWert; else
             if (paramName == "debug") DEBUG = paramWert; else
         print "Unknown argument: \""paramName "\" = \""paramWert"\"">"/dev/stderr"
             delete ARGV[argI]; continue
@@ -58,7 +64,7 @@ BEGIN {
             else if (fileName ~ /\.c$/) { }
             else if (fileName ~ /\.inc$/) { }
             else {
-                error = "Unknown input format: "fileName
+                error = "Unknown inputType format: "fileName
                 delete ARGV[argI]; continue
             }
 
@@ -74,10 +80,10 @@ BEGINFILE {
     FileName = get_FileName(FILENAME)
     Directory = get_DirectoryName(FILENAME)
 
-    Array_create(output)
+    Array_create(input)
     leereZeilen = 0
     z = 0
-    input = ""
+    inputType = ""
 
     FS=""
     OFS=""
@@ -85,7 +91,7 @@ BEGINFILE {
     ORS="\n"
 }
 
-NF == 0 { if (leereZeilen++ < 2) { ++z; Array_add(output, "") } }
+NF == 0 { if (leereZeilen++ < 2) { ++z; Array_add(input, "") } }
 
 NF > 0 {  # PreProcess: read what you have, in C
 
@@ -94,189 +100,192 @@ NF > 0 {  # PreProcess: read what you have, in C
 
     i = 1
     do {
-
-        if (input == "string") {
-
-            if (i == NF && $i != "\"") {
-                if (Index_append(i, "\"")) ++i
-                input = ""
-                break
-            }
-            if ($i == "\"") {
-                if (i != NF) Index_append(i, use, use)
-                input = ""
-            }
-            continue
-        }
-
-        if (input == "include string") {
-
-            if (i == NF && $i != ">") {
-                if (Index_append(i, ">")) ++i
-                input = ""
-                break
-            }
-            if ($i == ">") input = ""
-            continue
-        }
-
-        if (input == "comment") {
-
+        if (inputType == "comment") {
             if ($i == "/" && $(i + 1) == "*") {
                 $(i++) = "*"
+                ++comments
+                warning = warning FileName" Line "z": Comment in Comment /* /*\n"
             }
             else if ($i == "*" && $(i + 1) == "/") {
-                ++i; input = ""
+                if (comments) {
+                    --comments
+                    $(++i) = "*"
+                    continue
+                }
+                ++i
+                inputType = ""
+                if (i != NF) Index_append(i, use, use)
             }
             continue
         }
-
-        if ($i == use) continue
-
-        if ($i ~ /[ \t]/) {
-#            if (i != 1) if (Index_prepend(i, use, use)) ++i
-
-            # lies LeerZeichen
-            for (j = i; ++j <= NF; ) {
-                if ($j ~ /[ \t]/) continue
+        if (inputType == "string") {
+            if (i == NF && $i != "\"") {
+                if (Index_append(i, "\"")) {
+                    i += 2
+                    warning = warning FileName" Line "z": Missing End of String \"\n"
+                }
+                inputType = ""
                 break
             }
-            if (--j > i) i = j
-
-#            if (i != NF) Index_append(i, use, use)
+            if ($i == "\\") {
+                if ($(i + 1) == "\"") { ++i; continue }
+            }
+            if ($i == "\"") {
+                inputType = ""
+                if (i != NF) Index_append(i, use, use)
+            }
             continue
         }
-
+        if (inputType == "character") {
+            if (i == NF && $i != "'") {
+                if (Index_append(i, "'")) i += 2
+                inputType = ""
+                break
+            }
+            if ($i == "\\") {
+                if ($(i + 1) == "'") { ++i; continue }
+            }
+            if ($i == "'") {
+                inputType = ""
+                if (i != NF) Index_append(i, use, use)
+            }
+            continue
+        }
+        if (inputType == "include string") {
+            if (i == NF && $i != ">") {
+                if (Index_append(i, ">")) ++i
+                inputType = ""
+                break
+            }
+            if ($i == ">") {
+                inputType = ""
+                if (i != NF) Index_append(i, use, use)
+            }
+            continue
+        }
+        if ($i == use) continue
+        if ($i ~ /[ \b\f\n\r\t\v]/) {
+            if (i == 1) {
+                $i = ""
+                # eliminiere LeerZeichen
+                for (n = i; ++n <= NF; ) {
+                    if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
+                    break
+                } --n; --i
+                Index_reset()
+                continue
+            }
+            # lies LeerZeichen
+            for (; ++i <= NF; ) {
+                if ($i ~ /[ \b\f\n\r\t\v]/) continue
+                break
+            } --i
+            continue
+        }
         if ($i == "\"") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-
-            input = "string"
+            inputType = "string"
             continue
         }
-
+        if ( $i == "'" ) {
+            if (i != 1) if (Index_prepend(i, use, use)) ++i
+            inputType = "character"
+            continue
+        }
         if ($i == "#") {
+            if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == "#") {
-                if (i != 1) if (Index_prepend(i, use, use)) ++i
                 ++i
                 if (i != NF) Index_append(i, use, use)
                 continue
             }
-            if (i != 1) { Index_remove(i--); continue }
-
-            for (j = i; ++j <= NF; ) {
-                if ($j ~ /[ \t]/) { $j = ""; continue }
+            # eliminiere LeerZeichen
+            for (n = i; ++n <= NF; ) {
+                if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
                 break
-            }
-            for (--j; ++j <= NF; ) {
-                if ($j ~ /[[:alpha:]_0-9]/) continue # read a Name
-                break
-            }
-            if (--j > i) i = j
+            } --n
             Index_reset()
-
             if (i != NF) Index_append(i, use, use)
             continue
         }
-
-
         if ($i == "*") {
             if ($(i + 1) == "/") { $i = ""; $(i + 1) = ""; Index_reset(); --i; continue }
-
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "/") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-            if ($(i + 1) == "*") { ++i; input = "comment"; continue }
+            if ($(i + 1) == "*") {
+                ++i; inputType = "comment"
+                continue
+            }
             if ($(i + 1) == "/") break
             if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "+") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == "+") ++i
             else if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "-") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == ">") ++i
             else if ($(i + 1) == "-") ++i
             else if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "=") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "%" || $i == "^") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "&") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == "&") ++i
             else if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "|") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($(i + 1) == "|") ++i
             else if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
-
         if ($i == "(" || $i == "{" || $i == "[") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
         if ($i == ")" || $i == "}" || $i == "]") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
-
         if ($i == "<") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($1 == "#" && $2 == "i") {
-                input = "include string"
+                inputType = "include string"
                 continue
             }
             if ($(i + 1) == "<") ++i
             if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
         if ($i == ">") {
@@ -284,126 +293,163 @@ NF > 0 {  # PreProcess: read what you have, in C
             if ($(i + 1) == ">") ++i
             if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
-        if ( $i == "." ) {
+        if ($i == "!") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-            if ( $(i + 1) == "." ) ++i
-            if ( $(i + 1) == "." ) ++i
+            if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-        if ($i == "!" || $i == "." || $i == "," || $i == ";" || $i == "?" || $i == ":") {
+        if ($i == "," || $i == ";" || $i == "?" || $i == ":") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if (i != NF) Index_append(i, use, use)
-
             continue
         }
-
         if ($i == "\\") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if (i != NF) $i = ""
-
-            for (j = i; ++j <= NF; ) {
-                if ($j ~ /[ \t]/) { $j = ""; continue }
+            for (; ++i <= NF; ) {
+                if ($i ~ /[ \b\f\n\r\t\v]/) { $i = ""; continue }
                 break
-            }
+            } --i
             Index_reset()
             continue
         }
-
         if ($i ~ /[0-9]/) {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-
-            if ($(i + 1) == "x") {
+            if ($i == "0" && $(i + 1) == "x") {
                 i += 2
                 # lies eine HexadezimalZahl
-                for (j = i; ++j <= NF; ) {
-                    if ($j ~ /[0-9a-fA-F]/) continue
+                for (; ++i <= NF; ) {
+                    if ($i ~ /[0-9a-fA-F]/) continue
                     break
-                }
-                if (--j > i) i = j
-            }
-            else {
-                # lies eine Zahl
-                for (j = i; ++j <= NF; ) {
-                    if ($j ~ /[0-9]/) continue
+                } --i
+                for (; ++i <= NF; ) {
+                    if ($i ~ /[ulUL]/) continue
                     break
-                }
-                if (--j > i) i = j
+                } --i
+                if (i != NF) Index_append(i, use, use)
+                continue
             }
-            for (j = i; ++j <= NF; ) {
-                if ($j ~ /[ulUL]/) continue
+            # lies eine Zahl
+            for (; ++i <= NF; ) {
+                if ($i ~ /[0-9]/) continue
                 break
+            } --i
+            if ($(i + 1) == ".") {
+                ++i
+                # lies eine Zahl, als Fragment
+                for (; ++i <= NF; ) {
+                    if ($i ~ /[0-9]/) continue
+                    break
+                } --i
             }
-            if (--j > i) i = j
-
+            if ($(i + 1) ~ /[eE]/) {
+                ++i
+                # lies den Exponent
+                for (; ++i <= NF; ) {
+                    if ($i ~ /[0-9]/) continue
+                    break
+                } --i
+            }
+            if ($(i + 1) ~ /[uUlL]/) {
+                ++i
+                for (; ++i <= NF; ) {
+                    if ($i ~ /[uUlL]/) continue
+                    break
+                } --i
+            }
             if (i != NF) Index_append(i, use, use)
             continue
         }
-
+        if ( $i == "." ) {
+            if (i != 1) if (Index_prepend(i, use, use)) ++i
+            if ( $(i + 1) == "." && $(i + 2) == "." ) i += 2
+            if (i != NF) Index_append(i, use, use)
+            continue
+        }
         if ($i ~ /[[:alpha:]_]/) {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-
             # lies einen Namen
-            for (j = i; ++j <= NF; ) {
-                if ($j ~ /[[:alpha:]_0-9]/) continue
+            for (; ++i <= NF; ) {
+                if ($i ~ /[[:alpha:]_0-9]/) continue
                 break
-            }
-            if (--j > i) i = j
-
+            } --i
             if (i != NF) Index_append(i, use, use)
             continue
         }
 
-
+        # Just remove everything else!
         Index_remove(i--)
 
     } while (++i <= NF)
 
-    Array_add(output, $0)
+    Array_add(input, $0)
 
     if (DEBUG) {
-    for (x = 1; x <= NF; ++x) { if ($x == use) printf "|"; else printf "%s ", $x } print ""
+    for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } print ""
     }
-
 }
 
 ENDFILE {
 
-    if (!error) if (make != "make_propose") make_propose()
+    process()
+
     if (!error) @make()
 }
 
-function make_propose(    h, i, j, k, l) {
+function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    Array_create(result)
+    for (z = 1; z <= input["length"]; ++z) {
+        Index_push(input[z], useFS, use)
 
-    for (i = 1; i <= output["length"]; ++i) {
-        Index_push(output[i], use, " ", "\n", "\n")
+    i = 1
+    do {
+        if (inputType == "comment") {
+            if ($i ~ /\*\/$/) {
+                inputType = ""
+            }
+            $i = " "
+            continue
+        }
+        if ($i ~ /^\/\*/) {
+            if ($i !~ /\*\/$/) {
+                inputType = "comment"
+            }
+            $i = " "
+            continue
+        }
+        # if ($i ~ /^[ \b\f\n\r\t\v]+$/) { $i = ""; continue }
 
+    } while (++i <= NF)
 
+        Index_reset()
+        if ($0 !~ /^[ \b\f\n\r\t\v]*$/)
+            Array_add(result, $0)
         Index_pop()
     }
 }
 
-function make_print(    h, i, j, k, l) {
+function make_print(    h, i, j, k, l, x, y, z) {
 
     if (DEBUG) print ""
 
-    for (i = 1; i <= output["length"]; ++i) {
-        Index_push(output[i], use, " ", "\n", "\n")
+    for (z = 1; z <= result["length"]; ++z) {
+        Index_push(result[z], useFS, " ")
 
-# DEBUG
-    if (DEBUG) {
-        for (j = 1; j <= NF; ++j) { printf "(%d)%s"OFS, j, $j } print ""
-    } else
+        if (DEBUG) {
+            for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]+$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
+        }
+        else {
 # RELEASE
-    {
-        for (j = 1; j <= NF; ++j) { if ($j ~ /^[ \t]+$/) ; else printf "%s"OFS, $j } print ""
-#        for (j = 1; j <= NF; ++j) { if ($j == "\a") ; else printf "%s", $j } print ""
-    }
+            if (indent) {
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]+$/) ; else printf "%s"OFS, $h } print ""
+            }
+            else {
+                for (h = 1; h <= NF; ++h) { if ($h == use) ; else printf "%s", $h } print ""
+            }
+        }
 
         Index_pop()
     }
