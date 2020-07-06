@@ -165,32 +165,21 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if ($i == use) continue
         if ($i ~ /[ \b\f\n\r\t\v]/) {
-#            if (i == 1) {
-#                $i = ""
-#                # eliminiere beginnende LeerZeichen
-#                for (n = i; ++n <= NF; ) {
-#                    if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
-#                    break
-#                } --n; --i
-#                Index_reset()
-#                continue
-#            }
-            # lies LeerZeichen
+            $i = " "
+            # zähle LeerZeichen
             for (n = i; ++n <= NF; ) {
-                if ($n ~ /[ \b\f\n\r\t\v]/) continue
+                if ($n ~ /[ \b\f\n\r\t\v]/) { $n = " "; continue }
                 break
             } --n
-#            if (n == NF) {
-#                $i = ""
-#                # eliminiere endende LeerZeichen
-#                for (; ++i <= NF; ) {
-#                    if ($i ~ /[ \b\f\n\r\t\v]/) { $i = ""; continue }
-#                    break
-#                } --i
-#                Index_reset()
-#                continue
-#            }
-            i = n
+            if (n == NF) { # i == 1 ||
+                # eliminiere LeerZeichen
+                for (n = i; ++n <= NF; ) {
+                    if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
+                    break
+                } --n
+                $i = ""; --i
+            }
+            Index_reset()
             continue
         }
         if ($i == "\"") {
@@ -290,7 +279,7 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if ($i == "<") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-            if ($1 == "#" && $2 == "i") {
+            if ($1 == "#" && $3 == "i") {
                 inputType = "include string"
                 continue
             }
@@ -344,12 +333,13 @@ NF > 0 {  # PreProcess: read what you have, in C
                 continue
             }
             # lies eine Zahl
+            zahl = "decimal"
             for (; ++i <= NF; ) {
                 if ($i ~ /[0-9]/) continue
                 break
             } --i
             if ($(i + 1) == ".") {
-                ++i
+                ++i; zahl = "floating point"
                 # lies eine Zahl, als Fragment
                 for (; ++i <= NF; ) {
                     if ($i ~ /[0-9]/) continue
@@ -357,14 +347,15 @@ NF > 0 {  # PreProcess: read what you have, in C
                 } --i
             }
             if ($(i + 1) ~ /[eE]/) {
-                ++i
+                ++i; zahl = "floating point"
+                if ($(i + 1) ~ /[+-]/) ++i
                 # lies den Exponent
                 for (; ++i <= NF; ) {
                     if ($i ~ /[0-9]/) continue
                     break
                 } --i
             }
-            if ($(i + 1) ~ /[uUlL]/) {
+            if (zahl != "floating point" && $(i + 1) ~ /[uUlL]/) {
                 ++i
                 for (; ++i <= NF; ) {
                     if ($i ~ /[uUlL]/) continue
@@ -418,25 +409,28 @@ function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o,
     i = 1
     do {
         if (inputType == "comment") {
-            if ($i ~ /\*\/$/) {
-                inputType = ""
-            }
-            $i = ""
+            if ($i ~ /\*\/$/) inputType = ""
+            $i = " "
             continue
         }
         if ($i ~ /^\/\*/) {
-            if ($i !~ /\*\/$/) {
-                inputType = "comment"
-            }
-            $i = ""
+            if ($i !~ /\*\/$/) inputType = "comment"
+            $i = " "
             continue
         }
-        # if ($i ~ /^[ \b\f\n\r\t\v]+$/) { $i = ""; continue }
+        if ($i ~ /^\/\//) {
+            $i = " "
+            for (; ++i <= NF; ) {
+                $i = " "
+            } --i
+            continue
+        }
+
 
     } while (++i <= NF)
 
         Index_reset()
-        if ($0 !~ /^[ \b\f\n\r\t\v\x01]*$/)
+        if ($0 !~ /^[ \x01]*$/)
             Array_add(result, $0)
         Index_pop()
     }
@@ -450,12 +444,17 @@ function make_print(    h, i, j, k, l, x, y, z) {
         Index_push(result[z], useFS, "")
 
         if (DEBUG) {
-            for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]*$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
+            if (indent) {
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]+$/) ; else printf "(%d)%s", h, $h } print ""
+            }
+            else {
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]+$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
+            }
         }
         else {
 # RELEASE
             if (indent) {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ \b\f\n\r\t\v]*$/) ; else printf "%s ", $h } print ""
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]+$/) ; else printf "%s ", $h } print ""
             }
             else {
                 for (h = 1; h <= NF; ++h) {  printf "%s", $h } print ""
