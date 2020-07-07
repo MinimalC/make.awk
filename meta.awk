@@ -127,7 +127,7 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
         if (typeof(newArray) != "array") { error = "newArray isn't Array"; nextfile }
 
         for (n = 1; n <= newArray["length"]; ++n) {
-            m = m newArray[n] ORS
+            m = m newArray[n] OFS
         }
         return $0 = m
     }

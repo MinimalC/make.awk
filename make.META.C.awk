@@ -13,7 +13,7 @@ BEGIN {
 
     make = "make_print"
     includeDirs["length"] = 0
-    useFS = "[\\x01]+"
+    useFS = @/[\x01]+/
     use = "\x01"
     indent = 1
 
@@ -85,10 +85,10 @@ BEGINFILE {
     z = 0
     inputType = ""
 
-    FS=""
-    OFS=""
+    #FS=""
+    #OFS=""
     RS="\n"
-    ORS="\n"
+    #ORS="\n"
 }
 
 NF == 0 { if (leereZeilen++ < 2) { ++z; Array_add(input, "") } }
@@ -98,6 +98,7 @@ NF > 0 {  # PreProcess: read what you have, in C
     ++z
     leereZeilen = 0
 
+    Index_push($0, "", "")
     i = 1
     do {
         if (inputType == "comment") {
@@ -166,7 +167,7 @@ NF > 0 {  # PreProcess: read what you have, in C
         if ($i == use) continue
         if ($i ~ /[ \b\f\n\r\t\v]/) {
             $i = " "
-            # zähle LeerZeichen
+            # mache, zähle LeerZeichen
             for (n = i; ++n <= NF; ) {
                 if ($n ~ /[ \b\f\n\r\t\v]/) { $n = " "; continue }
                 break
@@ -392,6 +393,8 @@ NF > 0 {  # PreProcess: read what you have, in C
     if (DEBUG) {
     for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } print ""
     }
+
+    Index_pop()
 }
 
 ENDFILE {
@@ -401,37 +404,38 @@ ENDFILE {
     if (!error) @make()
 }
 
-function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o, p, q, r, resultLine, s, t, u, v, w, x, y, z) {
     Array_create(result)
     for (z = 1; z <= input["length"]; ++z) {
         Index_push(input[z], useFS, use)
 
+    Array_create(resultLine)
     i = 1
     do {
         if (inputType == "comment") {
             if ($i ~ /\*\/$/) inputType = ""
-            $i = " "
             continue
         }
         if ($i ~ /^\/\*/) {
             if ($i !~ /\*\/$/) inputType = "comment"
-            $i = " "
             continue
         }
         if ($i ~ /^\/\//) {
-            $i = " "
-            for (; ++i <= NF; ) {
-                $i = " "
-            } --i
+            for (; ++i <= NF; ) ;
+            continue
+        }
+        if (indent && $i ~ /^[ ]+$/) {
             continue
         }
 
 
+        Array_add(resultLine, $i)
+
     } while (++i <= NF)
 
-        Index_reset()
-        if ($0 !~ /^[ \x01]*$/)
-            Array_add(result, $0)
+        Index_pushArray(resultLine, useFS, use)
+        if ($0 !~ /^[\x01 ]*$/) Array_add(result, $0)
+        Index_pop()
         Index_pop()
     }
 }
@@ -441,23 +445,23 @@ function make_print(    h, i, j, k, l, x, y, z) {
     if (DEBUG) print ""
 
     for (z = 1; z <= result["length"]; ++z) {
-        Index_push(result[z], useFS, "")
+        Index_push(result[z], useFS, " ")
 
         if (DEBUG) {
             if (indent) {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]+$/) ; else printf "(%d)%s", h, $h } print ""
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) ; else printf "(%d)%s", h, $h } print ""
             }
             else {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]+$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
             }
         }
         else {
 # RELEASE
             if (indent) {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]+$/) ; else printf "%s ", $h } print ""
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) ; else printf "%s ", $h } print ""
             }
             else {
-                for (h = 1; h <= NF; ++h) {  printf "%s", $h } print ""
+                print # for (h = 1; h <= NF; ++h) {  printf "%s", $h } print ""
             }
         }
 
