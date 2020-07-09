@@ -20,8 +20,9 @@ END {
 }
 
 
-function File_exists(fileName) {
+function File_exists(fileName,    h, i, j) {
     if (!fileName) { print "File_exists: fileName is null">"/dev/stderr"; return }
+#    if ((getline j < fileName) < 0) return 1
     if (!system("test -s "fileName)) return 1
 }
 
@@ -67,18 +68,62 @@ function Array_add(array, value,    h, i, j, k, l) {
 
 function Array_insert(array, i, value,    h, j, k, l) {
     l = ++array["length"]
-    # TODO: move all above i
-    array[i + 1] = array[i]
+    # move all above including i
+    for (h = l; h >= i; --h) {
+        array[h] = array[h - 1]
+    }
     if (typeof(value) != "untyped") array[i] = value
     else array[i] # = 0
     # return i
 }
 
-function Array_remove(array, i) {
+function StringArray_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1, o) {
+    l = array["length"]
+    for (n = 1; n <= l; ++n) {
+        if (array[n] == string0) { n0 = n; continue }
+        if (array[n] == string1) { n1 = n; continue }
+    }
+    if (!n0) {
+        Array_insert(array, 1, string0)
+        Array_insert(array, 1, string1)
+    }
+    else if (!n1) {
+        Array_insert(array, n0, string1)
+    }
+    else if (n1 > n0) {
+        Array_remove(n1)
+        Array_insert(array, n0, string1)
+    }
+}
+
+function StringArray_insertAfter(array, string0, string1,    h, i, j, k) {
+    l = array["length"]
+    for (n = 1; n <= l; ++n) {
+        if (array[n] == string0) { n0 = n; continue }
+        if (array[n] == string1) { n1 = n; continue }
+    }
+    if (!n0) {
+        Array_insert(array, l, string1)
+        Array_insert(array, l, string0)
+    }
+    else if (!n1) {
+        Array_insert(array, n0 + 1, string1)
+    }
+    else if (n1 < n0) {
+        Array_remove(n1)
+        Array_insert(array, n0 + 1, string1)
+    }
+}
+
+function Array_remove(array, i,    h, j, k, l, m, n) {
     if (typeof(i) == "untyped") { error = "i is no Number"; nextfile }
     if (typeof(i) != "number") { delete array[i]; return }
-    if (Array_length(array)) --array["length"]
-    delete array[i]
+    l = array["length"]
+    for (n = i + 1; n <= l; ++n) {
+        array[n - 1] = array[n]
+    }
+    delete array[l]
+    --array["length"]
 }
 
 function Array_clear(array,    h, i) {
@@ -101,33 +146,43 @@ function Array_print(array, level,    h, i, prefix) {
 }
 
 
+function String_join(sepp, array,    h, i, reture) {
+    for (i = 1; i <= array["length"]; ++i) {
+        if (i == 1) reture = array[1]
+        else reture = reture sepp array[i]
+    }
+    return reture
+}
+
+function String_concat(string0, sepp, string1) {
+    if (typeof(string1) == "untyped") { string1 = sepp; sepp = OFS }
+    if (!string0) return string1
+    if (!string1) return string0
+    return string0 sepp string1
+}
+
+
 function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, l, m, n) {
     # save old Index
     i = Array_add(Index)
-    if (typeof(newORS) != "untyped") {
-        if (newORS != ORS) Index[i]["OUTPUTRECORDSEP"] = ORS
-        ORS = newORS
-    }
-    if (typeof(newRS) != "untyped") {
-        if (newRS != RS) Index[i]["RECORDSEP"] = RS
-        RS = newRS
-    }
-    if (typeof(newOFS) != "untyped") {
-        if (newOFS != OFS) Index[i]["OUTPUTFIELDSEP"] = OFS
-        OFS = newOFS
-    }
-    if (typeof(newFS) != "untyped") {
-        if (newFS != FS) Index[i]["FIELDSEP"] = FS
-        FS = newFS
-    }
+    Index[i]["OUTPUTRECORDSEP"] = ORS
+    Index[i]["RECORDSEP"] = RS
+    Index[i]["OUTPUTFIELDSEP"] = OFS
+    Index[i]["FIELDSEP"] = FS
     Index[i][0] = $0
+
+    if (typeof(newORS) != "untyped") ORS = newORS
+    if (typeof(newRS) != "untyped") RS = newRS
+    if (typeof(newOFS) != "untyped") OFS = newOFS
+    if (typeof(newFS) != "untyped") FS = newFS
 
     # new Index
     if (typeof(newArray) != "untyped") {
         if (typeof(newArray) != "array") { error = "newArray isn't Array"; nextfile }
 
         for (n = 1; n <= newArray["length"]; ++n) {
-            m = m newArray[n] OFS
+            if (n == 1) m = newArray[1]
+            else m = m OFS newArray[n]
         }
         return $0 = m
     }
@@ -137,13 +192,11 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
 function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
     # save old Index
     i = Array_add(Index)
-
-    Index[i][0] = $0
-
     Index[i]["OUTPUTRECORDSEP"] = ORS
     Index[i]["RECORDSEP"] = RS
     Index[i]["OUTPUTFIELDSEP"] = OFS
     Index[i]["FIELDSEP"] = FS
+    Index[i][0] = $0
 
     if (typeof(newORS) != "untyped") ORS = newORS
     if (typeof(newRS) != "untyped") RS = newRS
@@ -157,20 +210,24 @@ function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
     return Index_reset()
 }
 
-function Index_pop(    h, i) {
+function Index_pop(fromFS, fromOFS,    h, i, reture) {
+
+    if (typeof(fromOFS) != "untyped") OFS = fromOFS
+    if (typeof(fromFS) != "untyped")  FS  = fromFS
+    reture = $0
 
     if (i = Array_length(Index)) {
 
-        ORS  = Index[i]["OUTPUTRECORDSEP"]
-        RS   = Index[i]["RECORDSEP"]
-        OFS  = Index[i]["OUTPUTFIELDSEP"]
-        FS   = Index[i]["FIELDSEP"]
-
-        $0 = Index[i][0]
+        ORS = Index[i]["OUTPUTRECORDSEP"]
+        RS  = Index[i]["RECORDSEP"]
+        OFS = Index[i]["OUTPUTFIELDSEP"]
+        FS  = Index[i]["FIELDSEP"]
+        $0  = Index[i][0]
 
         Array_remove(Index, i)
     }
-    return Index_reset()
+    Index_reset()
+    return reture
 }
 
 #function Index_prependOrNot(i, value, ifNot) {
@@ -218,15 +275,15 @@ function Index_reset() {
     return $0 = $0
 }
 
-function Index_save(oldRecords) {
-    if (!oldRecords) return $0
-    return oldRecords ORS $0
-}
+#function Index_save(oldRecords) {
+#    if (!oldRecords) return $0
+#    return oldRecords ORS $0
+#}
 
-function Index_nextRecord(    p, q, r) {
-    if ((r = getline) <= 0) r = 0
-    return r
-}
+#function Index_nextRecord(    p, q, r) {
+#    if ((r = getline) <= 0) r = 0
+#    return r
+#}
 
 function get_FileName(fileName,    h, i, reture) {
     Index_push(fileName, "/", "")
@@ -240,6 +297,23 @@ function get_DirectoryName(fileName,    h, i, reture) {
     $NF = ""
     Index_reset()
     reture = $0
+    Index_pop()
+    return reture
+}
+
+function Path_join(path0, path1,    a, b, c, d, e, f, g, h, i, reture, updirs) {
+    Index_push(path1, "/", "/")
+    i = 1; do {
+        if ($i == "..") {
+            if (i > 1) $(i - 1) = ""
+            else {
+                ++updirs
+                $i = ""
+            }
+            continue
+        }
+        if ($i == ".") { $i = ""; continue }
+    } while (i <= NF)
     Index_pop()
     return reture
 }

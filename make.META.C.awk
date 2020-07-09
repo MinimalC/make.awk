@@ -70,7 +70,6 @@ BEGIN {
 
         }
     }
-
 }
 
 BEGINFILE {
@@ -80,18 +79,16 @@ BEGINFILE {
     FileName = get_FileName(FILENAME)
     Directory = get_DirectoryName(FILENAME)
 
-    Array_create(input)
     leereZeilen = 0
     z = 0
     inputType = ""
+    inputI = ++input["length"]
 
-    #FS=""
-    #OFS=""
+    #FS=" "
+    #OFS=" "
     RS="\n"
     #ORS="\n"
 }
-
-NF == 0 { if (leereZeilen++ < 2) { ++z; Array_add(input, "") } }
 
 NF > 0 {  # PreProcess: read what you have, in C
 
@@ -388,27 +385,43 @@ NF > 0 {  # PreProcess: read what you have, in C
 
     } while (++i <= NF)
 
-    Array_add(input, $0)
+    inputZ = ++input[inputI]["length"]
+    input[inputI][inputZ] = $0
 
     if (DEBUG) {
     for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } print ""
     }
 
+    #resultLineString = $0
     Index_pop()
+    #$0 = resultLineString
+}
+
+NF == 0 {
+    if (leereZeilen++ < 2) {
+        ++z
+
+        inputZ = ++input[inputI]["length"]
+        input[inputI][inputZ] = ""
+    }
 }
 
 ENDFILE {
+}
 
-    process()
+END {
+
+    preprocess()
 
     if (!error) @make()
 }
 
-function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o, p, q, r, resultLine, s, t, u, v, w, x, y, z) {
-    Array_create(result)
-    for (z = 1; z <= input["length"]; ++z) {
-        Index_push(input[z], useFS, use)
+function preprocess(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, m, n, o, p, q, r, resultLine, s, t, typeName, u, v, w, x, y, z) {
+    for (d = 1; d <= input["length"]; ++d) {
+    for (z = 1; z <= input[d]["length"]; ++z) {
+        Index_push(input[d][z], useFS, use)
 
+    resultI = ++result["length"]
     Array_create(resultLine)
     i = 1
     do {
@@ -428,45 +441,88 @@ function process(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, lz, m, n, o,
             continue
         }
 
+        if ($i == "extern" || $i == "register" || $i == "static" || $i == "auto") {
+            storage = String_concat(storage, " ", $i)
+            ++i
+        }
+        if ($i == "const" || $i == "volatile") {
+            qualifier = String_concat(qualifier, " ", $i)
+            ++i
+        }
+        if ($i == "unsigned" || $i == "signed") {
+            typeName = String_concat(typeName, " ", $i)
+            ++i
+        }
+        if ($i == "void" || $i == "char" || $i == "long" || $i == "int" || $i == "short") {
+            typeName = String_concat(typeName, " ", $i)
+            ++i
+        }
+        if ($i == "struct" || (typeName && $i == "*")) {
+            typeName = String_concat(typeName, " ", $i)
+            ++i
+        }
+        if (typeName == "struct" && $i ~ /^[[:alpha:]_0-9]+$/) {
+            typeName = String_concat(typeName, " ", $i)
+            ++i
+        }
+        if (typeName) {
+            if (storage) { Array_add(resultLine, storage); storage = "" }
+            if (qualifier) { Array_add(resultLine, qualifier); qualifier = "" }
+            Array_add(resultLine, typeName); typeName = ""
+        }
 
         Array_add(resultLine, $i)
 
     } while (++i <= NF)
+        Index_pop()
 
-        Index_pushArray(resultLine, useFS, use)
-        if ($0 !~ /^[\x01 ]*$/) Array_add(result, $0)
+        resultLineString = String_join(use, resultLine)
+        if (resultLineString !~ /^[\x01 ]*$/) {
+
+            resultZ = ++result[resultI]["length"]
+            result[resultI][resultZ] = resultLineString
+        }
+    } }
+}
+
+function make_printInput(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
+
+    if (DEBUG) print ""
+
+    for (d = 1; d <= input["length"]; ++d) {
+    for (z = 1; z <= input[d]["length"]; ++z) {
+        Index_push(input[d][z], useFS, " ")
+
+        if (DEBUG) {
+            for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
+        }
+        else {
+            # This is GAWK. You can't use just
+            # print
+            for (h = 1; h <= NF; ++h) {  printf "%s", $h } print ""
+        }
+
         Index_pop()
-        Index_pop()
-    }
+    } }
 }
 
 function make_print(    h, i, j, k, l, x, y, z) {
 
     if (DEBUG) print ""
 
-    for (z = 1; z <= result["length"]; ++z) {
-        Index_push(result[z], useFS, " ")
+    for (d = 1; d <= result["length"]; ++d) {
+    for (z = 1; z <= result[d]["length"]; ++z) {
+        Index_push(result[d][z], useFS, " ")
 
         if (DEBUG) {
-            if (indent) {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) ; else printf "(%d)%s", h, $h } print ""
-            }
-            else {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
-            }
+            for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) ; else printf "(%d)%s", h, $h } print ""
         }
         else {
-# RELEASE
-            if (indent) {
-                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) ; else printf "%s ", $h } print ""
-            }
-            else {
-                print # for (h = 1; h <= NF; ++h) {  printf "%s", $h } print ""
-            }
+            for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) ; else printf "%s ", $h } print ""
         }
 
         Index_pop()
-    }
+    } }
 
 }
 
