@@ -22,7 +22,7 @@ BEGIN {
 
         if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
             make = "make_"ARGV[argI]
-            delete ARGV[argI]; continue
+            ARGV[argI] = ""; continue
         }
 
         paramName = ""
@@ -44,30 +44,27 @@ BEGIN {
             if (paramName == "indent") indent = paramWert; else
             if (paramName == "debug") DEBUG = paramWert; else
         print "Unknown argument: \""paramName "\" = \""paramWert"\"">"/dev/stderr"
-            delete ARGV[argI]; continue
+            ARGV[argI] = ""; continue
         }
 
         if (Directory_exists(ARGV[argI])) {
             Array_add(includeDirs, ARGV[argI])
-            delete ARGV[argI]; continue
+            ARGV[argI] = ""; continue
         }
 
         if (!File_exists(ARGV[argI])) {
             print "File doesn't exist: "ARGV[argI]>"/dev/stderr"
-            delete ARGV[argI]; continue
+            ARGV[argI] = ""; continue
         }
+        fileName = get_FileName(ARGV[argI])
+        directory = get_DirectoryName(ARGV[argI])
+
+        if (fileName ~ /\.h$/) { }
+        else if (fileName ~ /\.c$/) { }
+        else if (fileName ~ /\.inc$/) { }
         else {
-            fileName = get_FileName(ARGV[argI])
-            directory = get_DirectoryName(ARGV[argI])
-
-            if (fileName ~ /\.h$/) { }
-            else if (fileName ~ /\.c$/) { }
-            else if (fileName ~ /\.inc$/) { }
-            else {
-                error = "Unknown inputType format: "fileName
-                delete ARGV[argI]; continue
-            }
-
+            error = "Unknown inputType format: "fileName
+            ARGV[argI] = ""; continue
         }
     }
 }
@@ -75,14 +72,23 @@ BEGIN {
 BEGINFILE {
 
     if (FILENAME == "-") { usage(); nextfile }
+    if (ERRNO) { print "File doesn't exist: "FILENAME>"/dev/stderr"; nextfile }
 
     FileName = get_FileName(FILENAME)
     Directory = get_DirectoryName(FILENAME)
 
+    inputI = ++input["length"]
+    input[inputI]["FILENAME"] = FILENAME
+    #input[inputI]["FileName"] = FileName
+    #input[inputI]["Directory"] = Directory
+
     leereZeilen = 0
     z = 0
     inputType = ""
-    inputI = ++input["length"]
+    was = ""
+
+    if (!Array_contains(includes, FILENAME))
+        Array_add(includes, FILENAME)
 
     #FS=" "
     #OFS=" "
@@ -102,7 +108,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             if ($i == "/" && $(i + 1) == "*") {
                 $(i++) = "*"
                 ++comments
-                warning = warning FileName" Line "z": Comment in Comment /* /*\n"
+                print FileName" Line "z": Comment in Comment /* /*" >"/dev/stderr"
             }
             else if ($i == "*" && $(i + 1) == "/") {
                 if (comments) {
@@ -117,28 +123,29 @@ NF > 0 {  # PreProcess: read what you have, in C
             continue
         }
         if (inputType == "string") {
-            if (i == NF && $i != "\"") {
-                if (Index_append(i, "\"")) {
-                    i += 2
-                    warning = warning FileName" Line "z": Missing End of String \"\n"
-                }
-                inputType = ""
+            if (i == NF && $i == "\\") {
+                print FileName" Line "z": Line Continuation \\ in String">"/dev/stderr"
                 break
             }
-            if ($i == "\\") {
-                if ($(i + 1) == "\"") { ++i; continue }
-            }
+            if ($i == "\\" && $(i + 1) == "\"") { ++i; continue }
             if ($i == "\"") {
                 inputType = ""
+                if (was == "#include") {
+                    if (!Array_contains(includes, Directory string))
+                        StringArray_insertBefore(includes, FILENAME, Directory string)
+                    if (!ARGV_contains(Directory string))
+                        ARGV[ARGC++] = Directory string
+                }
+                was = ""
                 if (i != NF) Index_append(i, use, use)
             }
+            else string = string $i
             continue
         }
         if (inputType == "character") {
             if (i == NF && $i != "'") {
-                if (Index_append(i, "'")) i += 2
-                inputType = ""
-                break
+                Index_append(i, "'")
+                Index_reset(); ++i
             }
             if ($i == "\\") {
                 if ($(i + 1) == "'") { ++i; continue }
@@ -151,14 +158,19 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if (inputType == "include string") {
             if (i == NF && $i != ">") {
-                if (Index_append(i, ">")) ++i
-                inputType = ""
-                break
+                Index_append(i, ">")
+                Index_reset(); ++i
             }
             if ($i == ">") {
                 inputType = ""
+                if (!Array_contains(includes, "/usr/include/" includeString))
+                    StringArray_insertBefore(includes, FILENAME, "/usr/include/" includeString)
+                if (!ARGV_contains("/usr/include/" includeString))
+                    ARGV[ARGC++] = "/usr/include/" includeString
+                was = ""
                 if (i != NF) Index_append(i, use, use)
             }
+            else includeString = includeString $i
             continue
         }
         if ($i == use) continue
@@ -183,6 +195,7 @@ NF > 0 {  # PreProcess: read what you have, in C
         if ($i == "\"") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             inputType = "string"
+            string = ""
             continue
         }
         if ( $i == "'" ) {
@@ -197,12 +210,13 @@ NF > 0 {  # PreProcess: read what you have, in C
                 if (i != NF) Index_append(i, use, use)
                 continue
             }
-            # eliminiere LeerZeichen
-            for (n = i; ++n <= NF; ) {
-                if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
-                break
-            } --n
-            Index_reset()
+            ## eliminiere LeerZeichen
+            #for (n = i; ++n <= NF; ) {
+            #    if ($n ~ /[ \b\f\n\r\t\v]/) { $n = ""; continue }
+            #    break
+            #} --n
+            #Index_reset()
+            was = "#"
             if (i != NF) Index_append(i, use, use)
             continue
         }
@@ -277,8 +291,9 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if ($i == "<") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-            if ($1 == "#" && $3 == "i") {
+            if (was == "#include") {
                 inputType = "include string"
+                includeString = ""
                 continue
             }
             if ($(i + 1) == "<") ++i
@@ -299,7 +314,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             if (i != NF) Index_append(i, use, use)
             continue
         }
-        if ($i == "," || $i == ";" || $i == "?" || $i == ":") {
+        if ($i == "," || $i == ";" || $i == "?" || $i == ":" || $i == "~") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if (i != NF) Index_append(i, use, use)
             continue
@@ -318,49 +333,54 @@ NF > 0 {  # PreProcess: read what you have, in C
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             if ($i == "0" && $(i + 1) == "x") {
                 i += 2
-                # lies eine HexadezimalZahl
+                zahl = "0x"
                 for (; ++i <= NF; ) {
-                    if ($i ~ /[0-9a-fA-F]/) continue
+                    if ($i ~ /[0-9a-fA-F]/) { zahl = zahl $i; continue }
                     break
                 } --i
                 for (; ++i <= NF; ) {
-                    if ($i ~ /[ulUL]/) continue
+                    if ($i ~ /[ulUL]/) { zahl = zahl $i; continue }
                     break
                 } --i
                 if (i != NF) Index_append(i, use, use)
+                if (was == "#") was = "#"zahl
+                else was = zahl
                 continue
             }
-            # lies eine Zahl
-            zahl = "decimal"
+            zahl = $i
             for (; ++i <= NF; ) {
-                if ($i ~ /[0-9]/) continue
+                if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                 break
             } --i
-            if ($(i + 1) == ".") {
-                ++i; zahl = "floating point"
-                # lies eine Zahl, als Fragment
+            if ($(i + 1) ~ /[uUlL]/) {
+                ++i; zahl = zahl $i
                 for (; ++i <= NF; ) {
-                    if ($i ~ /[0-9]/) continue
+                    if ($i ~ /[uUlL]/) { zahl = zahl $i; continue }
                     break
                 } --i
             }
-            if ($(i + 1) ~ /[eE]/) {
-                ++i; zahl = "floating point"
-                if ($(i + 1) ~ /[+-]/) ++i
-                # lies den Exponent
-                for (; ++i <= NF; ) {
-                    if ($i ~ /[0-9]/) continue
-                    break
-                } --i
-            }
-            if (zahl != "floating point" && $(i + 1) ~ /[uUlL]/) {
-                ++i
-                for (; ++i <= NF; ) {
-                    if ($i ~ /[uUlL]/) continue
-                    break
-                } --i
+            else {
+                if ($(i + 1) == ".") {
+                    ++i; zahl = zahl $i
+                    # lies das Fragment
+                    for (; ++i <= NF; ) {
+                        if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
+                        break
+                    } --i
+                }
+                if ($(i + 1) ~ /[eE]/) {
+                    ++i; zahl = zahl $i
+                    if ($(i + 1) ~ /[+-]/) { ++i; zahl = zahl $i }
+                    # lies den Exponent
+                    for (; ++i <= NF; ) {
+                        if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
+                        break
+                    } --i
+                }
             }
             if (i != NF) Index_append(i, use, use)
+            if (was == "#") was = "#"zahl
+            else was = zahl
             continue
         }
         if ( $i == "." ) {
@@ -372,11 +392,14 @@ NF > 0 {  # PreProcess: read what you have, in C
         if ($i ~ /[[:alpha:]_]/) {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
             # lies einen Namen
+            name = $i
             for (; ++i <= NF; ) {
-                if ($i ~ /[[:alpha:]_0-9]/) continue
+                if ($i ~ /[[:alpha:]_0-9]/) { name = name $i; continue }
                 break
             } --i
             if (i != NF) Index_append(i, use, use)
+            if (was == "#") was = "#"name
+            else was = name
             continue
         }
 
@@ -407,22 +430,32 @@ NF == 0 {
 }
 
 ENDFILE {
+
 }
 
 END {
 
-    preprocess()
+    Array_print(includes)
+
+    precompile()
 
     if (!error) @make()
 }
 
-function preprocess(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, m, n, o, p, q, r, resultLine, s, t, typeName, u, v, w, x, y, z) {
-    for (d = 1; d <= input["length"]; ++d) {
-    for (z = 1; z <= input[d]["length"]; ++z) {
-        Index_push(input[d][z], useFS, use)
+function precompile(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, m, n, o, p, q, r, resultLine, s, t, typeName, u, v, w, x, y, z) {
+
+    for (d = 1; d <= includes["length"]; ++d) {
+        for (e = 1; e <= input["length"]; ++e)
+            if (input[e]["FILENAME"] == includes[d]) break
+        if (e > input["length"]) { print "File \""includes[d]"\" doesn't exist">"/dev/stderr"; continue }
 
     resultI = ++result["length"]
-    Array_create(resultLine)
+    result[resultI]["FILENAME"] = input[e]["FILENAME"]
+
+    for (z = 1; z <= input[e]["length"]; ++z) {
+        Index_push(input[e][z], useFS, use)
+
+    resultLineI = resultLine["length"] = 0
     i = 1
     do {
         if (inputType == "comment") {
@@ -453,15 +486,39 @@ function preprocess(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, m, n, o, 
             typeName = String_concat(typeName, " ", $i)
             ++i
         }
-        if ($i == "void" || $i == "char" || $i == "long" || $i == "int" || $i == "short") {
+        if ($i == "void") {
             typeName = String_concat(typeName, " ", $i)
             ++i
         }
-        if ($i == "struct" || (typeName && $i == "*")) {
+        else if ($i == "char") {
             typeName = String_concat(typeName, " ", $i)
             ++i
         }
-        if (typeName == "struct" && $i ~ /^[[:alpha:]_0-9]+$/) {
+        else if ($i == "long") {
+            if ($(i + 1) == "long") {
+                typeName = String_concat(typeName, " ", $i)
+                ++i
+            }
+            if ($i == "int") {
+                typeName = String_concat(typeName, " ", $i)
+                ++i
+            }
+            typeName = String_concat(typeName, " ", $i)
+            ++i
+        }
+        else if ($i == "int" || $i == "short") {
+            typeName = String_concat(typeName, " ", $i)
+            ++i
+        }
+        else if ($i == "struct") {
+            typeName = String_concat(typeName, " ", $i)
+            ++i
+            if ($i ~ /^[[:alpha:]_0-9]+$/) {
+                typeName = String_concat(typeName, " ", $i)
+                ++i
+            }
+        }
+        if ($i == "*") {
             typeName = String_concat(typeName, " ", $i)
             ++i
         }
@@ -471,7 +528,8 @@ function preprocess(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, m, n, o, 
             Array_add(resultLine, typeName); typeName = ""
         }
 
-        Array_add(resultLine, $i)
+        resultLineI = ++resultLine["length"]
+        resultLine[resultLineI] = $i
 
     } while (++i <= NF)
         Index_pop()
@@ -487,11 +545,15 @@ function preprocess(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, m, n, o, 
 
 function make_printInput(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
 
-    if (DEBUG) print ""
+    for (d = 1; d <= includes["length"]; ++d) {
+        for (e = 1; e <= input["length"]; ++e)
+            if (input[e]["FILENAME"] == includes[d]) break
+        if (e > input["length"]) continue
 
-    for (d = 1; d <= input["length"]; ++d) {
-    for (z = 1; z <= input[d]["length"]; ++z) {
-        Index_push(input[d][z], useFS, " ")
+    if (DEBUG) { print ""; print input[e]["FILENAME"] }
+
+    for (z = 1; z <= input[e]["length"]; ++z) {
+        Index_push(input[e][z], useFS, use)
 
         if (DEBUG) {
             for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) printf "%s", $h; else printf "(%d)%s", h, $h } print ""
@@ -506,13 +568,17 @@ function make_printInput(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
     } }
 }
 
-function make_print(    h, i, j, k, l, x, y, z) {
+function make_print(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
 
-    if (DEBUG) print ""
+    for (d = 1; d <= includes["length"]; ++d) {
+        for (e = 1; e <= result["length"]; ++e)
+            if (result[e]["FILENAME"] == includes[d]) break
+        if (e > result["length"]) continue
 
-    for (d = 1; d <= result["length"]; ++d) {
-    for (z = 1; z <= result[d]["length"]; ++z) {
-        Index_push(result[d][z], useFS, " ")
+    if (DEBUG) { print ""; print result[e]["FILENAME"] }
+
+    for (z = 1; z <= result[e]["length"]; ++z) {
+        Index_push(result[e][z], useFS, use)
 
         if (DEBUG) {
             for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/) ; else printf "(%d)%s", h, $h } print ""

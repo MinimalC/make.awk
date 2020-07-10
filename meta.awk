@@ -8,6 +8,11 @@ BEGIN {
 #   RS="\0"
 }
 
+BEGINFILE {
+    if ("error" in SYMTAB && error) error = ""
+    if ("warning" in SYMTAB && warning) warning = ""
+}
+
 ENDFILE {
     if ("error" in SYMTAB && error)
         print "ERROR! "error > "/dev/stderr"
@@ -63,6 +68,7 @@ function Array_last(array,    h, i, j, k, l) {
 function Array_add(array, value,    h, i, j, k, l) {
     l = ++array["length"]
     if (typeof(value) != "untyped") array[l] = value
+#    else array[l] # = 0
     return l
 }
 
@@ -73,15 +79,35 @@ function Array_insert(array, i, value,    h, j, k, l) {
         array[h] = array[h - 1]
     }
     if (typeof(value) != "untyped") array[i] = value
-    else array[i] # = 0
+#    else array[i] # = 0
     # return i
 }
 
-function StringArray_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1, o) {
+function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
-        if (array[n] == string0) { n0 = n; continue }
-        if (array[n] == string1) { n1 = n; continue }
+        if (array[n] == item) { n0 = n; break }
+    }
+    return n0
+}
+
+function ARGV_contains(item,    s, t, u, v) {
+    for (v = 1; v < ARGC; ++v) {
+        if (ARGV[v] == item) { u = v; break }
+    }
+    return u
+}
+
+function StringArray_add(array, string) {
+    if (!Array_contains(array, string)) Array_add(array, string)
+}
+
+function StringArray_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
+    l = array["length"]
+    for (n = 1; n <= l; ++n) {
+        if (array[n] == string0) { n0 = n }
+        if (array[n] == string1) { n1 = n }
+        if (n0 && n1) break
     }
     if (!n0) {
         Array_insert(array, 1, string0)
@@ -91,16 +117,17 @@ function StringArray_insertBefore(array, string0, string1,    h, i, j, k, l, m, 
         Array_insert(array, n0, string1)
     }
     else if (n1 > n0) {
-        Array_remove(n1)
+        Array_remove(array, n1)
         Array_insert(array, n0, string1)
     }
 }
 
-function StringArray_insertAfter(array, string0, string1,    h, i, j, k) {
+function StringArray_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
-        if (array[n] == string0) { n0 = n; continue }
-        if (array[n] == string1) { n1 = n; continue }
+        if (array[n] == string0) { n0 = n }
+        if (array[n] == string1) { n1 = n }
+        if (n0 && n1) break
     }
     if (!n0) {
         Array_insert(array, l, string1)
@@ -110,7 +137,7 @@ function StringArray_insertAfter(array, string0, string1,    h, i, j, k) {
         Array_insert(array, n0 + 1, string1)
     }
     else if (n1 < n0) {
-        Array_remove(n1)
+        Array_remove(array, n1)
         Array_insert(array, n0 + 1, string1)
     }
 }
@@ -301,20 +328,8 @@ function get_DirectoryName(fileName,    h, i, reture) {
     return reture
 }
 
-function Path_join(path0, path1,    a, b, c, d, e, f, g, h, i, reture, updirs) {
-    Index_push(path1, "/", "/")
-    i = 1; do {
-        if ($i == "..") {
-            if (i > 1) $(i - 1) = ""
-            else {
-                ++updirs
-                $i = ""
-            }
-            continue
-        }
-        if ($i == ".") { $i = ""; continue }
-    } while (i <= NF)
-    Index_pop()
+function Path_join(path0, path1,    a, b, c, d, e, f, g, h, i, reture) {
+    # TODO
     return reture
 }
 
