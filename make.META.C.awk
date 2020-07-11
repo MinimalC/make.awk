@@ -72,7 +72,7 @@ BEGIN {
 BEGINFILE {
 
     if (FILENAME == "-") { usage(); nextfile }
-    if (ERRNO) { print "File doesn't exist: "FILENAME>"/dev/stderr"; nextfile }
+    if (ERRNO) { print "(BEGINFILE) File doesn't exist: "FILENAME>"/dev/stderr"; nextfile }
 
     FileName = get_FileName(FILENAME)
     Directory = get_DirectoryName(FILENAME)
@@ -85,7 +85,8 @@ BEGINFILE {
     leereZeilen = 0
     z = 0
     inputType = ""
-    was = ""
+    hash = ""
+    continuation = 0
 
     if (!Array_contains(includes, FILENAME))
         Array_add(includes, FILENAME)
@@ -100,6 +101,7 @@ NF > 0 {  # PreProcess: read what you have, in C
 
     ++z
     leereZeilen = 0
+    inputZ = ++input[inputI]["length"]
 
     Index_push($0, "", "")
     i = 1
@@ -108,7 +110,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             if ($i == "/" && $(i + 1) == "*") {
                 $(i++) = "*"
                 ++comments
-                print FileName" Line "z": Comment in Comment /* /*" >"/dev/stderr"
+                print FileName" Line "z": Comment in Comment /* /*">"/dev/stderr"
             }
             else if ($i == "*" && $(i + 1) == "/") {
                 if (comments) {
@@ -123,20 +125,22 @@ NF > 0 {  # PreProcess: read what you have, in C
             continue
         }
         if (inputType == "string") {
+            if (i == 1 && continuation) continuation = 0
             if (i == NF && $i == "\\") {
+                if (i != 1) if (Index_prepend(i, use, use)) ++i
                 print FileName" Line "z": Line Continuation \\ in String">"/dev/stderr"
-                break
+                input[inputI][inputZ] = input[inputI][inputZ] $0
+                if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } printf "" }
+                continuation = 1; getline; ++z; i = 0; continue
             }
             if ($i == "\\" && $(i + 1) == "\"") { ++i; continue }
             if ($i == "\"") {
                 inputType = ""
-                if (was == "#include") {
-                    if (!Array_contains(includes, Directory string))
-                        StringArray_insertBefore(includes, FILENAME, Directory string)
-                    if (!ARGV_contains(Directory string))
-                        ARGV[ARGC++] = Directory string
+                if (hash == "# include") {
+                    StringList_insertBefore(includes, FILENAME, Directory string)
+                    if (File_exists(Directory string)) ARGV_add(Directory string)
                 }
-                was = ""
+                hash = ""
                 if (i != NF) Index_append(i, use, use)
             }
             else string = string $i
@@ -157,20 +161,27 @@ NF > 0 {  # PreProcess: read what you have, in C
             continue
         }
         if (inputType == "include string") {
-            if (i == NF && $i != ">") {
-                Index_append(i, ">")
-                Index_reset(); ++i
+            if (i == 1 && continuation) continuation = 0
+            if (i == NF && $i == "\\") {
+                if (i != 1) if (Index_prepend(i, use, use)) ++i
+                print FileName" Line "z": Line Continuation \\ in #include <String>">"/dev/stderr"
+                input[inputI][inputZ] = input[inputI][inputZ] $0
+                if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } printf "" }
+                continuation = 1; getline; ++z; i = 0; continue
             }
             if ($i == ">") {
                 inputType = ""
-                if (!Array_contains(includes, "/usr/include/" includeString))
-                    StringArray_insertBefore(includes, FILENAME, "/usr/include/" includeString)
-                if (!ARGV_contains("/usr/include/" includeString))
-                    ARGV[ARGC++] = "/usr/include/" includeString
-                was = ""
+                StringList_insertBefore(includes, FILENAME, "/usr/include/" includeString)
+                if (File_exists("/usr/include/" includeString)) ARGV_add("/usr/include/" includeString)
+                hash = ""
                 if (i != NF) Index_append(i, use, use)
             }
             else includeString = includeString $i
+            continue
+        }
+        if (i == 1 && continuation) {
+            if (Index_prepend(i, use, use)) ++i
+            continuation = 0
             continue
         }
         if ($i == use) continue
@@ -216,7 +227,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             #    break
             #} --n
             #Index_reset()
-            was = "#"
+            hash = "#"
             if (i != NF) Index_append(i, use, use)
             continue
         }
@@ -271,6 +282,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             else if ($(i + 1) == "=") ++i
             if (i != NF) Index_append(i, use, use)
             continue
+
         }
         if ($i == "|") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
@@ -291,7 +303,7 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if ($i == "<") {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-            if (was == "#include") {
+            if (hash == "# include") {
                 inputType = "include string"
                 includeString = ""
                 continue
@@ -320,14 +332,15 @@ NF > 0 {  # PreProcess: read what you have, in C
             continue
         }
         if ($i == "\\") {
+            if (i != NF) {
+                $i = "" # remove
+                Index_reset(); continue
+            }
             if (i != 1) if (Index_prepend(i, use, use)) ++i
-            if (i != NF) $i = ""
-            for (; ++i <= NF; ) {
-                if ($i ~ /[ \b\f\n\r\t\v]/) { $i = ""; continue }
-                break
-            } --i
-            Index_reset()
-            continue
+            print FileName" Line "z": Line Continuation \\">"/dev/stderr"
+            input[inputI][inputZ] = input[inputI][inputZ] $0
+            if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } printf "" }
+            continuation = 1; getline; ++z; i = 0; continue
         }
         if ($i ~ /[0-9]/) {
             if (i != 1) if (Index_prepend(i, use, use)) ++i
@@ -343,8 +356,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                     break
                 } --i
                 if (i != NF) Index_append(i, use, use)
-                if (was == "#") was = "#"zahl
-                else was = zahl
+                if (hash == "#") hash = "# "zahl
                 continue
             }
             zahl = $i
@@ -379,8 +391,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                 }
             }
             if (i != NF) Index_append(i, use, use)
-            if (was == "#") was = "#"zahl
-            else was = zahl
+            if (hash == "#") hash = "# "zahl
             continue
         }
         if ( $i == "." ) {
@@ -398,8 +409,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                 break
             } --i
             if (i != NF) Index_append(i, use, use)
-            if (was == "#") was = "#"name
-            else was = name
+            if (hash == "#") hash = "# "name
             continue
         }
 
@@ -408,16 +418,11 @@ NF > 0 {  # PreProcess: read what you have, in C
 
     } while (++i <= NF)
 
-    inputZ = ++input[inputI]["length"]
-    input[inputI][inputZ] = $0
+    input[inputI][inputZ] = input[inputI][inputZ] $0
 
-    if (DEBUG) {
-    for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } print ""
-    }
+    if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == use) printf "|"; else printf "%s ", $h } print "" }
 
-    #resultLineString = $0
     Index_pop()
-    #$0 = resultLineString
 }
 
 NF == 0 {
@@ -447,7 +452,7 @@ function precompile(    a, b, c, d, e, f, g, h, i, inputType, j, k, l, m, n, o, 
     for (d = 1; d <= includes["length"]; ++d) {
         for (e = 1; e <= input["length"]; ++e)
             if (input[e]["FILENAME"] == includes[d]) break
-        if (e > input["length"]) { print "File \""includes[d]"\" doesn't exist">"/dev/stderr"; continue }
+        if (e > input["length"]) { print "(precompile) File doesn't exist: "includes[d]>"/dev/stderr"; continue }
 
     resultI = ++result["length"]
     result[resultI]["FILENAME"] = input[e]["FILENAME"]
@@ -570,10 +575,7 @@ function make_printInput(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
 
 function make_print(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
 
-    for (d = 1; d <= includes["length"]; ++d) {
-        for (e = 1; e <= result["length"]; ++e)
-            if (result[e]["FILENAME"] == includes[d]) break
-        if (e > result["length"]) continue
+    for (e = 1; e <= result["length"]; ++e) {
 
     if (DEBUG) { print ""; print result[e]["FILENAME"] }
 

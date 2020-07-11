@@ -43,6 +43,27 @@ function File_contains(fileName, string) {
 }
 
 
+function ARGV_contains(item,    s, t, u, v) {
+    for (v = 1; v < ARGC; ++v) {
+        if (ARGV[v] == item) { u = v; break }
+    }
+    return u
+}
+
+function ARGV_add(item,    p, q, r, s, t, u, v) {
+    if (!(r = ARGV_contains(item))) { ARGV[r = ARGC++] = item }
+    return r
+}
+
+function ARGV_remove(item,    h, i, itemI, s, t, u, v) {
+    itemI = ARGV_contains(item)
+    if (itemI) {
+        ARGV["removed"itemI] = item
+        ARGV[itemI] = ""
+    }
+}
+
+
 function Array_create(array) {
     # if (typeof(array) == "array") { error = "this is already Array"; nextfile }
     Array_clear(array)
@@ -91,18 +112,11 @@ function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
     return n0
 }
 
-function ARGV_contains(item,    s, t, u, v) {
-    for (v = 1; v < ARGC; ++v) {
-        if (ARGV[v] == item) { u = v; break }
-    }
-    return u
-}
-
-function StringArray_add(array, string) {
+function StringList_add(array, string) {
     if (!Array_contains(array, string)) Array_add(array, string)
 }
 
-function StringArray_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
+function StringList_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
@@ -122,7 +136,7 @@ function StringArray_insertBefore(array, string0, string1,    h, i, j, k, l, m, 
     }
 }
 
-function StringArray_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
+function StringList_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
@@ -186,6 +200,22 @@ function String_concat(string0, sepp, string1) {
     if (!string0) return string1
     if (!string1) return string0
     return string0 sepp string1
+}
+
+function String_startsWith(string0, string1,    h, i, j, k, l0, l1, m) {
+    l0 = length(string0)
+    l1 = length(string1)
+    if (l1 > l0) return 0
+    m = substr(string0, 1, l1)
+    return m == string1
+}
+
+function String_endsWith(string0, string1) {
+    l0 = length(string0)
+    l1 = length(string1)
+    if (l1 > l0) return 0
+    m = substr(string0, l0 - l1, l1)
+    return m == string1
 }
 
 
@@ -342,7 +372,7 @@ function __get_FileName(fileName,    h, i, splits, dirName) {
     return dirName
 }
 
-function __get_DirectoryName(fileName,    h, i, splitsL, dirName) {
+function __get_DirectoryName(fileName,    h, i, splits, splitsL, dirName) {
     split(fileName, splits, "/")
     splitsL = length(splits)
     if (splitsL == 1) return ""
