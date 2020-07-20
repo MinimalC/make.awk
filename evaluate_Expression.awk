@@ -25,7 +25,9 @@ BEGIN {
 
         print ""; print "\""evaluate_Expression( "AWA*(30/(12-2*3))+5==6*OHO", defines)"\""
 
-        print ""; print "\""evaluate_Expression( "defined(AWA)", defines)"\""
+        print ""; print "\""evaluate_Expression( "AWA*(30/(12-2*3))+5==6*5", defines)"\""
+
+        print ""; print "\""evaluate_Expression( "defined(AWA) && !defined(OHO)", defines)"\""
     }
 
     exit

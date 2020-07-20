@@ -647,6 +647,22 @@ print "Addition: "$0
             }
         }
     }
+
+    # Evaluate Boolean !
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "!") {
+            if (i == 1 || i == NF) ;
+            if ($(i + 1) == "!") continue
+            if ($(i + 1) ~ /^-?[0-9]+/) {
+                $i = ! $(i + 1)
+                Index_remove(i + 1); --i
+                if ($i == "!") --i
+print "Not: "$0
+                continue
+            }
+        }
+    }
+
     # Evaluate Boolean && ||
     for (i = 1; i <= NF; ++i) {
         if ($i == "&&" || $i == "||") {
@@ -667,22 +683,7 @@ print "Or: "$0
         }
     }
 
-    # Evaluate Boolean !
-    for (i = 1; i <= NF; ++i) {
-        if ($i == "!") {
-            if (i == 1 || i == NF) ;
-            if ($(i + 1) ~ /^-?[0-9]+/) {
-                if ($i == "!") {
-                    $i = ! $(i + 1)
-                    Index_remove(i + 1)
-print "Not: "$0
-                }
-                --i; Index_reset()
-            }
-        }
-    }
-
-    # Evaluate Equals == <= >= !=
+    # Evaluate Boolean Equals == <= >= !=
     for (i = 1; i <= NF; ++i) {
         if ($i == "==" || $i == ">=" || $i == "<=" || $i == "!=") {
             if (i == 1 || i == NF) ;

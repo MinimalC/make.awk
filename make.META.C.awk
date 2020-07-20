@@ -108,7 +108,7 @@ NF > 0 {  # PreProcess: read what you have, in C
     i = 1
     do {
         if (i == 1 && continuation) {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (Index_prepend(i, fix)) ++i
             continuation = 0
             continue
         }
@@ -127,11 +127,11 @@ NF > 0 {  # PreProcess: read what you have, in C
                 }
                 ++i
                 inputType = ""
-                if (i != NF) if (Index_append(i, fix, fix)) ++i
+                if (i != NF) if (Index_append(i, fix)) ++i
                 continue
             }
             if (i == NF && $i != "\\" && hash ~ /^#/) {
-                if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+                if (i != 1) if (Index_prepend(i, fix)) ++i
                 Index_append(i, "\\"); ++i
                 print FileName" Line "z": Line Continuation \\ in Comment">"/dev/stderr"
                 input[inputI][inputZ] = input[inputI][inputZ] $0
@@ -142,7 +142,7 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if (inputType == "string") {
             if (i == NF && $i == "\\") {
-                if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+                if (i != 1) if (Index_prepend(i, fix)) ++i
                 print FileName" Line "z": Line Continuation \\ in String">"/dev/stderr"
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
@@ -159,7 +159,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                     else print "(preprocess) File doesn't exist: \""Directory string"\"">"/dev/stderr"
                 }
                 hash = ""
-                if (i != NF) if (Index_append(i, fix, fix)) ++i
+                if (i != NF) if (Index_append(i, fix)) ++i
             }
             else string = string $i
             continue
@@ -174,13 +174,13 @@ NF > 0 {  # PreProcess: read what you have, in C
             }
             if ($i == "'") {
                 inputType = ""
-                if (i != NF) if (Index_append(i, fix, fix)) ++i
+                if (i != NF) if (Index_append(i, fix)) ++i
             }
             continue
         }
         if (inputType == "include string") {
             if (i == NF && $i == "\\") {
-                if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+                if (i != 1) if (Index_prepend(i, fix)) ++i
                 print FileName" Line "z": Line Continuation \\ in #include <String>">"/dev/stderr"
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
@@ -197,7 +197,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                 }
                 if (d > includeDirs["length"]) print "(preprocess) File doesn't exist: <"includeString">">"/dev/stderr"
                 hash = ""
-                if (i != NF) if (Index_append(i, fix, fix)) ++i
+                if (i != NF) if (Index_append(i, fix)) ++i
             }
             else includeString = includeString $i
             continue
@@ -239,7 +239,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             if (i != NF) {
                 Index_remove(i--); continue
             }
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             print FileName" Line "z": Line Continuation \\">"/dev/stderr"
             input[inputI][inputZ] = input[inputI][inputZ] $0
             if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
@@ -247,101 +247,101 @@ NF > 0 {  # PreProcess: read what you have, in C
         }
         if (i == 1 && $i == "#") {
             hash = "#"
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "#") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "#") {
                 ++i
-                if (i != NF) if (Index_append(i, fix, fix)) ++i
+                if (i != NF) if (Index_append(i, fix)) ++i
                 continue
             }
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "\"") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             inputType = "string"
             string = ""
             continue
         }
         if ( $i == "'" ) {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             inputType = "character"
             continue
         }
         if ($i == "*") {
             if ($(i + 1) == "/") { Index_remove(i, i + 1); --i; continue }
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "/") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "*") {
                 ++i; inputType = "comment"
                 continue
             }
             if ($(i + 1) == "/") break
             if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "+") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "+") ++i
             else if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "-") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == ">") ++i
             else if ($(i + 1) == "-") ++i
             else if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "=") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "%" || $i == "^") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "&") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "&") ++i
             else if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "|") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "|") ++i
             else if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "(" || $i == "{" || $i == "[") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == ")" || $i == "}" || $i == "]") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "<") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if (hash == "# include") {
                 inputType = "include string"
                 includeString = ""
@@ -349,29 +349,29 @@ NF > 0 {  # PreProcess: read what you have, in C
             }
             if ($(i + 1) == "<") ++i
             if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == ">") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == ">") ++i
             if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "!") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($(i + 1) == "=") ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i == "," || $i == ";" || $i == "?" || $i == ":" || $i == "~") {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i ~ /[0-9]/) {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ($i == "0" && $(i + 1) == "x") {
                 i += 2
                 zahl = "0x"
@@ -383,7 +383,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                     if ($i ~ /[ulUL]/) { zahl = zahl $i; continue }
                     break
                 } --i
-                if (i != NF) if (Index_append(i, fix, fix)) ++i
+                if (i != NF) if (Index_append(i, fix)) ++i
                 if (hash == "#") hash = "# "zahl
                 continue
             }
@@ -418,25 +418,25 @@ NF > 0 {  # PreProcess: read what you have, in C
                     } --i
                 }
             }
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             if (hash == "#") hash = "# "zahl
             continue
         }
         if ( $i == "." ) {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             if ( $(i + 1) == "." && $(i + 2) == "." ) i += 2
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             continue
         }
         if ($i ~ /[[:alpha:]_]/) {
-            if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            if (i != 1) if (Index_prepend(i, fix)) ++i
             # lies einen Namen
             name = $i
             for (; ++i <= NF; ) {
                 if ($i ~ /[[:alpha:]_0-9]/) { name = name $i; continue }
                 break
             } --i
-            if (i != NF) if (Index_append(i, fix, fix)) ++i
+            if (i != NF) if (Index_append(i, fix)) ++i
             if (hash == "#") hash = "# "name
             continue
         }
