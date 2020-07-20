@@ -51,9 +51,35 @@ function File_contains(fileName, string,    h, i, j, p, q, r) {
 }
 
 
-function __write(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) { }
+function __write(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    printf a b c d e f g h i j k l m n o p q r s t u v w x y z
+}
 
-function __writeLine(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) { }
+function __writeLine(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    print a b c d e f g h i j k l m n o p q r s t u v w x y z
+}
+
+function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+}
+function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+}
+function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,    message) {
+    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+    printf message >"/dev/stderr"
+}
+
+function __debugLine(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    __errorLine(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+}
+function __warningLine(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    __errorLine(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+}
+function __errorLine(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,    message) {
+    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+    print message >"/dev/stderr"
+}
 
 
 function ARGV_contains(item,    s, t, u, v) {
@@ -69,6 +95,9 @@ function ARGV_add(item,    p, q, r, s, t, u, v) {
 
 function ARGV_remove(i) {
     ARGV[i] = ""
+}
+function ARGV_length() {
+    return ARGC - 1
 }
 
 
@@ -115,11 +144,11 @@ function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
     return n0
 }
 
-function StringList_add(array, string) {
+function List_add(array, string) {
     if (!Array_contains(array, string)) Array_add(array, string)
 }
 
-function StringList_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
+function List_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
@@ -139,7 +168,7 @@ function StringList_insertBefore(array, string0, string1,    h, i, j, k, l, m, n
     }
 }
 
-function StringList_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
+function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
@@ -188,6 +217,40 @@ function Array_print(array, level,    h, i, prefix) {
             print prefix i ": " array[i]
 }
 
+function Array_debug(array, level) { Array_error(array, level) }
+
+function Array_error(array, level,    h, i, prefix) {
+    if (!level) level = 0
+    if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
+    if (typeof(array) != "array") {
+        print prefix "Array_error: array is typeof \""typeof(array)"\"">"/dev/stderr"
+        return
+    }
+    for (i in array)
+        if (typeof(array[i]) == "array")
+            Array_error(array[i], level + 1)
+        else
+            print prefix i ": " array[i] >"/dev/stderr"
+}
+
+function ENVIRON_debug() {
+    print "ENVIRON" >"/dev/stderr"
+    Array_error(ENVIRON, 1)
+}
+
+function PROCINFO_debug() {
+    print "PROCINFO" >"/dev/stderr"
+    Array_error(PROCINFO, 1)
+    #print "SYMTAB" >"/dev/stderr"
+    #Array_error(SYMTAB, 1)
+    #print "FUNCTAB" >"/dev/stderr"
+    #Array_error(FUNCTAB, 1)
+}
+
+function ARGV_debug() {
+    print "ARGV" >"/dev/stderr"
+    Array_error(ARGV, 1)
+}
 
 function String_join(sepp, array,    h, i, r) {
     if (array["length"] == 0) return ""
@@ -303,42 +366,77 @@ function Index_pop(fromFS, fromOFS,    p, q, r) {
     return r
 }
 
+function Index_insert(i, value, ifNot,    p, q, r) {
+    if (typeof(value) == "untyped") { error = "value is untyped"; nextfile }
+    if (typeof(ifNot) == "untyped" || $i != ifNot) {
+        ++NF
+        for (q = NF; q > i; --q) {
+            $q = $(q - 1)
+        }
+        $i = value
+        r = 1
+    }
+    Index_reset()
+    return r
+}
+
 function Index_prepend(i, value, ifNot,    p, q, r) {
-    if (typeof(value) == "untyped") { error = "value is untyped"; nextfile }
-    if (typeof(ifNot) == "untyped" || $(i - 1) != ifNot) {
-        $i = value OFS $i
-        r = length(value)
-    }
-    Index_reset()
+    if (typeof(ifNot) == "untyped" || (i == 1 || $(i - 1) != ifNot))
+        r = Index_insert(i, value)
     return r
 }
 
-function Index_append(i, value, ifNot,    p, q, r) {
-    if (typeof(value) == "untyped") { error = "value is untyped"; nextfile }
-    if (typeof(ifNot) == "untyped" || $(i + 1) != ifNot) {
-        $i = $i OFS value
-        r = length(value)
-    }
-    Index_reset()
+function Index_append(i, value, ifNot) {
+    if (typeof(ifNot) == "untyped" || (i < NF || $(i + 1) != ifNot))
+        r = Index_insert(i + 1, value)
     return r
 }
 
-function Index_remove(i) {
-    $i = ""
+function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    if (typeof(a) != "untyped") $a = ""
+    if (typeof(b) != "untyped") $b = ""
+    if (typeof(c) != "untyped") $c = ""
+    if (typeof(d) != "untyped") $d = ""
+    if (typeof(e) != "untyped") $e = ""
+    if (typeof(f) != "untyped") $f = ""
+    if (typeof(g) != "untyped") $g = ""
+    if (typeof(h) != "untyped") $h = ""
+    if (typeof(i) != "untyped") $i = ""
+    if (typeof(j) != "untyped") $j = ""
+    if (typeof(k) != "untyped") $k = ""
+    if (typeof(l) != "untyped") $l = ""
+    if (typeof(m) != "untyped") $m = ""
+    if (typeof(n) != "untyped") $n = ""
+    if (typeof(o) != "untyped") $o = ""
+    if (typeof(p) != "untyped") $p = ""
+    if (typeof(q) != "untyped") $q = ""
+    if (typeof(r) != "untyped") $r = ""
+    if (typeof(s) != "untyped") $s = ""
+    if (typeof(t) != "untyped") $t = ""
+    if (typeof(u) != "untyped") $u = ""
+    if (typeof(v) != "untyped") $v = ""
+    if (typeof(w) != "untyped") $w = ""
+    if (typeof(x) != "untyped") $x = ""
+    if (typeof(y) != "untyped") $y = ""
+    if (typeof(z) != "untyped") $z = ""
     return Index_reset()
 }
 
-function Index_merge(i, len,    h, j, k, l) {
-    l = i + len
-    for (j = i; ++j <= l; ) {
-        $i = $i $j
-        $j = ""
+#function Index_merge(i, len,    h, j, k, l) {
+#    l = i + len
+#    for (j = i; ++j <= l; ) {
+#        $i = $i $j
+#        $j = ""
+#    }
+#    return Index_reset()
+#}
+
+function Index_reset(    h, i, j, k, l, m, n) {
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "") { ++n; continue }
+        $(i - n) = $i
     }
-    return Index_reset()
-}
-
-function Index_reset(    h, i) {
-    # for (i = 1; i < NF; ++i) if ($i == "") { $i = $(i + 1); $(i + 1) = "" }
+    NF -= n
     return $0 = $0
 }
 
@@ -363,6 +461,7 @@ function get_DirectoryName(fileName,    p, q, r) {
     Index_push(fileName, "/", "/")
     $NF = ""
     Index_reset()
+    ++NF
     r = $0
     Index_pop()
     return r
@@ -373,8 +472,399 @@ function Path_join(path0, path1,    a, b, c, d, e, f, g, p, q, r) {
     return r
 }
 
+function evaluate_Expression(expression, defines, undefineds,    h, i, j, k, l, m, n, numbers, o, operators, r, v, w, x) {
+    Index_push(expression, "", "")
+    # Insert Spaces to "get" the Expression
+    for (i = 1; i <= NF; ++i) {
+
+        if ($i == "<") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == "=") ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == ">") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == "=") ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == "!") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == "=") ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == "=") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == "=") ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == "|") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == "|") ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == "&") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == "&") ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == "-") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+#            if (i < NF && $(i + 1) ~ /[0-9]/) continue
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == "(" || $i == ")") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+
+            m = ""; o = 0
+            for (n = i + 1; n <= NF; ++n) {
+                if ($n == "(") ++o
+                if ($n == ")") { if (o) --o; else { $n = ""; break } }
+                m = m $n
+                $n = ""
+            }
+            Index_reset()
+            if (m ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/ || m ~ /^-?[0-9]+$/) {
+                $i = m; Index_reset(); --i
+                continue
+            }
+            x = evaluate_Expression(m, defines)
+            Index_push(x, @/ +/, " ")
+            if (NF > 1) {
+                Index_prepend(1, "(")
+                Index_append(NF, ")")
+            }
+            y = NF
+            $i = Index_pop()
+            i += y - 1
+            continue
+        }
+        if ($i == "+" || $i == "*" || $i == "/") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+
+        if ($i ~ /[0-9]/) {
+            if (i > 1 && $(i - 1) != "-") if (Index_prepend(i, " ", " ")) ++i
+            for (; ++i <= NF; ) {
+                if ($i ~ /[0-9]/) continue
+                break
+            } --i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+
+        if ($i ~ /[[:alpha:]_]/) {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            for (; ++i <= NF; ) {
+                if ($i ~ /[[:alpha:]_0-9]/) continue
+                break
+            } --i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+
+        if ($i == " ") {
+            if (i == 1 || $(i - 1) == " " || i == NF) Index_remove(i--)
+            continue
+        }
+
+        # remove
+        Index_remove(i--)
+    }
+    expression = Index_pop()
+    Index_push(expression, @/ +/, " ")
+
+    # Evaluate defined( AWA )
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "defined") {
+            n = $(i + 1)
+            if (defines["length"] && Array_contains(defines, n))
+                 $i = "1"
+            else $i = "0"
+            $(i + 1) = ""
+            Index_reset()
+print "defined "n" : "$0
+            continue
+        }
+
+        if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+            n = $i
+            if (defines["length"] && (d = Array_contains(defines, n))) {
+                $i = defines[n]["body"]
+                --i; Index_reset()
+print "define "n" : "$0
+                continue
+            }
+        }
+
+    }
+
+    # Evaluate Division / Multiplikation *
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "/" || $i == "*") {
+            if (i == 1 || i == NF) ;
+            if ($(i - 1) ~ /^-?[0-9]+/ && $(i + 1) ~ /^-?[0-9]+/) {
+                if ($i == "/") {
+                    $i = $(i - 1) / $(i + 1)
+                    Index_remove(i - 1, i + 1)
+print "Division: "$0
+                }
+                if ($i == "*") {
+                    $i = $(i - 1) * $(i + 1)
+                    Index_remove(i - 1, i + 1)
+print "Multiplikation: "$0
+                }
+                --i; Index_reset()
+            }
+        }
+    }
+    # Evaluate Subtraktion - Addition +
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "-" || $i == "+") {
+            if (i == 1 || i == NF) ;
+            if ($(i - 1) ~ /^-?[0-9]+/ && $(i + 1) ~ /^-?[0-9]+/) {
+                if ((i < 3 || ($(i - 2) != "*" && $(i - 2) != "/")) && $(i + 2) != "*" && $(i + 2) != "/") {
+                    if ($i == "-") {
+                        $i = $(i - 1) - $(i + 1)
+                        Index_remove(i - 1, i + 1)
+print "Subtraktion: "$0
+                    }
+                    if ($i == "+") {
+                        $i = $(i - 1) + $(i + 1)
+                        Index_remove(i - 1, i + 1)
+print "Addition: "$0
+                    }
+                    --i; Index_reset()
+                }
+            }
+        }
+    }
+    # Evaluate Boolean && ||
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "&&" || $i == "||") {
+            if (i == 1 || i == NF) ;
+            if ($(i - 1) ~ /^-?[0-9]+/ && $(i + 1) ~ /^-?[0-9]+/) {
+                if ($i == "&&") {
+                    $i = $(i - 1) && $(i + 1)
+                    Index_remove(i - 1, i + 1)
+print "And: "$0
+                }
+                if ($i == "||") {
+                    $i = $(i - 1) || $(i + 1)
+                    Index_remove(i - 1, i + 1)
+print "Or: "$0
+                }
+                --i; Index_reset()
+            }
+        }
+    }
+
+    # Evaluate Boolean !
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "!") {
+            if (i == 1 || i == NF) ;
+            if ($(i + 1) ~ /^-?[0-9]+/) {
+                if ($i == "!") {
+                    $i = ! $(i + 1)
+                    Index_remove(i + 1)
+print "Not: "$0
+                }
+                --i; Index_reset()
+            }
+        }
+    }
+
+    # Evaluate Equals == <= >= !=
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "==" || $i == ">=" || $i == "<=" || $i == "!=") {
+            if (i == 1 || i == NF) ;
+            if ($(i - 1) ~ /^-?[0-9]+/ && $(i + 1) ~ /^-?[0-9]+/) {
+                if (i == 2 && NF == 3) {
+                    if ($i == "==") {
+                        $i = $(i - 1) == $(i + 1)
+                        Index_remove(i - 1, i + 1)
+print "Equals: "$0
+                    }
+                    if ($i == ">=") {
+                        $i = $(i - 1) >= $(i + 1)
+                        Index_remove(i - 1, i + 1)
+print "GreaterThanEquals: "$0
+                    }
+                    if ($i == "<=") {
+                        $i = $(i - 1) <= $(i + 1)
+                        Index_remove(i - 1, i + 1)
+print "LowerThanEquals: "$0
+                    }
+                    if ($i == "!=") {
+                        $i = $(i - 1) != $(i + 1)
+                        Index_remove(i - 1, i + 1)
+print "NotEquals: "$0
+                    }
+                    --i; Index_reset()
+                }
+            }
+        }
+    }
+    return Index_pop()
+}
 
 # DEPRECATED
+
+function __evaluate_Expression(expression, defines,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, r) {
+    gsub(/\(/, " ( ", expression)
+    gsub(/\)/, " ) ", expression)
+    gsub(/\+/, " + ", expression)
+    gsub(/\-[^0-9]/, " - ", expression)
+    gsub(/\*/, " * ", expression)
+    gsub(/\//, " / ", expression)
+    gsub(/&&/, " && ", expression)
+    gsub(/\|\|/, " || ", expression)
+    gsub(/==/, " == ", expression)
+    gsub(/!=/, " != ", expression)
+    gsub(/![^=]/, " ! ", expression)
+    gsub(/>[^=]/, " > ", expression)
+    gsub(/>=/, " >= ", expression)
+    gsub(/<[^=]/, " < ", expression)
+    gsub(/<=/, " <= ", expression)
+    expression = String_trim(expression)
+    Index_push(expression, @/[ ]+/, " ")
+print NF": \""($0 = $0)"\""
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "" && i < NF - 1) {
+            for (n = i + 1; n <= NF; ++n) {
+                $(n - 1) = $n
+            }
+            $NF = ""
+print "moving"
+            --i; Index_reset(); continue
+        }
+#print
+        if ($i ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/ && typeof(defines) == "array" && (d = Array_contains(defines, $i))) {
+            $i = defines[$i]["body"]
+            --i; Index_reset(); continue
+        }
+        if ($i == "(") {
+            m = ""; h = 0
+            for (j = i + 1; j <= NF; ++j) {
+                if ($j == "(") ++h
+                if ($j == ")") { if (h) --h; else { $j = ""; break } }
+                m = String_concat(m, " ", $j)
+                $j = ""
+            }
+            if (j > NF) ;
+            $i = __evaluate_Expression(m, defines)
+            --i; Index_reset(); continue
+        }
+        if ($i ~ /^[\-0-9]+$/) {
+            if (i > 1) {
+                if ($(i - 1) == "!") {
+                    $(i - 1) = ! $i; $i = ""; i -= 2; Index_reset()
+                    continue
+                }
+            }
+            if (i > 2) {
+                if ($(i - 1) == "+") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) + $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "-") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) - $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "*") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) * $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "/") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) / $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "&&") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) && $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "||") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) || $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "==") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) == $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "!=") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) != $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == ">") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) > $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == ">=") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) >= $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "<") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) < $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+                if ($(i - 1) == "<=") {
+                    if ($(i - 2) ~ /^[\-0-9]+$/) {
+                        $(i - 2) = $(i - 2) <= $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
+                    }
+                    continue
+                }
+            }
+        }
+        if ($i == "defined") {
+            j = i + 1
+            if ($j == "(") { $j = ""; ++j }
+            if (Array_contains(defines, $j)) {
+                if (i > 1 && $(i - 1) == "!") { $i = ""; --i; $i = 0 }
+                else { $i = 1 }
+            } else {
+                if (i > 1 && $(i - 1) == "!") { $i = ""; --i; $i = 1 }
+                else { $i = 0 }
+            }
+            $j = ""; ++j
+            if ($j == ")") { $j = ""; ++j }
+            Index_reset()
+            continue
+        }
+    }
+
+    r = String_trim(Index_pop())
+    return r
+}
 
 function __get_FileName(fileName,    h, i, splits, dirName) {
     split(fileName, splits, "/")
