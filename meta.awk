@@ -325,6 +325,28 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
     return Index_reset()
 }
 
+function Index_pushRange(offset0, length0, newFS, newOFS, newRS, newORS,    h, i, j) {
+    # save old Index
+    i = Array_add(Index)
+    Index[i]["OUTPUTRECORDSEP"] = ORS
+    Index[i]["RECORDSEP"] = RS
+    Index[i]["OUTPUTFIELDSEP"] = OFS
+    Index[i]["FIELDSEP"] = FS
+    Index[i][0] = $0
+
+    if (typeof(newORS) != "untyped") ORS = newORS
+    if (typeof(newRS) != "untyped") RS = newRS
+    if (typeof(newOFS) != "untyped") OFS = newOFS
+    if (typeof(newFS) != "untyped") FS = newFS
+
+    # new Index
+    for (j = 1; j <= NF; ++j) {
+        if (j < offset0) $j = ""
+        if (typeof(length0) != "number" || j > offset0 + length0) $j = ""
+    }
+    return Index_reset()
+}
+
 function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
     # save old Index
     i = Array_add(Index)
