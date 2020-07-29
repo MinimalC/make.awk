@@ -17,9 +17,10 @@ BEGIN {
     fix = "\x01"
 
     Array_add(includeDirs, "/usr/include/")
+    Array_add(includeDirs, "/usr/include/x86_64-linux-gnu/")
+    Array_add(includeDirs, "/usr/lib/gcc/x86_64-linux-gnu/7/include/")
 
-    for (argI = 1; argI < ARGC; ++argI) {
-        # argL = length(ARGV[argI])
+    for (argI = 1; argI <= ARGV_length(); ++argI) {
 
         if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
             make = "make_"ARGV[argI]
@@ -477,13 +478,13 @@ END {
 
 
 
-function precompile(    a, b, c, d, defines, e, f, g, h, i, __if, inputType, j, k, l, m, n, name,
-                        o, p, q, r, resultI, resultZ, statement, statementI, statementString, s, structs, structsI,
-                        t, typedefs, typedefsI, typeName, u, v, w, varName, x, y, z)
+function precompile(    a, b, c, d, defines, e, f, g, h, i, ifExpressions, inputType, j, k, l, m, n, name,
+                        o, p, q, r, resultI, resultZ, s,
+                        t, u, v, w, x, y, z)
 {
-    structs["length"] = structsI = 0
-    typedefs["length"] = typedefsI = 0
-    defines["length"] = definesI = 0
+    defines["length"] = 0
+
+    ifExpressions["length"] = 0
 
     for (d = 1; d <= includes["length"]; ++d) {
         for (e = 1; e <= input["length"]; ++e)
@@ -494,7 +495,6 @@ function precompile(    a, b, c, d, defines, e, f, g, h, i, __if, inputType, j, 
     result[resultI]["FILENAME"] = input[e]["FILENAME"]
 
     inputType = ""
-    statement["length"] = statementI = 0
 
     for (z = 1; z <= input[e]["length"]; ++z) {
         Index_push(input[e][z], fixFS, fix)
@@ -504,7 +504,7 @@ function precompile(    a, b, c, d, defines, e, f, g, h, i, __if, inputType, j, 
         if (i > NF) {
             if ((l = Index["length"]) > 1) {
                 i = Index[l]["i"]
-                name = Index[l]["name"]
+                # name = Index[l]["name"]
                 n = NF
                 $i = Index_pop()
                 Index_reset()
@@ -528,14 +528,18 @@ function precompile(    a, b, c, d, defines, e, f, g, h, i, __if, inputType, j, 
         if ($i ~ /^\/\//) {
             for (n = i; n <= NF; ++n) $n = ""
             Index_reset()
-            --i; continue
+            break
         }
+
         if (i == 1 && $1 == "#") {
+        if ($2 == "include") {
+            NF = 0; break
+        }
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
                 if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                    Index_prepend(n, "defined"); n += 2
+                    Index_prepend(n, "defined "); n += 2
                 }
             }
         }
@@ -543,80 +547,132 @@ function precompile(    a, b, c, d, defines, e, f, g, h, i, __if, inputType, j, 
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
                 if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                    Index_prepend(n, "!"fix"defined"); n += 2
+                    Index_prepend(n, "! defined"); n += 2
                 }
             }
         }
         if ($2 == "if") {
-
+            m = ""
+            for (n = 3; n <= NF; ++n) {
+                m = String_concat(m, " ", $n)
+            }
+            x = Expression_evaluate(m, defines, "")
+__error("if "m" == "x)
+            if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
+            f = Array_add(ifExpressions)
+            ifExpressions[f]["if"] = m
+            ifExpressions[f]["result"] = x
+            NF = 0; break
         }
+        if ($2 == "elif") {
+            m = ""
+            for (n = 3; n <= NF; ++n) {
+                m = String_concat(m, " ", $n)
+            }
+            f = ifExpressions["length"]
+            if (!ifExpressions[f]["result"]) {
+                x = Expression_evaluate(m, defines, "")
+__error("else if "m" == "x)
+                if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
+                ifExpressions[f]["else if"] = m
+                ifExpressions[f]["result"] = x
+            }
+            NF = 0; break
+        }
+        if ($2 == "else") {
+            f = ifExpressions["length"]
+            if (!ifExpressions[f]["result"]) {
+                ifExpressions[f]["else"] = 1
+__error("else")
+                ifExpressions[f]["result"] = 1
+            }
+            NF = 0; break
+        }
+        if ($2 == "endif") {
+            Array_remove(ifExpressions, ifExpressions["length"])
+__error("endif")
+            NF = 0; break
+        } }
+
+        for (f = 1; f <= ifExpressions["length"]; ++f) {
+            if (ifExpressions[f]["result"]) continue
+            NF = 0; break
+        }
+        if (NF == 0) break
+
+        if (i == 1 && $1 == "#") {
         if ($2 == "define") {
-            if (f = Array_contains(defines, $3)) {
-                print "(precompile) define already exists: "$3>"/dev/stderr"
-                break
+            name = $3
+            if (f = Array_contains(defines, name)) {
+                print "(precompile) "input[e]["FILENAME"]" Line "z": define already exists: "name>"/dev/stderr"
+                NF = 0; break
             }
-            f = Array_add(defines, $3)
-            n = 4
-            if ($4 == "(") {
-                for (; ++n <= NF; ) {
-                    if ($n == ")") break
-                    defines[$3]["function"] = String_concat(defines[$3]["function"], "\x01", $n)
-                    ++defines[$3]["functionL"]
+            f = Array_add(defines, name)
+
+            $1 = ""; $2 = ""; $3 = ""; Index_reset()
+
+            if ($1 == "(") {
+                for (n = 2; n <= NF; ++n) {
+                    if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) continue
+                    if ($n == ",") continue
+                    if ($n == ")") { ++n; break }
+                    break
+                } --n
+                if ($n == ")") {
+                    $1 = ""; m = ""
+                    for (n = 2; n <= NF; ++n) {
+                        if ($n == ")") { $n = ""; break }
+                        m = String_concat(m, fix, $n)
+                        $n = ""
+                    }
+                    Index_reset()
+                    defines[name]["function"] = m
                 }
-                #if (n > NF) ;
-                if (n <= NF) ++n
-            }
-            for (; n <= NF; ++n) {
-                defines[$3]["body"] = String_concat(defines[$3]["body"], "\x01", $n)
-                ++defines[$3]["bodyL"]
             }
 
-            # if (defines[$3]["body"] == $3) { defines[$3]["body"] = "/* "$3" */" }
-            if (defines[$3]["body"] ~ /^[ ]*$/ && defines[$3]["function"] !~ /^[ ]*$/) {
-                defines[$3]["body"] = "("defines[$3]["function"]")"
-                defines[$3]["bodyL"] = defines[$3]["functionL"]
-                defines[$3]["function"] = ""
-                defines[$3]["functionL"] = 0
+            m = ""
+            for (n = 1; n <= NF; ++n) {
+                m = String_concat(m, fix, $n)
             }
-if (defines[$3]["function"])
-printf $3 "(" defines[$3]["function"] ") " defines[$3]["body"]"\n">"/dev/stderr"
-else
-printf $3 " " defines[$3]["body"]"\n">"/dev/stderr"
+            defines[name]["body"] = m
 
-            break
+#if (defines[name]["function"])
+#printf name "(" defines[name]["function"] ") " defines[name]["body"]"\n">"/dev/stderr"
+#else
+#printf name " " defines[name]["body"]"\n">"/dev/stderr"
+
+            NF = 0; break
         }
         if ($2 == "undef") {
             if (!(f = Array_contains(defines, $3))) {
-                print "(precompile) undef doesn't exist: "$3>"/dev/stderr"
-                break
+                print "(precompile) "input[e]["FILENAME"]" Line "z": undef doesn't exist: "$3>"/dev/stderr"
+                NF = 0; break
+            } else {
+                Array_remove(defines, f)
+                delete defines[$3]
             }
-            Array_remove(defines, f)
-            break
-        }
-
-        break
-        }
+            NF = 0; break
+        } }
 
         # Evaluate AWA
         if (n = Array_contains(defines, $i)) {
             l = Index["length"]
             for (o = 2; o <= l; ++o)
                 if ($i == Index[o]["name"]) break
-            if (o > l) {
-                name = $i
-                Index_push(defines[name]["body"], fixFS, fix)
-                l = Index["length"]
-                Index[l]["name"] = name
-                Index[l]["i"] = i; i = 0
+            if (o <= l) {
+                print "repeating define: define "$i" "$i>"/dev/stderr"
                 continue
             }
-            print "repeating define: define "$i" "$i>"/dev/stderr"
+            name = $i
+            Index_push(defines[name]["body"], fixFS, fix)
+            l = Index["length"]
+            Index[l]["name"] = name
+            Index[l]["i"] = i; i = 0
             continue
         }
 
     }
-
-        if (NF > 1) {
+        if (NF > 0) {
             # print # if ($0 !~ /^[ \x01]*$/) {
             resultZ = ++result[resultI]["length"]
             result[resultI][resultZ] = $0
