@@ -53,9 +53,16 @@ function File_contains(fileName, string,    h, i, j, p, q, r) {
 }
 
 
+function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+#    warning = String_concat(warning, "\n", message)
+    print message >"/dev/stderr"
+}
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+#    error = String_concat(error, "\n", message)
     print message >"/dev/stderr"
+    # nextfile
 }
 
 function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
@@ -201,7 +208,7 @@ function Array_print(array, level,    h, i, prefix) {
             print prefix i ": " array[i]
 }
 
-function Array_debug(array, level) { Array_error(array, level) }
+function Array_debug(array, level) { if ("DEBUG" in SYMTAB && DEBUG) { Array_error(array, level) } }
 
 function Array_error(array, level,    h, i, prefix) {
     if (!level) level = 0
@@ -425,6 +432,12 @@ function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t
     if (typeof(x) != "untyped") $x = ""
     if (typeof(y) != "untyped") $y = ""
     if (typeof(z) != "untyped") $z = ""
+    return Index_reset()
+}
+
+function Index_removeRange(from0, to0,    h, i) {
+    if (typeof(to0) == "untyped") to0 = NF
+    for (i = from0; i <= to0; ++i) $i = ""
     return Index_reset()
 }
 

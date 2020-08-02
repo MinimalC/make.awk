@@ -2,32 +2,45 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-function Expression_evaluate(expression, defines, replaceUndefinedWith,    h, i, j, k, l,
-                             m, n, numbers, o, operators, r, v, w, x)
+function Expression_evaluate(expression, defines, replaceUndefinedWith,    a, arguments, b, c, d, defineBody,
+                             h, i, I, j, k, l, m, n, name, o, p, q, r, s, t, u, v, w, x, y, z)
 {
-    Index_push(expression, "", "")
-    # Insert Spaces to "get" the Expression
-    for (i = 1; i <= NF; ++i) {
+    if (typeof(fixFS) == "untyped") fixFS = FS
+    if (typeof(fix) == "untyped") fix = OFS
+    if (typeof(defines) == "untyped") defines["length"] = 0
 
+    Index_push(expression, "", "")
+    I = Index["length"]
+
+    i = 0
+    # for (i = 1; i <= NF; ++i)
+    while (++i) {
+        if (i > NF) {
+            if ((l = Index["length"]) > I) {
+                i = Index[l]["i"]
+                # n = NF
+                $i = Index_pop()
+                Index_reset()
+                --i # i += n
+                continue
+            }
+            break
+        }
         if ($i == "<") {
             if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == "<") ++i
             if (i < NF && $(i + 1) == "=") ++i
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
         if ($i == ">") {
             if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF && $(i + 1) == ">") ++i
             if (i < NF && $(i + 1) == "=") ++i
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
-        if ($i == "!") {
-            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
-            if (i < NF && $(i + 1) == "=") ++i
-            if (i < NF) if (Index_append(i, " ", " ")) ++i
-            continue
-        }
-        if ($i == "=") {
+        if ($i == "!" || $i == "=") {
             if (i > 1) if (Index_prepend(i, " ", " ")) ++i
             if (i < NF && $(i + 1) == "=") ++i
             if (i < NF) if (Index_append(i, " ", " ")) ++i
@@ -45,48 +58,25 @@ function Expression_evaluate(expression, defines, replaceUndefinedWith,    h, i,
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
-        if ($i == "-") {
-            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
-#            if (i < NF && $(i + 1) ~ /[0-9]/) continue
-            if (i < NF) if (Index_append(i, " ", " ")) ++i
-            continue
-        }
-        if ($i == "(") { # || $i == ")") {
-            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
-
-            m = ""; o = 0
-            for (n = i + 1; n <= NF; ++n) {
-                if ($n == "(")  ++o
-                if ($n == ")") { if (o) --o; else { $n = ""; break } }
-                m = m $n
-                $n = ""
-            }
-            Index_reset()
-            m = String_trim(m)
-            if (m ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/ || m ~ /^[0-9]+$/) {
-                $i = m; --i; Index_reset()
-                continue
-            }
-            x = Expression_evaluate(m, defines)
-            Index_push(x, " ", " ")
-            y = NF > 1
-            Index_pop()
-            Index_push(x, "", "")
-            if (y) {
-                Index_prepend(1, "(")
-                Index_append(NF, ")")
-            }
-            y = NF
-            $i = Index_pop()
-            i += y - 1
-            continue
-        }
-        if ($i == "+" || $i == "*" || $i == "/") {
+        if ($i == "+" && $(i + 1) ~ /[0-9]/) ++i
+        if ($i == "-" && $(i + 1) ~ /[0-9]/) ++i
+        if ($i == "," || $i == "+" || $i == "-" || $i == "*" || $i == "/" || $i == "~") {
             if (i > 1) if (Index_prepend(i, " ", " ")) ++i
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
-
+        if ($i == "(") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            ++k
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == ")") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            --k
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
         if ($i ~ /[0-9]/) {
             if (i > 1 && $(i - 1) != "-") if (Index_prepend(i, " ", " ")) ++i
             for (; ++i <= NF; ) {
@@ -96,7 +86,6 @@ function Expression_evaluate(expression, defines, replaceUndefinedWith,    h, i,
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
-
         if ($i ~ /[[:alpha:]_]/) {
             if (i > 1) if (Index_prepend(i, " ", " ")) ++i
             for (; ++i <= NF; ) {
@@ -106,145 +95,205 @@ function Expression_evaluate(expression, defines, replaceUndefinedWith,    h, i,
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
-
         if ($i == " ") {
             if (i == 1 || $(i - 1) == " " || i == NF) Index_remove(i--)
             continue
         }
-
+        if ($i == "\\") {
+            # Line Continuation
+            Index_remove(i--)
+            continue
+        }
         # remove
+__debug("Unknown Character: "$i)
         Index_remove(i--)
     }
     expression = Index_pop()
+    if (k != 0) __warning("Missing or too many ) (")
     Index_push(expression, " ", " ")
 
-    # Evaluate defined AWA
+    # Evaluate defined(AWA), AWA(a,b) or just AWA
     for (i = 1; i <= NF; ++i) {
         if ($i == "defined") {
-            n = $(i + 1)
-            if (defines["length"] && Array_contains(defines, n))
-                 $i = "1"
-            else $i = "0"
-            Index_remove(i + 1)
-#__error("Defined "n" : "$i)
+            if ($(i + 1) != "(") Index_append(i, "(")
+            n = $(i + 2)
+            if ($(i + 3) != ")") Index_append(i + 2, ")")
+            if (Array_contains(defines, n)) $i = "1"; else $i = "0"
+            Index_remove(i + 1, i + 2, i + 3)
+__debug("Defined "n" : "$i)
             continue
         }
+        if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+            name = $i
+            defineBody = defines[name]["body"]
+            Array_clear(arguments)
+            if (defines[name]["function"]["length"]) {
+                if ($(i + 1) != "(") Index_append(i, "(")
 
-#        if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-#            n = $i
-#            if (defines["length"] && (d = Array_contains(defines, n))) {
-#                $i = defines[n]["body"]
-##__error("Define "n" : "defines[n]["body"])
-#                --i; Index_reset()
-#                continue
-#            }
-#            if (typeof(replaceUndefinedWith) != "untyped") {
-#                $i = replaceUndefinedWith
-#            }
-#        }
+                o = i + 2
+                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
+                    if ($o == ",") { ++o; continue }
+                    m = $o
+                    if ($o == "(" || $o == "{") {
+                        p = 0; for ( ; ++o <= NF; ) {
+                            m = String_concat(m, fix, $o)
+                            if ($o == "(" || $o == "{") ++p
+                            if ($o == ")" || $o == "}") { if (p) --p; else break }
+                        }
+                    }
+                    Array_add(arguments, m)
+                    ++o
+                }
 
+                if ($o != ")") Index_append(o++, ")")
+                Index_removeRange(i + 1, o)
+
+                Index_push(defineBody, fixFS, fix)
+                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
+                    # take the argument name, replace them with i + argN, then push the body
+                    for (o = 1; o <= NF; ++o)
+                        if ($o == defines[name]["function"][n]) $o = arguments[n]
+                }
+                defineBody = Index_pop()
+            }
+            if (defineBody == "") {
+                # using something define. with having a comment or no content at all, just remove
+__debug("Define "name" without body")
+                #if (typeof(replaceUndefinedWith) != "untyped")
+                #    $i = replaceUndefinedWith
+                Index_remove(i--)
+                continue
+            }
+            Index_push(defineBody, fixFS, fix)
+            for (o = 1; o <= NF; ++o)
+                if ($o == "\\") $o = ""
+            Index_reset()
+            l = Index["length"]
+            Index[l]["name"] = name
+            Index[l]["i"] = i; i = 0
+            continue
+        }
     }
-
-    # Evaluate Division / Multiplikation *
+    # Evaluate Boolean ! Logical NOT ~ Negation: the complement of n
     for (i = 1; i <= NF; ++i) {
-        if ($(i - 1) ~ /^[0-9]+$/ && $(i + 1) ~ /^[0-9]+$/) {
+        if ($i == "!") {
+            if ($(i + 1) == "!") continue
+            if ($(i + 1) ~ /^[-+]?[0-9]+$/) {
+                $i = ! $(i + 1)
+                Index_remove(i + 1); --i
+                if ($i == "!") --i
+__debug("Not: "$0)
+                continue
+            }
+        }
+        if ($i == "~") {
+            if ($(i + 1) == "~") continue
+            if ($(i + 1) ~ /^[-+]?[0-9]+$/) {
+                $i = compl($(i + 1))
+                Index_remove(i + 1); --i
+                if ($i == "~") --i
+__debug("NOT: "$0)
+                continue
+            }
+        }
+    }
+    # Evaluate Multiplikation * Division / Modulo %  # triple operator 1 / 3 % remainder
+    for (i = 1; i <= NF; ++i) {
+        if ($(i - 1) ~ /^[-+]?[0-9]+$/ && $(i + 1) ~ /^[-+]?[0-9]+$/) {
             if ($i == "/") {
                 $i = $(i - 1) / $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-#__error("Division: "$0)
+__debug("Division: "$0)
             }
             if ($i == "*") {
                 $i = $(i - 1) * $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-#__error("Multiplikation: "$0)
+__debug("Multiplikation: "$0)
             }
         }
     }
     # Evaluate Subtraktion - Addition +
     for (i = 1; i <= NF; ++i) {
-        if ($(i - 1) ~ /^[0-9]+$/ && $(i + 1) ~ /^[0-9]+$/) {
+        if ($(i - 1) ~ /^[-+]?[0-9]+$/ && $(i + 1) ~ /^[-+]?[0-9]+$/) {
             if ((i < 3 || ($(i - 2) != "*" && $(i - 2) != "/")) && $(i + 2) != "*" && $(i + 2) != "/") {
                 if ($i == "-") {
                     $i = $(i - 1) - $(i + 1)
                     Index_remove(i - 1, i + 1); --i
-#__error("Subtraktion: "$0)
+__debug("Subtraktion: "$0)
                 }
                 if ($i == "+") {
                     $i = $(i - 1) + $(i + 1)
                     Index_remove(i - 1, i + 1); --i
-#__error("Addition: "$0)
+__debug("Addition: "$0)
                 }
             }
         }
     }
 
-    # Evaluate Boolean !
+    # Evaluate Left Shift << Right Shift >>
     for (i = 1; i <= NF; ++i) {
-        if ($i == "!") {
-            if ($(i + 1) == "!") continue
-            if ($(i + 1) ~ /^[0-9]+$/) {
-                $i = ! $(i + 1)
-                Index_remove(i + 1); --i
-                if ($i == "!") --i
-#__error("Not: "$0)
-                continue
+        if ($(i - 1) ~ /^[-+]?[0-9]+$/ && $(i + 1) ~ /^[-+]?[0-9]+$/) {
+            if ($i == "<<") {
+                $i = lshift($(i - 1), $(i + 1))
+                Index_remove(i - 1, i + 1); --i
+__debug("And: "$0)
+            }
+            if ($i == ">>") {
+                $i = rshift($(i - 1), $(i + 1))
+                Index_remove(i - 1, i + 1); --i
+__debug("Or: "$0)
             }
         }
     }
 
+    # Evaluate Comparison, Boolean Equality == <= < >= > !=
     for (i = 1; i <= NF; ++i) {
-        if ($(i - 1) ~ /^[0-9]+$/ && $(i + 1) ~ /^[0-9]+$/) {
-            if ($i == ">") {
-                $i = $(i - 1) > $(i + 1)
-                Index_remove(i - 1, i + 1); --i
-#__error( "GreaterThan: "$0 )
-            }
-            if ($i == "<") {
-                $i = $(i - 1) < $(i + 1)
-                Index_remove(i - 1, i + 1); --i
-#__error( "LowerThan: "$0 )
-            }
-        }
-    }
-
-    # Evaluate Boolean && ||
-    for (i = 1; i <= NF; ++i) {
-        if ($(i - 1) ~ /^[0-9]+$/ && $(i + 1) ~ /^[0-9]+$/) {
-            if ($i == "&&") {
-                $i = $(i - 1) && $(i + 1)
-                Index_remove(i - 1, i + 1); --i
-#__error("And: "$0)
-            }
-            if ($i == "||") {
-                $i = $(i - 1) || $(i + 1)
-                Index_remove(i - 1, i + 1); --i
-#__error("Or: "$0)
-            }
-        }
-    }
-
-    # Evaluate Boolean Equals == <= >= !=
-    for (i = 1; i <= NF; ++i) {
-        if ($(i - 1) ~ /^[0-9]+$/ && $(i + 1) ~ /^[0-9]+$/) {
+        if ($(i - 1) ~ /^[-+]?[0-9]+$/ && $(i + 1) ~ /^[-+]?[0-9]+$/) {
             if ($i == "==") {
                 $i = $(i - 1) == $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-#__error("Equals: "$0)
-            }
-            if ($i == ">=") {
-                $i = $(i - 1) >= $(i + 1)
-                Index_remove(i - 1, i + 1); --i
-#__error( "GreaterThanEquals: "$0 )
+__debug("Equals: "$0)
             }
             if ($i == "<=") {
                 $i = $(i - 1) <= $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-#__error( "LowerThanEquals: "$0 )
+__debug( "LowerThanEquals: "$0 )
+            }
+            if ($i == "<") {
+                $i = $(i - 1) < $(i + 1)
+                Index_remove(i - 1, i + 1); --i
+__debug( "LowerThan: "$0 )
+            }
+            if ($i == ">=") {
+                $i = $(i - 1) >= $(i + 1)
+                Index_remove(i - 1, i + 1); --i
+__debug( "GreaterThanEquals: "$0 )
+            }
+            if ($i == ">") {
+                $i = $(i - 1) > $(i + 1)
+                Index_remove(i - 1, i + 1); --i
+__debug( "GreaterThan: "$0 )
             }
             if ($i == "!=") {
                 $i = $(i - 1) != $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-#__error( "NotEquals: "$0 )
+__debug( "NotEquals: "$0 )
+            }
+        }
+    }
+    # Evaluate Boolean AND && OR ||
+    for (i = 1; i <= NF; ++i) {
+        if ($(i - 1) ~ /^[-+]?[0-9]+$/ && $(i + 1) ~ /^[-+]?[0-9]+$/) {
+            if ($i == "&&") {
+                $i = $(i - 1) && $(i + 1)
+                Index_remove(i - 1, i + 1); --i
+__debug("AND: "$0)
+            }
+            if ($i == "||") {
+                $i = $(i - 1) || $(i + 1)
+                Index_remove(i - 1, i + 1); --i
+__debug("OR: "$0)
+                break
             }
         }
     }

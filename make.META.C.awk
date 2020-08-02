@@ -5,13 +5,14 @@
 @include "meta.awk"
 
 function usage() {
-    print "fix make.ISO_C.awk Program.c">"/dev/stderr"
+    print "Usage: make.ISO_C.awk Program.c">"/dev/stderr"
 }
 
 BEGIN {
-    if (ARGC == 1) { usage(); exit 1 }
-
     make = "make_print"
+
+    if (ARGV_length() == 0) { usage(); exit 1 }
+
     includeDirs["length"] = 0
     fixFS = @/[ \x01]*[\x01]/
     fix = "\x01"
@@ -96,6 +97,8 @@ BEGINFILE {
     #OFS=" "
     RS="\n"
     #ORS="\n"
+
+    if (DEBUG) print "\n"FILENAME
 }
 
 NF > 0 {  # PreProcess: read what you have, in C
@@ -477,12 +480,17 @@ END {
 }
 
 
-
-function precompile(    a, b, c, d, defines, e, f, g, h, i, ifExpressions, inputType, j, k, l, m, n, name,
-                        o, p, q, r, resultI, resultZ, s,
-                        t, u, v, w, x, y, z)
+function precompile(a, argumentI, arguments, b, c, d, defineBody, defines, e, f, g, h, i, I, ifExpressions, inputType, j, k, l, m, n, name,
+                    o, p, q, r, resultI, resultZ, s, t, u, v, w, x, y, z)
 {
     defines["length"] = 0
+    Array_add(defines, "__GNUC__")
+    defines["__GNUC__"]["body"] = "7"
+    Array_add(defines, "__GNUC_MINOR__")
+    defines["__GNUC_MINOR__"]["body"] = "5"
+    Array_add(defines, "__WORDSIZE")
+    defines["__WORDSIZE"]["body"] = "64"
+
 
     ifExpressions["length"] = 0
 
@@ -498,17 +506,19 @@ function precompile(    a, b, c, d, defines, e, f, g, h, i, ifExpressions, input
 
     for (z = 1; z <= input[e]["length"]; ++z) {
         Index_push(input[e][z], fixFS, fix)
+        I = Index["length"]
 
     i = 0
     while (++i) {
         if (i > NF) {
-            if ((l = Index["length"]) > 1) {
+            if ((l = Index["length"]) > I) {
                 i = Index[l]["i"]
                 # name = Index[l]["name"]
-                n = NF
+                # n = NF
                 $i = Index_pop()
                 Index_reset()
-                i += n ; continue
+                --i # i += n
+                continue
             }
             break
         }
@@ -516,19 +526,17 @@ function precompile(    a, b, c, d, defines, e, f, g, h, i, ifExpressions, input
         if ($i ~ /^[ ]*$/) continue
         if (inputType == "comment") {
             if ($i ~ /\*\/$/) inputType = ""
-            Index_remove(i)
-            --i; continue
+            Index_remove(i--)
+            continue
         }
         if ($i ~ /^\/\*/) {
             inputType = "comment"
             if ($i ~ /\*\/$/) inputType = ""
-            Index_remove(i)
-            --i; continue
+            Index_remove(i--)
+            continue
         }
         if ($i ~ /^\/\//) {
-            for (n = i; n <= NF; ++n) $n = ""
-            Index_reset()
-            break
+            NF = i - 1; break
         }
 
         if (i == 1 && $1 == "#") {
@@ -557,7 +565,7 @@ function precompile(    a, b, c, d, defines, e, f, g, h, i, ifExpressions, input
                 m = String_concat(m, " ", $n)
             }
             x = Expression_evaluate(m, defines, "")
-__error("if "m" == "x)
+__debug(input[e]["FILENAME"]" Line "z": if "m"  == "x)
             if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
             f = Array_add(ifExpressions)
             ifExpressions[f]["if"] = m
@@ -572,7 +580,7 @@ __error("if "m" == "x)
             f = ifExpressions["length"]
             if (!ifExpressions[f]["result"]) {
                 x = Expression_evaluate(m, defines, "")
-__error("else if "m" == "x)
+__debug(input[e]["FILENAME"]" Line "z": else if "m"  == "x)
                 if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
                 ifExpressions[f]["else if"] = m
                 ifExpressions[f]["result"] = x
@@ -583,14 +591,14 @@ __error("else if "m" == "x)
             f = ifExpressions["length"]
             if (!ifExpressions[f]["result"]) {
                 ifExpressions[f]["else"] = 1
-__error("else")
+__debug(input[e]["FILENAME"]" Line "z": else")
                 ifExpressions[f]["result"] = 1
             }
             NF = 0; break
         }
         if ($2 == "endif") {
             Array_remove(ifExpressions, ifExpressions["length"])
-__error("endif")
+__debug(input[e]["FILENAME"]" Line "z": endif")
             NF = 0; break
         } }
 
@@ -608,45 +616,40 @@ __error("endif")
                 NF = 0; break
             }
             f = Array_add(defines, name)
-
-            $1 = ""; $2 = ""; $3 = ""; Index_reset()
-
+            Index_remove(1, 2, 3)
             if ($1 == "(") {
                 for (n = 2; n <= NF; ++n) {
                     if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) continue
                     if ($n == ",") continue
-                    if ($n == ")") { ++n; break }
+                    if ($n == "{") break
+                    if ($n == ")") break
                     break
-                } --n
-                if ($n == ")") {
-                    $1 = ""; m = ""
-                    for (n = 2; n <= NF; ++n) {
-                        if ($n == ")") { $n = ""; break }
-                        m = String_concat(m, fix, $n)
-                        $n = ""
+                }
+                if ($n == ")" && n < NF) {
+                    m = ""; for (o = 2; o < n; ++o) {
+                        m = String_concat(m, " ", $o)
+                        if ($o == ",") continue
+                        argumentI = ++defines[name]["function"]["length"]
+                        defines[name]["function"][argumentI] = $o
                     }
-                    Index_reset()
-                    defines[name]["function"] = m
+                    defines[name]["function"]["text"] = m
+                    Index_removeRange(1, n)
                 }
             }
 
-            m = ""
-            for (n = 1; n <= NF; ++n) {
-                m = String_concat(m, fix, $n)
-            }
+            m = ""; for (n = 1; n <= NF; ++n) m = String_concat(m, fix, $n)
             defines[name]["body"] = m
 
-#if (defines[name]["function"])
-#printf name "(" defines[name]["function"] ") " defines[name]["body"]"\n">"/dev/stderr"
-#else
-#printf name " " defines[name]["body"]"\n">"/dev/stderr"
+if (defines[name]["function"]["length"])
+__debug(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["function"]["length"]"("defines[name]["function"]["text"]") "defines[name]["body"])
+else
+__debug(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
 
             NF = 0; break
         }
         if ($2 == "undef") {
             if (!(f = Array_contains(defines, $3))) {
                 print "(precompile) "input[e]["FILENAME"]" Line "z": undef doesn't exist: "$3>"/dev/stderr"
-                NF = 0; break
             } else {
                 Array_remove(defines, f)
                 delete defines[$3]
@@ -655,16 +658,63 @@ __error("endif")
         } }
 
         # Evaluate AWA
-        if (n = Array_contains(defines, $i)) {
+        if (Array_contains(defines, $i)) {
+            # define SOMETHING SOMETHING
             l = Index["length"]
-            for (o = 2; o <= l; ++o)
-                if ($i == Index[o]["name"]) break
-            if (o <= l) {
-                print "repeating define: define "$i" "$i>"/dev/stderr"
+            for (n = I + 1; n <= l; ++n)
+                if ($i == Index[n]["name"]) break
+            if (n <= l) {
+                print input[e]["FILENAME"]" Line "z": self-referencing define "$i" "$i>"/dev/stderr"
                 continue
             }
+            #define name ( arg1 , arg2 ) body
             name = $i
-            Index_push(defines[name]["body"], fixFS, fix)
+            defineBody = defines[name]["body"]
+            Array_clear(arguments)
+            if (defines[name]["function"]["length"]) {
+                if ($(i + 1) != "(") Index_append(i, "(")
+
+                o = i + 2
+                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
+                    if ($o == ",") { ++o; continue }
+                    m = $o
+                    if ($o == "(" || $o == "{") {
+                        p = 0; for ( ; ++o <= NF; ) {
+                            m = String_concat(m, fix, $o)
+                            if ($o == "(" || $o == "{") ++p
+                            if ($o == ")" || $o == "}") { if (p) --p; else break }
+                        }
+                    }
+                    Array_add(arguments, m)
+                    ++o
+                }
+
+                if ($o != ")") Index_append(o++, ")")
+                Index_removeRange(i + 1, o)
+
+                Index_push(defineBody, fixFS, fix)
+                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
+                    for (o = 1; o <= NF; ++o)
+                        if ($o == defines[name]["function"][n]) $o = arguments[n]
+                }
+                defineBody = Index_pop()
+            }
+            if (defineBody == "") {
+                # define unsafe  /* unsafe */
+                print input[e]["FILENAME"]" Line "z": define "$i>"/dev/stderr"
+                Index_remove(i--)
+                continue
+            }
+if (defines[name]["function"]["length"]) {
+__debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["function"]["length"]"( "defines[name]["function"]["text"]" ) "defineBody)
+Array_debug(arguments)
+}
+else
+__debug(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
+            Index_push(defineBody, fixFS, fix)
+            for (o = 1; o <= NF; ++o)
+                if ($o == "\\") $o = ""
+            Index_reset()
             l = Index["length"]
             Index[l]["name"] = name
             Index[l]["i"] = i; i = 0
