@@ -1,34 +1,19 @@
 
 
-		#		define HAHA
- # define string write
-#define struct(name)  struct __ff(struct,name)
+#define __STRING(x) #x
 
-	/* HAHAHA
-			HOHOHO
-		/* AWAWAWA */
-	OHOHO
-	*/
+#define __ASMNAME2 (prefix , cname) __STRING ( prefix ) cname
 
-	string8	Hallo="Welt
+#define __ASMNAME (cname) __ASMNAME2 ( __USER_LABEL_PREFIX__ , cname )
 
-    void
-    * Hey_Ich_Bin_Der_µ		()	__noreturn;
+#define __REDIRECT (name , proto , alias)  name proto __asm__ ( __ASMNAME ( # alias ) )
 
-    typedef struct_class_AWA
-    {__int32 name}*AWA
-
-    void IMA(__int32*text)__noreturn;
+int __REDIRECT(setpgrp, (__pid_t pid, __pid_t pgrp),
+    setpgid);
 
 
-char (*(*f())[])();
-
-char (*(*X[3])())[5];
-
-void (*f)(int,void (*)());
-
-char far *far *ptr;
-
-typedef void (*pfun)(int,float);
-
-int **(*f)(int**,int**(*)(int **,int **));
+#if defined(__GNUC__)
+AWA
+#else
+OHO
+#endif

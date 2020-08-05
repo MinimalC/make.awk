@@ -484,13 +484,16 @@ function precompile(a, argumentI, arguments, b, c, d, defineBody, defines, e, f,
                     o, p, q, r, resultI, resultZ, s, t, u, v, w, x, y, z)
 {
     defines["length"] = 0
+    Array_add(defines, "__STDC__")
+    defines["__STDC__"]["body"] = "1"
     Array_add(defines, "__GNUC__")
     defines["__GNUC__"]["body"] = "7"
     Array_add(defines, "__GNUC_MINOR__")
     defines["__GNUC_MINOR__"]["body"] = "5"
     Array_add(defines, "__WORDSIZE")
     defines["__WORDSIZE"]["body"] = "64"
-
+    Array_add(defines, "__USER_LABEL_PREFIX__")
+    defines["__USER_LABEL_PREFIX__"]["body"] = ""
 
     ifExpressions["length"] = 0
 
@@ -502,6 +505,10 @@ function precompile(a, argumentI, arguments, b, c, d, defineBody, defines, e, f,
     resultI = ++result["length"]
     result[resultI]["FILENAME"] = input[e]["FILENAME"]
 
+# DEBUG
+resultZ = ++result[resultI]["length"]
+result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
+
     inputType = ""
 
     for (z = 1; z <= input[e]["length"]; ++z) {
@@ -512,6 +519,26 @@ function precompile(a, argumentI, arguments, b, c, d, defineBody, defines, e, f,
     while (++i) {
         if (i > NF) {
             if ((l = Index["length"]) > I) {
+                for (o = 1; o <= NF; ++o) {
+                    if ($o == "\\") { $o = ""; continue }
+                    if ($o == "##") {
+                        $(o + 1) = $(o - 1) $(o + 1)
+                        $(o - 1) = ""; $o = ""
+                        ++o; continue
+                    }
+                    if ($o == "#") {
+                        if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                            $o = "\"\""
+                        }
+                        else {
+                            $(o + 1) = "\""$(o + 1)"\""
+                            $o = ""
+                            ++o
+                        }
+                        continue
+                    }
+                }
+                Index_reset()
                 i = Index[l]["i"]
                 # name = Index[l]["name"]
                 # n = NF
@@ -565,11 +592,11 @@ function precompile(a, argumentI, arguments, b, c, d, defineBody, defines, e, f,
                 m = String_concat(m, " ", $n)
             }
             x = Expression_evaluate(m, defines, "")
-__debug(input[e]["FILENAME"]" Line "z": if "m"  == "x)
             if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
             f = Array_add(ifExpressions)
+__error(input[e]["FILENAME"]" Line "z": "f" if "m"  == "x)
             ifExpressions[f]["if"] = m
-            ifExpressions[f]["result"] = x
+            if (x) ifExpressions[f]["do"] = 1
             NF = 0; break
         }
         if ($2 == "elif") {
@@ -578,32 +605,35 @@ __debug(input[e]["FILENAME"]" Line "z": if "m"  == "x)
                 m = String_concat(m, " ", $n)
             }
             f = ifExpressions["length"]
-            if (!ifExpressions[f]["result"]) {
-                x = Expression_evaluate(m, defines, "")
-__debug(input[e]["FILENAME"]" Line "z": else if "m"  == "x)
-                if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
-                ifExpressions[f]["else if"] = m
-                ifExpressions[f]["result"] = x
+            x = Expression_evaluate(m, defines, "")
+            if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
+            ifExpressions[f]["else if"] = m
+            if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
+            if (!ifExpressions[f]["do"] && x) {
+__error(input[e]["FILENAME"]" Line "z": "f" else if "m"  == "x)
+                ifExpressions[f]["do"] = 1
             }
             NF = 0; break
         }
         if ($2 == "else") {
             f = ifExpressions["length"]
-            if (!ifExpressions[f]["result"]) {
-                ifExpressions[f]["else"] = 1
-__debug(input[e]["FILENAME"]" Line "z": else")
-                ifExpressions[f]["result"] = 1
+            ifExpressions[f]["else"] = 1
+            if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
+            if (!ifExpressions[f]["do"]) {
+__error(input[e]["FILENAME"]" Line "z": "f" else")
+                ifExpressions[f]["do"] = 1
             }
             NF = 0; break
         }
         if ($2 == "endif") {
-            Array_remove(ifExpressions, ifExpressions["length"])
-__debug(input[e]["FILENAME"]" Line "z": endif")
+            f = ifExpressions["length"]
+__error(input[e]["FILENAME"]" Line "z": "f" endif")
+            Array_remove(ifExpressions, f)
             NF = 0; break
         } }
 
         for (f = 1; f <= ifExpressions["length"]; ++f) {
-            if (ifExpressions[f]["result"]) continue
+            if (ifExpressions[f]["do"] == 1) continue
             NF = 0; break
         }
         if (NF == 0) break
@@ -625,7 +655,7 @@ __debug(input[e]["FILENAME"]" Line "z": endif")
                     if ($n == ")") break
                     break
                 }
-                if ($n == ")" && n < NF) {
+                if ($n == ")") { # n < NF
                     m = ""; for (o = 2; o < n; ++o) {
                         m = String_concat(m, " ", $o)
                         if ($o == ",") continue
@@ -641,9 +671,9 @@ __debug(input[e]["FILENAME"]" Line "z": endif")
             defines[name]["body"] = m
 
 if (defines[name]["function"]["length"])
-__debug(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["function"]["length"]"("defines[name]["function"]["text"]") "defines[name]["body"])
+__error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["function"]["length"]"("defines[name]["function"]["text"]") "defines[name]["body"])
 else
-__debug(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
+__error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
 
             NF = 0; break
         }
@@ -674,16 +704,23 @@ __debug(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
             if (defines[name]["function"]["length"]) {
                 if ($(i + 1) != "(") Index_append(i, "(")
 
-                o = i + 2
+                o = i + 1
                 for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-                    if ($o == ",") { ++o; continue }
-                    m = $o
-                    if ($o == "(" || $o == "{") {
-                        p = 0; for ( ; ++o <= NF; ) {
-                            m = String_concat(m, fix, $o)
-                            if ($o == "(" || $o == "{") ++p
-                            if ($o == ")" || $o == "}") { if (p) --p; else break }
+                    m = ""
+                    p = 0; while (++o) {
+                        if (o > NF) {
+                            if ((l = Index["length"]) == I) {
+                                if (++z <= input[e]["length"]) {
+                                    $0 = $0 fix input[e][z]
+                                    --o; continue
+                                }
+                            }
+                            break
                         }
+                        if (!p && $o == ",") { --o; break }
+                        if ($o == "(" || $o == "{") ++p
+                        if ($o == ")" || $o == "}") { if (p) --p; else { --o; break } }
+                        m = String_concat(m, fix, $o)
                     }
                     Array_add(arguments, m)
                     ++o
@@ -706,19 +743,16 @@ __debug(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
                 continue
             }
 if (defines[name]["function"]["length"]) {
-__debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["function"]["length"]"( "defines[name]["function"]["text"]" ) "defineBody)
-Array_debug(arguments)
+__error(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["function"]["length"]"( "defines[name]["function"]["text"]" ) "defineBody)
+Array_error(arguments)
 }
 else
-__debug(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
+__error(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
             Index_push(defineBody, fixFS, fix)
-            for (o = 1; o <= NF; ++o)
-                if ($o == "\\") $o = ""
-            Index_reset()
             l = Index["length"]
             Index[l]["name"] = name
-            Index[l]["i"] = i; i = 0
-            continue
+            Index[l]["i"] = i
+            i = 0; continue
         }
 
     }

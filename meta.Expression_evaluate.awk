@@ -17,6 +17,9 @@ function Expression_evaluate(expression, defines, replaceUndefinedWith,    a, ar
     while (++i) {
         if (i > NF) {
             if ((l = Index["length"]) > I) {
+                for (o = 1; o <= NF; ++o)
+                    if ($o == "\\") $o = ""
+                Index_reset()
                 i = Index[l]["i"]
                 # n = NF
                 $i = Index_pop()
@@ -130,16 +133,14 @@ __debug("Defined "n" : "$i)
             if (defines[name]["function"]["length"]) {
                 if ($(i + 1) != "(") Index_append(i, "(")
 
-                o = i + 2
+                o = i + 1
                 for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-                    if ($o == ",") { ++o; continue }
-                    m = $o
-                    if ($o == "(" || $o == "{") {
-                        p = 0; for ( ; ++o <= NF; ) {
-                            m = String_concat(m, fix, $o)
-                            if ($o == "(" || $o == "{") ++p
-                            if ($o == ")" || $o == "}") { if (p) --p; else break }
-                        }
+                    m = ""
+                    p = 0; for ( ; ++o <= NF; ) {
+                        if (!p && $o == ",") { --o; break }
+                        if ($o == "(" || $o == "{") ++p
+                        if ($o == ")" || $o == "}") { if (p) --p; else { --o; break } }
+                        m = String_concat(m, fix, $o)
                     }
                     Array_add(arguments, m)
                     ++o
@@ -150,14 +151,13 @@ __debug("Defined "n" : "$i)
 
                 Index_push(defineBody, fixFS, fix)
                 for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-                    # take the argument name, replace them with i + argN, then push the body
                     for (o = 1; o <= NF; ++o)
                         if ($o == defines[name]["function"][n]) $o = arguments[n]
                 }
                 defineBody = Index_pop()
             }
             if (defineBody == "") {
-                # using something define. with having a comment or no content at all, just remove
+                # define unsafe  /* unsafe */
 __debug("Define "name" without body")
                 #if (typeof(replaceUndefinedWith) != "untyped")
                 #    $i = replaceUndefinedWith
@@ -165,13 +165,10 @@ __debug("Define "name" without body")
                 continue
             }
             Index_push(defineBody, fixFS, fix)
-            for (o = 1; o <= NF; ++o)
-                if ($o == "\\") $o = ""
-            Index_reset()
             l = Index["length"]
             Index[l]["name"] = name
-            Index[l]["i"] = i; i = 0
-            continue
+            Index[l]["i"] = i
+            i = 0; continue
         }
     }
     # Evaluate Boolean ! Logical NOT ~ Negation: the complement of n

@@ -183,8 +183,8 @@ function Array_remove(array, i,    h, j, k, l, m, n) {
     if (typeof(i) == "untyped") { error = "i is no Number"; nextfile }
     if (typeof(i) != "number") { delete array[i]; return }
     l = array["length"]
-    for (n = i + 1; n <= l; ++n)
-        array[n - 1] = array[n]
+    for (n = i; n < l; ++n)
+        array[n] = array[n + 1]
     delete array[l]
     --array["length"]
 }
