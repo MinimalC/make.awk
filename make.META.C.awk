@@ -98,7 +98,7 @@ BEGINFILE {
     RS="\n"
     #ORS="\n"
 
-    if (DEBUG) print "\n"FILENAME
+#    if (DEBUG) print "\n"FILENAME
 }
 
 NF > 0 {  # PreProcess: read what you have, in C
@@ -120,7 +120,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             if ($i == "/" && $(i + 1) == "*") {
                 $(i++) = "*"
                 ++comments
-                print FileName" Line "z": Comment in Comment /* /*">"/dev/stderr"
+                print FILENAME" Line "z": Comment in Comment /* /*">"/dev/stderr"
                 continue
             }
             if ($i == "*" && $(i + 1) == "/") {
@@ -137,7 +137,7 @@ NF > 0 {  # PreProcess: read what you have, in C
             if (i == NF && $i != "\\" && hash ~ /^#/) {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 Index_append(i, "\\"); ++i
-                print FileName" Line "z": Line Continuation \\ in Comment">"/dev/stderr"
+                print FILENAME" Line "z": Line Continuation \\ in Comment">"/dev/stderr"
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 continuation = 1; getline; ++z; i = 0; continue
@@ -147,7 +147,7 @@ NF > 0 {  # PreProcess: read what you have, in C
         if (inputType == "string") {
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-                print FileName" Line "z": Line Continuation \\ in String">"/dev/stderr"
+                print FILENAME" Line "z": Line Continuation \\ in String">"/dev/stderr"
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 continuation = 1; getline; ++z; i = 0; continue
@@ -185,7 +185,7 @@ NF > 0 {  # PreProcess: read what you have, in C
         if (inputType == "include string") {
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-                print FileName" Line "z": Line Continuation \\ in #include <String>">"/dev/stderr"
+                print FILENAME" Line "z": Line Continuation \\ in #include <String>">"/dev/stderr"
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 continuation = 1; getline; ++z; i = 0; continue
@@ -244,7 +244,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                 Index_remove(i--); continue
             }
             if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-            print FileName" Line "z": Line Continuation \\">"/dev/stderr"
+            print FILENAME" Line "z": Line Continuation \\">"/dev/stderr"
             input[inputI][inputZ] = input[inputI][inputZ] $0
             if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
             continuation = 1; getline; ++z; i = 0; continue
@@ -479,21 +479,47 @@ END {
     if (!error) @make()
 }
 
+function gcc_preprocess(    fileIn, fileOut) {
+
+    fileIn = ".preprocess.C.gcc.c"
+    print "/* Gemeinfrei */" > fileIn
+    close(fileIn)
+
+    fileOut = ".preprocess.C.gcc...pre.c"
+    system("gcc -std=c11 -nostdinc -E "fileIn"  > "fileOut)
+    system("gcc -std=c11 -nostdinc -dM -E "fileIn" | sort >> "fileOut)
+}
+
+function read_gcc_preprocess_defines(defines,    fileIn, line, name) {
+    gcc_preprocess()
+    fileIn = ".preprocess.C.gcc...pre.c"
+    while (0 < (getline line < fileIn)) {
+        Index_push(line, FS, OFS)
+        if ($1 == "#define") {
+            name = $2
+            Index_remove(1, 2)
+            Array_add(defines, name)
+            defines[name]["body"] = $0
+        }
+        Index_pop()
+    }
+}
 
 function precompile(a, argumentI, arguments, b, c, d, defineBody, defines, e, f, g, h, i, I, ifExpressions, inputType, j, k, l, m, n, name,
                     o, p, q, r, resultI, resultZ, s, t, u, v, w, x, y, z)
 {
     defines["length"] = 0
-    Array_add(defines, "__STDC__")
-    defines["__STDC__"]["body"] = "1"
-    Array_add(defines, "__GNUC__")
-    defines["__GNUC__"]["body"] = "7"
-    Array_add(defines, "__GNUC_MINOR__")
-    defines["__GNUC_MINOR__"]["body"] = "5"
-    Array_add(defines, "__WORDSIZE")
-    defines["__WORDSIZE"]["body"] = "64"
-    Array_add(defines, "__USER_LABEL_PREFIX__")
-    defines["__USER_LABEL_PREFIX__"]["body"] = ""
+    #Array_add(defines, "__STDC__")
+    #defines["__STDC__"]["body"] = "1"
+    #Array_add(defines, "__GNUC__")
+    #defines["__GNUC__"]["body"] = "7"
+    #Array_add(defines, "__GNUC_MINOR__")
+    #defines["__GNUC_MINOR__"]["body"] = "5"
+    #Array_add(defines, "__WORDSIZE")
+    #defines["__WORDSIZE"]["body"] = "64"
+    #Array_add(defines, "__USER_LABEL_PREFIX__")
+    #defines["__USER_LABEL_PREFIX__"]["body"] = ""
+    read_gcc_preprocess_defines(defines)
 
     ifExpressions["length"] = 0
 
@@ -541,10 +567,10 @@ result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
                 Index_reset()
                 i = Index[l]["i"]
                 # name = Index[l]["name"]
-                # n = NF
+                n = NF
                 $i = Index_pop()
                 Index_reset()
-                --i # i += n
+                i += n - 1
                 continue
             }
             break
@@ -587,8 +613,11 @@ result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
             }
         }
         if ($2 == "if") {
-            m = ""
+            m = ""; c = 0
             for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^\/\*/) ++c
+                if ($n ~ /\*\/$/) { if (c) --c; continue }
+                if (c) continue
                 m = String_concat(m, " ", $n)
             }
             x = Expression_evaluate(m, defines, "")
@@ -600,8 +629,11 @@ __error(input[e]["FILENAME"]" Line "z": "f" if "m"  == "x)
             NF = 0; break
         }
         if ($2 == "elif") {
-            m = ""
+            m = ""; c = 0
             for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^\/\*/) ++c
+                if ($n ~ /\*\/$/) { if (c) --c; continue }
+                if (c) continue
                 m = String_concat(m, " ", $n)
             }
             f = ifExpressions["length"]
@@ -706,8 +738,8 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
 
                 o = i + 1
                 for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-                    m = ""
-                    p = 0; while (++o) {
+                    m = ""; p = 0
+                    while (++o) {
                         if (o > NF) {
                             if ((l = Index["length"]) == I) {
                                 if (++z <= input[e]["length"]) {
@@ -738,13 +770,13 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
             }
             if (defineBody == "") {
                 # define unsafe  /* unsafe */
-                print input[e]["FILENAME"]" Line "z": define "$i>"/dev/stderr"
+                print input[e]["FILENAME"]" Line "z": using define "name" without body">"/dev/stderr"
                 Index_remove(i--)
                 continue
             }
 if (defines[name]["function"]["length"]) {
 __error(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["function"]["length"]"( "defines[name]["function"]["text"]" ) "defineBody)
-Array_error(arguments)
+# Array_error(arguments)
 }
 else
 __error(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
