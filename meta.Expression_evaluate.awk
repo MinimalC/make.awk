@@ -45,8 +45,8 @@ function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defi
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
-        if ($i == "+" && $(i + 1) ~ /[0-9]/) ++i
-        if ($i == "-" && $(i + 1) ~ /[0-9]/) ++i
+        if ($i == "+" && $(i + 1) ~ /[0-9]/ && ($(i - 2) == "-" || $(i - 2) == "+" || $(i - 2) == "*" || $(i - 2) == "/")) ++i
+        if ($i == "-" && $(i + 1) ~ /[0-9]/ && ($(i - 2) == "-" || $(i - 2) == "+" || $(i - 2) == "*" || $(i - 2) == "/")) ++i
         if ($i == "," || $i == "+" || $i == "-" || $i == "*" || $i == "/" || $i == "~") {
             if (i > 1) if (Index_prepend(i, " ", " ")) ++i
             if (i < NF) if (Index_append(i, " ", " ")) ++i
@@ -70,6 +70,14 @@ function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defi
                 if ($i ~ /[0-9]/) continue
                 break
             } --i
+            if ($(i + 1) ~ /[uUlL]/) {
+                n = i
+                for (; ++n <= NF; ) {
+                    if ($n ~ /[uUlL]/) continue
+                    break
+                } --n
+                Index_removeRange(i + 1, n)
+            }
             if (i < NF) if (Index_append(i, " ", " ")) ++i
             continue
         }
@@ -108,17 +116,17 @@ __error("Unknown Character \""$i"\"")
                 i = Index[l]["i"]
                 n = NF
                 $i = Index_pop()
-__debug("Define "name" "$i)
+#__debug("Define "name" "$i)
                 Index_reset()
                 i += n - 1
                 continue
             }
             break
         }
-        if ($i == ")") {
-            Index_remove(i--)
-            continue
-        }
+#        if ($i == ")") {
+#            Index_remove(i--)
+#            continue
+#        }
         if ($i == "(") {
             m = ""
             for (o = i + 1; o <= NF; ++o) {
@@ -128,16 +136,15 @@ __debug("Define "name" "$i)
             }
             Index_removeRange(i + 1, o)
             x = Expression_evaluate(m, defines)
-            if (x !~ /^[-+]?[0-9]+$/) {
-                Index_push(x, " ", " ")
-                n = NF
-                Index_pop()
+            Index_push(x, " ", " ")
+            n = NF
+            Index_pop()
+            if (n > 1) {
                 Index_append(i, x" )")
-                i += n
+                i += n + 1
                 continue
             }
             $i = x
-            Index_reset()
             --i
             continue
         }
@@ -175,7 +182,7 @@ __debug("Defined "n" "$i)
                 if ($o != ")") Index_append(o++, ")")
                 Index_removeRange(i + 1, o)
 
-                Index_push(defineBody, fixFS, " ")
+                Index_push(defineBody, fixFS, fix)
                 for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
                     for (o = 1; o <= NF; ++o)
                         if ($o == defines[name]["function"][n]) $o = arguments[n]
@@ -188,8 +195,8 @@ __debug("Define "name" without body")
                 $i = "0"
                 continue
             }
-            Index_push(defineBody, fixFS, " ")
-            defineBody = Index_pop()
+            gsub(fixFS, " ", defineBody)
+__debug("Define "name" "defineBody)
             Index_push(defineBody, " ", " ")
             l = Index["length"]
             Index[l]["name"] = name
@@ -203,9 +210,11 @@ __debug("Define "name" without body")
         if ($i == "!") {
             if ($(i + 1) == "!") continue
             if ($(i + 1) !~ /^[-+]?[0-9]+$/) continue
-            $i = ! $(i + 1)
-            Index_remove(i + 1); --i
-            if ($i == "!") --i
+
+            $i = ! ($(i + 1) + 0)
+
+            Index_remove(i + 1)
+            if ($(i - 1) == "!") --i
 __debug("not: "$0)
             continue
         }
@@ -214,8 +223,8 @@ __debug("not: "$0)
             if ($(i + 1) == "~") continue
             if ($(i + 1) !~ /^[-+]?[0-9]+$/) continue
             $i = compl($(i + 1))
-            Index_remove(i + 1); --i
-            if ($i == "~") --i
+            Index_remove(i + 1)
+            if ($(i - 1) == "~") --i
 __debug("NOT: "$0)
             continue
         }
@@ -321,166 +330,16 @@ __debug( "NotEquals: "$0 )
             $i = $(i - 1) && $(i + 1)
             Index_remove(i - 1, i + 1); --i
 __debug("and: "$0)
-            if (!$i) NF = i
+            # if (!$i) NF = i
         }
         if ($i == "||") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) || $(i + 1)
             Index_remove(i - 1, i + 1); --i
 __debug("or: "$0)
-            if (!$i) NF = i
+            # if (!$i) NF = i
         }
     }
     return Index_pop()
 }
 
-
-# DEPRECATED
-
-function __Expression_evaluate(expression, defines,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, r) {
-    gsub(/\(/, " ( ", expression)
-    gsub(/\)/, " ) ", expression)
-    gsub(/\+/, " + ", expression)
-    gsub(/\-[^0-9]/, " - ", expression)
-    gsub(/\*/, " * ", expression)
-    gsub(/\//, " / ", expression)
-    gsub(/&&/, " && ", expression)
-    gsub(/\|\|/, " || ", expression)
-    gsub(/==/, " == ", expression)
-    gsub(/!=/, " != ", expression)
-    gsub(/![^=]/, " ! ", expression)
-    gsub(/>[^=]/, " > ", expression)
-    gsub(/>=/, " >= ", expression)
-    gsub(/<[^=]/, " < ", expression)
-    gsub(/<=/, " <= ", expression)
-    expression = String_trim(expression)
-    Index_push(expression, @/[ ]+/, " ")
-print NF": \""($0 = $0)"\""
-    for (i = 1; i <= NF; ++i) {
-        if ($i == "" && i < NF - 1) {
-            for (n = i + 1; n <= NF; ++n) {
-                $(n - 1) = $n
-            }
-            $NF = ""
-print "moving"
-            --i; Index_reset(); continue
-        }
-#print
-        if ($i ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/ && typeof(defines) == "array" && (d = Array_contains(defines, $i))) {
-            $i = defines[$i]["body"]
-            --i; Index_reset(); continue
-        }
-        if ($i == "(") {
-            m = ""; h = 0
-            for (j = i + 1; j <= NF; ++j) {
-                if ($j == "(") ++h
-                if ($j == ")") { if (h) --h; else { $j = ""; break } }
-                m = String_concat(m, " ", $j)
-                $j = ""
-            }
-            if (j > NF) ;
-            $i = __Expression_evaluate(m, defines)
-            --i; Index_reset(); continue
-        }
-        if ($i ~ /^[\-0-9]+$/) {
-            if (i > 1) {
-                if ($(i - 1) == "!") {
-                    $(i - 1) = ! $i; $i = ""; i -= 2; Index_reset()
-                    continue
-                }
-            }
-            if (i > 2) {
-                if ($(i - 1) == "+") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) + $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "-") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) - $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "*") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) * $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "/") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) / $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "&&") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) && $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "||") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) || $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "==") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) == $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "!=") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) != $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == ">") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) > $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == ">=") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) >= $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "<") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) < $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-                if ($(i - 1) == "<=") {
-                    if ($(i - 2) ~ /^[\-0-9]+$/) {
-                        $(i - 2) = $(i - 2) <= $i; $(i - 1) = ""; $i = ""; i -= 3; Index_reset()
-                    }
-                    continue
-                }
-            }
-        }
-        if ($i == "defined") {
-            j = i + 1
-            if ($j == "(") { $j = ""; ++j }
-            if (Array_contains(defines, $j)) {
-                if (i > 1 && $(i - 1) == "!") { $i = ""; --i; $i = 0 }
-                else { $i = 1 }
-            } else {
-                if (i > 1 && $(i - 1) == "!") { $i = ""; --i; $i = 1 }
-                else { $i = 0 }
-            }
-            $j = ""; ++j
-            if ($j == ")") { $j = ""; ++j }
-            Index_reset()
-            continue
-        }
-    }
-
-    r = String_trim(Index_pop())
-    return r
-}

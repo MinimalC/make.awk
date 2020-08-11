@@ -37,9 +37,7 @@ function File_exists(fileName,    h, i, j, r) {
 
 function Directory_exists(dirName) {
     if (!dirName) { print "Directory_exists: dirName is null">"/dev/stderr"; return }
-    if (PROCINFO["platform"] == "mingw")
-        if (system("FOR /D %%directory IN (\""dirName"*\") DO EXIT 1")) return 1
-    else if (!system("test -d "dirName)) return 1
+    if (!system("test -d "dirName)) return 1
 }
 
 function File_contains(fileName, string,    h, i, j, p, q, r) {
@@ -363,7 +361,7 @@ function Index_pop(fromFS, fromOFS,    p, q, r) {
 
     if (typeof(fromOFS) != "untyped") OFS = fromOFS
     if (typeof(fromFS) != "untyped")  FS  = fromFS
-    r = $0
+    r = Index_reset()
 
     if (i = Array_length(Index)) {
 
@@ -481,6 +479,18 @@ function get_DirectoryName(fileName,    p, q, r) {
     $NF = ""
 #    Index_reset()
 #    ++NF
+    r = $0
+    Index_pop()
+    return r
+}
+
+function Path_join(directory, fileName,    h, i, j, k, l, m, n, o, p, q, r) {
+    Index_push(directory "/" fileName, "/", "/")
+    for (n = 1; n <= NF; ++n) {
+        if ($n == "" || $n == ".") Index_remove(n--)
+        if (n > 1 && $n == "..") { Index_remove(n - 1, n); n -= 2 }
+    }
+    if ($1 != "..") { Index_insert(1, " "); $1 = "" }
     r = $0
     Index_pop()
     return r

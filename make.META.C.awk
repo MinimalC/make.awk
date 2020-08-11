@@ -69,6 +69,16 @@ BEGIN {
             ARGV[argI] = ""; continue
         }
     }
+
+    n = 0
+    for (argI = 1; argI <= ARGV_length(); ++argI) {
+        if (ARGV[argI])
+            origin[++n] = ARGV[argI]
+    }
+    origin["length"] = n
+
+    targetDefines = gcc_preprocess()
+    ARGV_add(targetDefines)
 }
 
 BEGINFILE {
@@ -107,6 +117,7 @@ NF > 0 {  # PreProcess: read what you have, in C
     leereZeilen = 0
     inputZ = ++input[inputI]["length"]
     hash = ""
+    continuation = 0
 
     Index_push($0, "", "")
     i = 1
@@ -156,11 +167,12 @@ NF > 0 {  # PreProcess: read what you have, in C
             if ($i == "\"") {
                 inputType = ""
                 if (hash == "# include") {
-                    if (File_exists(Directory string)) {
-                        List_insertBefore(includes, FILENAME, Directory string)
-                        ARGV_add(Directory string)
+                    n = Path_join(Directory, string)
+                    if (File_exists(n)) {
+                        List_insertBefore(includes, FILENAME, n)
+                        ARGV_add(n)
                     }
-                    else print "(preprocess) File doesn't exist: \""Directory string"\"">"/dev/stderr"
+                    else print "(preprocess) File doesn't exist: \""n"\"">"/dev/stderr"
                 }
                 hash = ""
                 if (i != NF) if (Index_append(i, fix, fix)) ++i
@@ -193,15 +205,17 @@ NF > 0 {  # PreProcess: read what you have, in C
             if ($i == ">") {
                 inputType = ""
                 for (d = 1; d <= includeDirs["length"]; ++d) {
-                    if (File_exists(includeDirs[d] includeString)) {
-                        List_insertBefore(includes, FILENAME, includeDirs[d] includeString)
-                        ARGV_add(includeDirs[d] includeString)
+                    n = Path_join(includeDirs[d], includeString)
+                    if (File_exists(n)) {
+                        List_insertBefore(includes, FILENAME, n)
+                        ARGV_add(n)
                         break
                     }
                 }
                 if (d > includeDirs["length"]) print "(preprocess) File doesn't exist: <"includeString">">"/dev/stderr"
                 hash = ""
                 if (i != NF) if (Index_append(i, fix, fix)) ++i
+                break
             }
             else includeString = includeString $i
             continue
@@ -227,19 +241,6 @@ NF > 0 {  # PreProcess: read what you have, in C
             continue
         }
         if ($i == "\\") {
-#            # mache, zähle LeerZeichen
-#            for (n = i; ++n <= NF; ) {
-#                if ($n ~ /[ \b\f\n\r\t\v]/) { $n = " "; continue }
-#                break
-#            } --n
-#            if (n == NF) { # i == 1 ||
-#                # eliminiere LeerZeichen
-#                for (n = i; ++n <= NF; ) {
-#                    if ($n ~ /[ \b\f\n\r\t\v]/) { Index_remove(n--); continue }
-#                    break
-#                } --n
-#                Index_remove(i--)
-#            }
             if (i != NF) {
                 Index_remove(i--); continue
             }
@@ -441,7 +442,7 @@ NF > 0 {  # PreProcess: read what you have, in C
                 break
             } --i
             if (i != NF) if (Index_append(i, fix, fix)) ++i
-            if (hash == "#") hash = "# "name
+            if (hash == "#") { hash = "# "name }
             continue
         }
 
@@ -472,11 +473,32 @@ ENDFILE {
 
 END {
 
-    # Array_print(includes)
+__debug( "includeDirs:")
+ Array_debug(includeDirs)
 
-    precompile()
+__debug( "includes:")
+ Array_debug(includes)
 
-    if (!error) @make()
+    #Array_add(defines, "__STDC__")
+    #defines["__STDC__"]["body"] = "1"
+    #Array_add(defines, "__GNUC__")
+    #defines["__GNUC__"]["body"] = "7"
+    #Array_add(defines, "__GNUC_MINOR__")
+    #defines["__GNUC_MINOR__"]["body"] = "5"
+    #Array_add(defines, "__WORDSIZE")
+    #defines["__WORDSIZE"]["body"] = "64"
+    #Array_add(defines, "__USER_LABEL_PREFIX__")
+    #defines["__USER_LABEL_PREFIX__"]["body"] = ""
+
+    #read_gcc_preprocess_defines(defines)
+
+    precompile(targetDefines, defines)
+
+    for (argI = 1; argI <= origin["length"]; ++argI)
+        if (origin[argI])
+            precompile(origin[argI], defines)
+
+#    if (!error) @make()
 }
 
 function gcc_preprocess(    fileIn, fileOut) {
@@ -486,8 +508,10 @@ function gcc_preprocess(    fileIn, fileOut) {
     close(fileIn)
 
     fileOut = ".preprocess.C.gcc...pre.c"
-    system("gcc -std=c11 -nostdinc -E "fileIn"  > "fileOut)
-    system("gcc -std=c11 -nostdinc -dM -E "fileIn" | sort >> "fileOut)
+    #system("gcc -std=c11 -nostdinc -E "fileIn"  > "fileOut)
+    system("gcc -std=c11 -nostdinc -dM -E "fileIn" | sort > "fileOut)
+
+    return fileOut
 }
 
 function read_gcc_preprocess_defines(defines,    fileIn, line, name) {
@@ -505,35 +529,23 @@ function read_gcc_preprocess_defines(defines,    fileIn, line, name) {
     }
 }
 
-function precompile(a, argumentI, arguments, b, c, d, defineBody, defines, e, f, g, h, i, I, ifExpressions, inputType, j, k, l, m, n, name,
-                    o, p, q, r, resultI, resultZ, s, t, u, v, w, x, y, z)
+function precompile(fileName, defines,    a, argumentI, arguments, b, c, count, d, defineBody, e, f, g, h,
+                    i, I, ifExpressions, inputType, j, k, l, m, n, name,
+                    o, p, q, r, resultI, resultZ, s, t, u, v, w, x, y, z, zeile)
 {
-    defines["length"] = 0
-    #Array_add(defines, "__STDC__")
-    #defines["__STDC__"]["body"] = "1"
-    #Array_add(defines, "__GNUC__")
-    #defines["__GNUC__"]["body"] = "7"
-    #Array_add(defines, "__GNUC_MINOR__")
-    #defines["__GNUC_MINOR__"]["body"] = "5"
-    #Array_add(defines, "__WORDSIZE")
-    #defines["__WORDSIZE"]["body"] = "64"
-    #Array_add(defines, "__USER_LABEL_PREFIX__")
-    #defines["__USER_LABEL_PREFIX__"]["body"] = ""
-    read_gcc_preprocess_defines(defines)
-
     ifExpressions["length"] = 0
 
-    for (d = 1; d <= includes["length"]; ++d) {
-        for (e = 1; e <= input["length"]; ++e)
-            if (input[e]["FILENAME"] == includes[d]) break
-        if (e > input["length"]) { print "(precompile) File doesn't exist: "includes[d]>"/dev/stderr"; continue }
+    for (e = 1; e <= input["length"]; ++e)
+        if (input[e]["FILENAME"] == fileName ) break
+    if (e > input["length"]) { print "(precompile) File doesn't exist: "fileName>"/dev/stderr"; return }
 
     resultI = ++result["length"]
-    result[resultI]["FILENAME"] = input[e]["FILENAME"]
+#    result[resultI]["FILENAME"] = input[e]["FILENAME"]
 
 # DEBUG
-resultZ = ++result[resultI]["length"]
-result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
+#resultZ = ++result[resultI]["length"]
+#result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
+print "\n/* 1 \""input[e]["FILENAME"]"\" */"
 
     inputType = ""
 
@@ -544,39 +556,40 @@ result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
     i = 0
     while (++i) {
         if (i > NF) {
-            if ((l = Index["length"]) > I) {
-                for (o = 1; o <= NF; ++o) {
-                    if ($o == "\\") { $o = ""; continue }
-                    if ($o == "##") {
-                        $(o + 1) = $(o - 1) $(o + 1)
-                        $(o - 1) = ""; $o = ""
-                        ++o; continue
-                    }
-                    if ($o == "#") {
-                        if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                            $o = "\"\""
-                        }
-                        else {
-                            $(o + 1) = "\""$(o + 1)"\""
-                            $o = ""
-                            ++o
-                        }
-                        continue
-                    }
-                }
-                Index_reset()
-                i = Index[l]["i"]
-                # name = Index[l]["name"]
-                n = NF
-                $i = Index_pop()
-                Index_reset()
-                i += n - 1
-                continue
-            }
+#            if ((l = Index["length"]) > I) {
+#                for (o = 1; o <= NF; ++o) {
+#                    if ($o == "\\") { $o = ""; continue }
+#                    if ($o == "##") {
+#                        $(o + 1) = $(o - 1) $(o + 1)
+#                        $(o - 1) = ""; $o = ""
+#                        ++o; continue
+#                    }
+#                    if ($o == "#") {
+#                        if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+#                            $o = "\"\""
+#                        }
+#                        else {
+#                            $(o + 1) = "\""$(o + 1)"\""
+#                            $o = ""
+#                            ++o
+#                        }
+#                        continue
+#                    }
+#                }
+#                Index_reset()
+#                i = Index[l]["i"]
+#                # name = Index[l]["name"]
+#                n = NF
+#                $i = Index_pop()
+#                Index_reset()
+#                i += n - 1
+#                continue
+#            }
             break
         }
 
-        if ($i ~ /^[ ]*$/) continue
+#        if ($i ~ /^[ ]*$/) continue
+
         if (inputType == "comment") {
             if ($i ~ /\*\/$/) inputType = ""
             Index_remove(i--)
@@ -593,9 +606,6 @@ result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
         }
 
         if (i == 1 && $1 == "#") {
-        if ($2 == "include") {
-            NF = 0; break
-        }
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
@@ -671,6 +681,34 @@ __error(input[e]["FILENAME"]" Line "z": "f" endif")
         if (NF == 0) break
 
         if (i == 1 && $1 == "#") {
+        if ($2 == "include") {
+            if ($3 ~ /^</) {
+                m = substr($3, 2, length($3) - 2)
+                for (n = 1; n <= includeDirs["length"]; ++n) {
+                    name = Path_join(includeDirs[n], m)
+                    if (File_exists(name)) {
+__error(input[e]["FILENAME"]" Line "z": including "name)
+                        precompile(name, defines)
+
+                        print "/* "z + 1" \""input[e]["FILENAME"]"\" */"
+                        break
+                    }
+                }
+                if (n > includeDirs["length"]) print "(precompile) File doesn't exist: <"m">">"/dev/stderr"
+            }
+            else {
+                m = get_DirectoryName(input[e]["FILENAME"])
+                m = Path_join(m, substr($3, 2, length($3) - 2))
+__error(input[e]["FILENAME"]" Line "z": including "m)
+                if (File_exists(m))
+                    precompile(m, defines)
+                else
+                    print "(precompile) File doesn't exist: \""m"\"">"/dev/stderr"
+
+                print "/* "z + 1" \""input[e]["FILENAME"]"\" */"
+            }
+            NF = 0; break
+        }
         if ($2 == "define") {
             name = $3
             if (f = Array_contains(defines, name)) {
@@ -683,7 +721,7 @@ __error(input[e]["FILENAME"]" Line "z": "f" endif")
                 for (n = 2; n <= NF; ++n) {
                     if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) continue
                     if ($n == ",") continue
-                    if ($n == "{") break
+                  # if ($n == "{") break
                     if ($n == ")") break
                     break
                 }
@@ -699,7 +737,9 @@ __error(input[e]["FILENAME"]" Line "z": "f" endif")
                 }
             }
 
-            m = ""; for (n = 1; n <= NF; ++n) m = String_concat(m, fix, $n)
+            m = ""; for (n = 1; n <= NF; ++n) {
+                m = String_concat(m, fix, $n)
+            }
             defines[name]["body"] = m
 
 if (defines[name]["function"]["length"])
@@ -734,39 +774,49 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
             defineBody = defines[name]["body"]
             Array_clear(arguments)
             if (defines[name]["function"]["length"]) {
-                if ($(i + 1) != "(") Index_append(i, "(")
+                o = i; m = ""; p = 0
+#                while (++o) {
+#                    if (o > NF) {
+##                        if ((l = Index["length"]) > I) {
+##                            i = o = Index[l]["i"]
+##                            # name = Index[l]["name"]
+##                            n = NF
+##                            $o = Index_pop()
+##                            Index_reset()
+##                            o += n - 1
+##                            continue
+##                        }
+#                        if ((l = Index["length"]) == I) {
+#                            if (++z <= input[e]["length"]) {
+#                                $0 = $0 fix input[e][z]
+#                                --o; continue
+#                            }
+#                        }
+#                        break
+#                    }
+#                    if (o == i + 1) {
+#                        continue
+#                    }
+#                    if (!p && $o == ",") {
+#                        Array_add(arguments, m)
+#                        m = ""
+#                        continue
+#                    }
+#                    if ($o == "(" || $o == "{") ++p
+#                    if ($o == ")" || $o == "}") { if (p) --p; else break }
+#                    m = String_concat(m, fix, $o)
+#                }
+#__error("real arguments length: "defines[name]["function"]["length"])
+#Array_error(arguments)
+#__error($0)
+#                Index_removeRange(i + 1, o)
 
-                o = i + 1
-                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-                    m = ""; p = 0
-                    while (++o) {
-                        if (o > NF) {
-                            if ((l = Index["length"]) == I) {
-                                if (++z <= input[e]["length"]) {
-                                    $0 = $0 fix input[e][z]
-                                    --o; continue
-                                }
-                            }
-                            break
-                        }
-                        if (!p && $o == ",") { --o; break }
-                        if ($o == "(" || $o == "{") ++p
-                        if ($o == ")" || $o == "}") { if (p) --p; else { --o; break } }
-                        m = String_concat(m, fix, $o)
-                    }
-                    Array_add(arguments, m)
-                    ++o
-                }
-
-                if ($o != ")") Index_append(o++, ")")
-                Index_removeRange(i + 1, o)
-
-                Index_push(defineBody, fixFS, fix)
-                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-                    for (o = 1; o <= NF; ++o)
-                        if ($o == defines[name]["function"][n]) $o = arguments[n]
-                }
-                defineBody = Index_pop()
+#                Index_push(defineBody, fixFS, fix)
+#                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
+#                    for (o = 1; o <= NF; ++o)
+#                        if ($o == defines[name]["function"][n]) $o = arguments[n]
+#                }
+#                defineBody = Index_pop()
             }
             if (defineBody == "") {
                 # define unsafe  /* unsafe */
@@ -780,22 +830,57 @@ __error(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["function"][
 }
 else
 __error(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
+
             Index_push(defineBody, fixFS, fix)
-            l = Index["length"]
-            Index[l]["name"] = name
-            Index[l]["i"] = i
-            i = 0; continue
+            for (o = 1; o <= NF; ++o) {
+                if ($o == "\\") { $o = ""; continue }
+                if ($o == "##") {
+                    $(o + 1) = $(o - 1) $(o + 1)
+                   $(o - 1) = ""; $o = ""
+                    ++o; continue
+                }
+                if ($o == "#") {
+                    if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                        $o = "\"\""
+                    }
+                    else {
+                        $(o + 1) = "\""$(o + 1)"\""
+                        $o = ""
+                        ++o
+                    }
+                    continue
+                }
+            }
+            defineBody = Index_pop()
+
+            $i = defineBody
+            Index_reset()
+            --i; continue
+
+#            Index_push(defineBody, fixFS, fix)
+#            l = Index["length"]
+#            Index[l]["name"] = name
+#            Index[l]["i"] = i
+#            i = 0; continue
         }
 
     }
+        # count = NF
         if (NF > 0) {
-            # print # if ($0 !~ /^[ \x01]*$/) {
-            resultZ = ++result[resultI]["length"]
-            result[resultI][resultZ] = $0
+            if (DEBUG) {
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/ || $h == "\\") ; else printf "(%d)%s", h, $h } print ""
+            }
+            else {
+                for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/ || $h == "\\") ; else printf "%s ", $h } print ""
+            }
+            # print
+            # if ($0 !~ /^[ \x01]*$/)
+            # resultZ = ++result[resultI]["length"]
+            # result[resultI][resultZ] = $0
         }
 
         Index_pop()
-    } }
+    }
 }
 
 function make_printInput(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
