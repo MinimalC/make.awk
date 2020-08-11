@@ -757,7 +757,10 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
                 delete defines[$3]
             }
             NF = 0; break
-        } }
+        }
+            $1 = "/*"; $NF = $NF fix "*/"; Index_reset()
+            break
+        }
 
         # Evaluate AWA
         if (Array_contains(defines, $i)) {
@@ -775,48 +778,49 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
             Array_clear(arguments)
             if (defines[name]["function"]["length"]) {
                 o = i; m = ""; p = 0
-#                while (++o) {
-#                    if (o > NF) {
-##                        if ((l = Index["length"]) > I) {
-##                            i = o = Index[l]["i"]
-##                            # name = Index[l]["name"]
-##                            n = NF
-##                            $o = Index_pop()
-##                            Index_reset()
-##                            o += n - 1
-##                            continue
-##                        }
-#                        if ((l = Index["length"]) == I) {
-#                            if (++z <= input[e]["length"]) {
-#                                $0 = $0 fix input[e][z]
-#                                --o; continue
-#                            }
+                while (++o) {
+                    if (o > NF) {
+#                        if ((l = Index["length"]) > I) {
+#                            i = o = Index[l]["i"]
+#                            # name = Index[l]["name"]
+#                            n = NF
+#                            $o = Index_pop()
+#                            Index_reset()
+#                            o += n - 1
+#                            continue
 #                        }
-#                        break
-#                    }
-#                    if (o == i + 1) {
-#                        continue
-#                    }
-#                    if (!p && $o == ",") {
-#                        Array_add(arguments, m)
-#                        m = ""
-#                        continue
-#                    }
-#                    if ($o == "(" || $o == "{") ++p
-#                    if ($o == ")" || $o == "}") { if (p) --p; else break }
-#                    m = String_concat(m, fix, $o)
-#                }
-#__error("real arguments length: "defines[name]["function"]["length"])
-#Array_error(arguments)
-#__error($0)
-#                Index_removeRange(i + 1, o)
+                        if ((l = Index["length"]) == I) {
+                            if (++z <= input[e]["length"]) {
+                                $0 = $0 fix input[e][z]
+                                --o; continue
+                            }
+                        }
+                        break
+                    }
+                    if (o == i + 1) continue
+                    if (!p && $o == ",") {
+                        Array_add(arguments, m)
+                        m = ""
+                        continue
+                    }
+                    if ($o == "(" || $o == "{") ++p
+                    if ($o == ")" || $o == "}") {
+                        if (p) --p
+                        else { Array_add(arguments, m); break }
+                    }
+                    m = String_concat(m, fix, $o)
+                }
+__error("real arguments length: "defines[name]["function"]["length"])
+Array_error(arguments)
+__error($0)
+                Index_removeRange(i + 1, o)
 
-#                Index_push(defineBody, fixFS, fix)
-#                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-#                    for (o = 1; o <= NF; ++o)
-#                        if ($o == defines[name]["function"][n]) $o = arguments[n]
-#                }
-#                defineBody = Index_pop()
+                Index_push(defineBody, fixFS, fix)
+                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
+                    for (o = 1; o <= NF; ++o)
+                        if ($o == defines[name]["function"][n]) $o = arguments[n]
+                }
+                defineBody = Index_pop()
             }
             if (defineBody == "") {
                 # define unsafe  /* unsafe */
