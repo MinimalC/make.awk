@@ -557,26 +557,6 @@ print "\n/* 1 \""input[e]["FILENAME"]"\" */"
     while (++i) {
         if (i > NF) {
 #            if ((l = Index["length"]) > I) {
-#                for (o = 1; o <= NF; ++o) {
-#                    if ($o == "\\") { $o = ""; continue }
-#                    if ($o == "##") {
-#                        $(o + 1) = $(o - 1) $(o + 1)
-#                        $(o - 1) = ""; $o = ""
-#                        ++o; continue
-#                    }
-#                    if ($o == "#") {
-#                        if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-#                            $o = "\"\""
-#                        }
-#                        else {
-#                            $(o + 1) = "\""$(o + 1)"\""
-#                            $o = ""
-#                            ++o
-#                        }
-#                        continue
-#                    }
-#                }
-#                Index_reset()
 #                i = Index[l]["i"]
 #                # name = Index[l]["name"]
 #                n = NF
@@ -733,13 +713,12 @@ __error(input[e]["FILENAME"]" Line "z": including "m)
                         defines[name]["function"][argumentI] = $o
                     }
                     defines[name]["function"]["text"] = m
+                    defines[name]["isFunctional"] = 1
                     Index_removeRange(1, n)
                 }
             }
 
-            m = ""; for (n = 1; n <= NF; ++n) {
-                m = String_concat(m, fix, $n)
-            }
+            m = ""; for (n = 1; n <= NF; ++n) m = String_concat(m, fix, $n)
             defines[name]["body"] = m
 
 if (defines[name]["function"]["length"])
@@ -776,7 +755,7 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
             name = $i
             defineBody = defines[name]["body"]
             Array_clear(arguments)
-            if (defines[name]["function"]["length"]) {
+            if (defines[name]["isFunctional"]) {
                 o = i; m = ""; p = 0
                 while (++o) {
                     if (o > NF) {
@@ -806,7 +785,7 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
                     if ($o == "(" || $o == "{") ++p
                     if ($o == ")" || $o == "}") {
                         if (p) --p
-                        else { Array_add(arguments, m); break }
+                        else { if (m != "") Array_add(arguments, m); break }
                     }
                     m = String_concat(m, fix, $o)
                 }
@@ -869,7 +848,6 @@ __error(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
         }
 
     }
-        # count = NF
         if (NF > 0) {
             if (DEBUG) {
                 for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/ || $h == "\\") ; else printf "(%d)%s", h, $h } print ""
