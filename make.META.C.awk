@@ -541,6 +541,9 @@ function precompile(fileName, defines,    a, argumentI, arguments, b, c, count, 
 
     resultI = ++result["length"]
 #    result[resultI]["FILENAME"] = input[e]["FILENAME"]
+    if (!Array_contains(defines, "__FILE__")) Array_add(defines, "__FILE__")
+    if (!Array_contains(defines, "__LINE__")) Array_add(defines, "__LINE__")
+    defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
 
 # DEBUG
 #resultZ = ++result[resultI]["length"]
@@ -551,7 +554,8 @@ print "\n/* 1 \""input[e]["FILENAME"]"\" */"
 
     for (z = 1; z <= input[e]["length"]; ++z) {
         Index_push(input[e][z], fixFS, fix)
-        I = Index["length"]
+
+        defines["__LINE__"]["body"] = z
 
     i = 0
     while (++i) {
@@ -669,6 +673,8 @@ __error(input[e]["FILENAME"]" Line "z": "f" endif")
                     if (File_exists(name)) {
 __error(input[e]["FILENAME"]" Line "z": including "name)
                         precompile(name, defines)
+                        defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
+                        defines["__LINE__"]["body"] = z
 
                         print "/* "z + 1" \""input[e]["FILENAME"]"\" */"
                         break
@@ -680,8 +686,11 @@ __error(input[e]["FILENAME"]" Line "z": including "name)
                 m = get_DirectoryName(input[e]["FILENAME"])
                 m = Path_join(m, substr($3, 2, length($3) - 2))
 __error(input[e]["FILENAME"]" Line "z": including "m)
-                if (File_exists(m))
+                if (File_exists(m)) {
                     precompile(m, defines)
+                    defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
+                    defines["__LINE__"]["body"] = z
+                }
                 else
                     print "(precompile) File doesn't exist: \""m"\"">"/dev/stderr"
 
@@ -701,7 +710,7 @@ __error(input[e]["FILENAME"]" Line "z": including "m)
                 for (n = 2; n <= NF; ++n) {
                     if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) continue
                     if ($n == ",") continue
-                  # if ($n == "{") break
+                    if ($n == "...") continue
                     if ($n == ")") break
                     break
                 }
@@ -768,11 +777,11 @@ __error(input[e]["FILENAME"]" Line "z": define "name" "defines[name]["body"])
 #                            o += n - 1
 #                            continue
 #                        }
-                        if ((l = Index["length"]) == I) {
-                            if (++z <= input[e]["length"]) {
-                                $0 = $0 fix input[e][z]
-                                --o; continue
-                            }
+#                        if ((l = Index["length"]) == I)
+                        if (++z <= input[e]["length"]) {
+                            $0 = $0 fix input[e][z]
+                            defines["__LINE__"]["body"] = z
+                            --o; continue
                         }
                         break
                     }
@@ -795,9 +804,23 @@ __error($0)
                 Index_removeRange(i + 1, o)
 
                 Index_push(defineBody, fixFS, fix)
-                for (n = 1; n <= defines[name]["function"]["length"]; ++n) {
-                    for (o = 1; o <= NF; ++o)
+                l = defines[name]["function"]["length"]
+                for (n = 1; n <= l; ++n) {
+                    for (o = 1; o <= NF; ++o) {
                         if ($o == defines[name]["function"][n]) $o = arguments[n]
+                        if (o > 1 && $(o - 1) == "#") { $o = "\""$o"\""; $(o - 1) = "" }
+                    }
+                }
+                if (defines[name]["function"][l] == "...") {
+                    for (o = 1; o <= NF; ++o) {
+                        if ($o == "__VA_ARGS__") {
+                            $o = ""
+                            for (n = l; n <= arguments["length"]; ++n)
+                                $o = String_concat($o, fix","fix, arguments[n])
+                            if (o > 1 && $(o - 1) == "#") { $o = "\""$o"\""; $(o - 1) = "" }
+                        }
+                    }
+                    Index_reset()
                 }
                 defineBody = Index_pop()
             }
