@@ -205,7 +205,7 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
                         break
                     }
                 }
-                if (d > includeDirs["length"]) __error("(preprocess) File doesn't exist: <"includeString">")
+              # if (d > includeDirs["length"]) __error("(preprocess) File doesn't exist: <"includeString">")
                 if (i != NF) if (Index_append(i, fix, fix)) ++i
               # hash = ""
               # NF = i
@@ -521,9 +521,9 @@ function precompile(fileName, defines,    a, argumentI, arguments, b, c, count, 
     if (!Array_contains(defines, "__LINE__")) Array_add(defines, "__LINE__")
     defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
 
-#resultZ = ++result[resultI]["length"]
-#result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
-print "\n# 1 \""input[e]["FILENAME"]"\""
+    #resultZ = ++result[resultI]["length"]
+    #result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
+    print "\n# 1 \""input[e]["FILENAME"]"\""
 
     inputType = ""
 
@@ -579,7 +579,7 @@ print "\n# 1 \""input[e]["FILENAME"]"\""
             x = Expression_evaluate(m, defines, "")
             if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
             f = Array_add(ifExpressions)
-__error(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "x)
+__debug(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "x)
             ifExpressions[f]["if"] = m
             if (x) ifExpressions[f]["do"] = 1
             NF = 0; break
@@ -598,7 +598,7 @@ __error(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "x)
             ifExpressions[f]["else if"] = m
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             if (!ifExpressions[f]["do"] && x) {
-__error(input[e]["FILENAME"]" Line "z": (Level "f") else if "m"  == "x)
+__debug(input[e]["FILENAME"]" Line "z": (Level "f") else if "m"  == "x)
                 ifExpressions[f]["do"] = 1
             }
             NF = 0; break
@@ -608,14 +608,14 @@ __error(input[e]["FILENAME"]" Line "z": (Level "f") else if "m"  == "x)
             ifExpressions[f]["else"] = 1
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             if (!ifExpressions[f]["do"]) {
-__error(input[e]["FILENAME"]" Line "z": (Level "f") else")
+__debug(input[e]["FILENAME"]" Line "z": (Level "f") else")
                 ifExpressions[f]["do"] = 1
             }
             NF = 0; break
         }
         if ($2 == "endif") {
             f = ifExpressions["length"]
-__error(input[e]["FILENAME"]" Line "z": (Level "f") endif")
+__debug(input[e]["FILENAME"]" Line "z": (Level "f") endif")
             Array_remove(ifExpressions, f)
             NF = 0; break
         } }
@@ -633,7 +633,7 @@ __error(input[e]["FILENAME"]" Line "z": (Level "f") endif")
                 for (n = 1; n <= includeDirs["length"]; ++n) {
                     name = Path_join(includeDirs[n], m)
                     if (File_exists(name)) {
-__error(input[e]["FILENAME"]" Line "z": including "name)
+__debug(input[e]["FILENAME"]" Line "z": including "name)
                         precompile(name, defines)
                         defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
                         defines["__LINE__"]["body"] = z
@@ -648,7 +648,7 @@ __error(input[e]["FILENAME"]" Line "z": including "name)
                 m = get_DirectoryName(input[e]["FILENAME"])
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
-__error(input[e]["FILENAME"]" Line "z": including "m)
+__debug(input[e]["FILENAME"]" Line "z": including "m)
                     precompile(m, defines)
                     defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
                     defines["__LINE__"]["body"] = z
@@ -692,9 +692,9 @@ __error(input[e]["FILENAME"]" Line "z": including "m)
             defines[name]["body"] = m
 
 if (defines[name]["arguments"]["length"])
-__error(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["arguments"]["length"]"("defines[name]["arguments"]["text"]") "defines[name]["body"])
+__debug(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["arguments"]["length"]"("defines[name]["arguments"]["text"]") "defines[name]["body"])
 else
-__error(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["body"])
+__debug(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["body"])
 
             NF = 0; break
         }
@@ -747,9 +747,9 @@ __error(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["body"])
                     }
                     m = String_concat(m, fix, $o)
                 }
-#__error("real arguments length: "defines[name]["arguments"]["length"])
-#Array_error(arguments)
-#__error($0)
+#__debug("real arguments length: "defines[name]["arguments"]["length"])
+#Array_debug(arguments)
+#__debug($0)
                 Index_removeRange(i + 1, o)
 
                 Index_push(defineBody, fixFS, fix)
@@ -776,16 +776,16 @@ __error(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["body"])
             }
             if (defineBody == "") {
                 # define unsafe  /* unsafe */
-                __error(input[e]["FILENAME"]" Line "z": using "name" without body")
+__debug(input[e]["FILENAME"]" Line "z": using "name" without body")
                 Index_remove(i--)
                 continue
             }
 #if (defines[name]["arguments"]["length"]) {
-#__error(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["arguments"]["length"]"( "defines[name]["arguments"]["text"]" ) "defineBody)
-## Array_error(arguments)
+#__debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["arguments"]["length"]"( "defines[name]["arguments"]["text"]" ) "defineBody)
+## Array_debug(arguments)
 #}
 #else
-#__error(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
+#__debug(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
 
             Index_push(defineBody, fixFS, fix)
             for (o = 1; o <= NF; ++o) {

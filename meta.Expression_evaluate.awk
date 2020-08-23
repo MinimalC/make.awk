@@ -116,7 +116,7 @@ __error("Unknown Character \""$i"\"")
                 i = Index[l]["i"]
                 n = NF
                 $i = Index_pop()
-#__debug("Define "name" "$i)
+__debug2("Using "name" "$i)
                 Index_reset()
                 i += n - 1
                 continue
@@ -154,7 +154,7 @@ __error("Unknown Character \""$i"\"")
             n = $(i + 2)
             if ($(i + 3) != ")") Index_append(i + 2, ")")
             if (Array_contains(defines, n)) $i = "1"; else $i = "0"
-__debug("Defined "n" "$i)
+__debug2("Defined "n" "$i)
             Index_remove(i + 1, i + 2, i + 3)
             continue
         }
@@ -162,7 +162,7 @@ __debug("Defined "n" "$i)
         if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
             name = $i
             if (!Array_contains(defines, name)) {
-__debug("NotDefined "name)
+__debug2("NotDefined "name)
                 $i = "0"
                 continue
             }
@@ -196,12 +196,12 @@ __debug("NotDefined "name)
             }
             if (defineBody == "") {
                 # define unsafe  /* unsafe */
-__debug("Define "name" without body")
+__debug2("Define "name" without body")
                 $i = "0"
                 continue
             }
             gsub(fixFS, " ", defineBody)
-__debug("Define "name" "defineBody)
+#__debug2("Using "name" "defineBody)
             Index_push(defineBody, " ", " ")
             l = Index["length"]
             Index[l]["name"] = name
@@ -220,7 +220,7 @@ __debug("Define "name" "defineBody)
 
             Index_remove(i + 1)
             if ($(i - 1) == "!") --i
-__debug("not: "$0)
+__debug2("not: "$0)
             continue
         }
         # Evaluate Binary, Bitwise NOT ~ Negation: the complement of n
@@ -230,7 +230,7 @@ __debug("not: "$0)
             $i = compl($(i + 1))
             Index_remove(i + 1)
             if ($(i - 1) == "~") --i
-__debug("NOT: "$0)
+__debug2("NOT: "$0)
             continue
         }
     }
@@ -241,19 +241,19 @@ __debug("NOT: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             if (!$(i + 1)) {
                 $i = 0
-__debug("Division through null: "$0)
+__debug2("Division through null: "$0)
             }
             else {
                 $i = $(i - 1) / $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-__debug("Division: "$0)
+__debug2("Division: "$0)
             }
         }
         if ($i == "*") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) * $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug("Multiplikation: "$0)
+__debug2("Multiplikation: "$0)
         }
     }
 
@@ -264,14 +264,14 @@ __debug("Multiplikation: "$0)
             if ((i > 3 && ($(i - 2) == "*" || $(i - 2) == "/")) || ($(i + 2) == "*" || $(i + 2) == "/")) continue
             $i = $(i - 1) - $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug("Subtraktion: "$0)
+__debug2("Subtraktion: "$0)
         }
         if ($i == "+") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             if ((i > 3 && ($(i - 2) == "*" || $(i - 2) == "/")) || ($(i + 2) == "*" || $(i + 2) == "/")) continue
             $i = $(i - 1) + $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug("Addition: "$0)
+__debug2("Addition: "$0)
         }
     }
 
@@ -281,13 +281,13 @@ __debug("Addition: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = lshift($(i - 1), $(i + 1))
             Index_remove(i - 1, i + 1); --i
-__debug("LeftShift: "$0)
+__debug2("LeftShift: "$0)
         }
         if ($i == ">>") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = rshift($(i - 1), $(i + 1))
             Index_remove(i - 1, i + 1); --i
-__debug("RightShift: "$0)
+__debug2("RightShift: "$0)
         }
     }
 
@@ -297,51 +297,51 @@ __debug("RightShift: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) == $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug("Equals: "$0)
+__debug2("Equals: "$0)
         }
         if ($i == "<=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) <= $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug( "LowerThanEquals: "$0 )
+__debug2( "LowerThanEquals: "$0 )
         }
         if ($i == "<") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) < $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug( "LowerThan: "$0 )
+__debug2( "LowerThan: "$0 )
         }
         if ($i == ">=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) >= $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug( "GreaterThanEquals: "$0 )
+__debug2( "GreaterThanEquals: "$0 )
         }
         if ($i == ">") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) > $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug( "GreaterThan: "$0 )
+__debug2( "GreaterThan: "$0 )
         }
         if ($i == "!=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) != $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug( "NotEquals: "$0 )
+__debug2( "NotEquals: "$0 )
         }
         # Evaluate Logical Boolean and && or ||
         if ($i == "&&") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) && $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug("and: "$0)
+__debug2("and: "$0)
             if (!$i) NF = i
         }
         if ($i == "||") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) || $(i + 1)
             Index_remove(i - 1, i + 1); --i
-__debug("or: "$0)
+__debug2("or: "$0)
             if (!$i) NF = i
         }
     }

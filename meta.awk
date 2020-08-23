@@ -69,6 +69,12 @@ function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, 
         print message >"/dev/stderr"
     }
 }
+function __debug2(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    if ("DEBUG" in SYMTAB && DEBUG >= 2) {
+        message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+        print message >"/dev/stderr"
+    }
+}
 
 
 function ARGV_contains(item,    s, t, u, v) {
@@ -491,7 +497,8 @@ function Path_join(directory, fileName,    h, i, j, k, l, m, n, o, p, q, r, s) {
     for (n = 1; n <= NF; ++n) {
         if ($n == "") Index_remove(n--)
         if (n > 1 && $n == ".") Index_remove(n--)
-        if (n > 1 && $n == "..") { Index_remove(n - 1, n); n -= 2 }
+        if (n == 2 && $n == "..") { Index_remove(n - 1); --n }
+        if (n > 2 && $n == "..") { Index_remove(n - 1, n); n -= 2 }
     }
     if (!s && $1 != ".." && $1 != ".") { Index_insert(1, " "); $1 = "" }
     r = $0

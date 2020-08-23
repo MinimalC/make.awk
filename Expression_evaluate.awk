@@ -3,7 +3,7 @@
 @include "meta.awk"
 
 BEGIN {
-    DEBUG=1
+    DEBUG=2
 
     defines["length"] = definesI = 0
 
