@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-@include "meta.Expression_evaluate.awk"
+@include "../make.awk/meta.Expression_evaluate.awk"
 
 BEGIN {
     PROCINFO["sorted_in"] = "@ind_num_asc"
@@ -178,7 +178,7 @@ function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n
 }
 
 function Array_remove(array, i,    h, j, k, l, m, n) {
-    if (typeof(i) == "untyped") { error = "i is no Number"; nextfile }
+    if (typeof(i) == "untyped") { __error("i is untyped"); return }
     if (typeof(i) != "number") { delete array[i]; return }
     l = array["length"]
     for (n = i; n < l; ++n)
@@ -357,7 +357,7 @@ function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
     return Index_reset()
 }
 
-function Index_pop(fromFS, fromOFS,    p, q, r) {
+function Index_pop(fromFS, fromOFS,    h, i, p, q, r) {
 
     if (typeof(fromOFS) != "untyped") OFS = fromOFS
     if (typeof(fromFS) != "untyped")  FS  = fromFS
@@ -484,13 +484,16 @@ function get_DirectoryName(fileName,    p, q, r) {
     return r
 }
 
-function Path_join(directory, fileName,    h, i, j, k, l, m, n, o, p, q, r) {
-    Index_push(directory "/" fileName, "/", "/")
+function Path_join(directory, fileName,    h, i, j, k, l, m, n, o, p, q, r, s) {
+    if (directory == "") directory = "."
+    Index_push(directory"/"fileName, "/", "/")
+    s = $1 != ""
     for (n = 1; n <= NF; ++n) {
-        if ($n == "" || $n == ".") Index_remove(n--)
+        if ($n == "") Index_remove(n--)
+        if (n > 1 && $n == ".") Index_remove(n--)
         if (n > 1 && $n == "..") { Index_remove(n - 1, n); n -= 2 }
     }
-    if ($1 != "..") { Index_insert(1, " "); $1 = "" }
+    if (!s && $1 != ".." && $1 != ".") { Index_insert(1, " "); $1 = "" }
     r = $0
     Index_pop()
     return r

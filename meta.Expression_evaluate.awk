@@ -154,13 +154,18 @@ __error("Unknown Character \""$i"\"")
             n = $(i + 2)
             if ($(i + 3) != ")") Index_append(i + 2, ")")
             if (Array_contains(defines, n)) $i = "1"; else $i = "0"
-            Index_remove(i + 1, i + 2, i + 3)
 __debug("Defined "n" "$i)
+            Index_remove(i + 1, i + 2, i + 3)
             continue
         }
         # Evaluate AWA ( a , b ) or AWA
         if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
             name = $i
+            if (!Array_contains(defines, name)) {
+__debug("NotDefined "name)
+                $i = "0"
+                continue
+            }
             defineBody = defines[name]["body"]
             Array_clear(arguments)
             if (defines[name]["function"]["length"]) {
@@ -330,14 +335,14 @@ __debug( "NotEquals: "$0 )
             $i = $(i - 1) && $(i + 1)
             Index_remove(i - 1, i + 1); --i
 __debug("and: "$0)
-            # if (!$i) NF = i
+            if (!$i) NF = i
         }
         if ($i == "||") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) || $(i + 1)
             Index_remove(i - 1, i + 1); --i
 __debug("or: "$0)
-            # if (!$i) NF = i
+            if (!$i) NF = i
         }
     }
     return Index_pop()

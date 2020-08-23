@@ -47,7 +47,7 @@ BEGIN {
 
         print ""; print "\""Expression_evaluate( " 5UL  >  4", defines)"\""
 
-        print ""; print "\""Expression_evaluate( " !__GNUC_PREREQ (2, 7)", defines)"\""
+        print ""; print "\""Expression_evaluate( " __GNUC_PREREQ (2, 7)", defines)"\""
 
         print ""; print "\""Expression_evaluate( " !( defined ( __GNUG__ ) && defined ( size_t ) ) ", defines)"\""
 
