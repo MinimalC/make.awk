@@ -177,9 +177,6 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
                         ARGV_add(n)
                     }
                   # else __error("(preprocess) File doesn't exist: \""n"\"")
-                  # hash = ""
-                  # NF = i
-                  # break
                 }
                 if (i != NF) if (Index_append(i, fix, fix)) ++i
                 continue
@@ -207,9 +204,6 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
                 }
               # if (d > includeDirs["length"]) __error("(preprocess) File doesn't exist: <"includeString">")
                 if (i != NF) if (Index_append(i, fix, fix)) ++i
-              # hash = ""
-              # NF = i
-              # break
                 continue
             }
             includeString = includeString $i
@@ -247,9 +241,7 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
             continue
         }
         if ($i == "\\") {
-            if (i != NF) {
-                Index_remove(i--); continue
-            }
+            if (i != NF) { Index_remove(i--); continue }
             if (i != 1) if (Index_prepend(i, fix, fix)) ++i
           # print FILENAME" Line "z": Line Continuation \\">"/dev/stderr"
 if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
@@ -271,14 +263,22 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
             if (i != NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
-        if ($i == "\"") {
+        if ( $i == "L" && $(i + 1) == "\"" ) {
             if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            continue
+        }
+        if ( $i == "\"" ) {
+            if (i != 1 && $(i - 1) != "L") if (Index_prepend(i, fix, fix)) ++i
             inputType = "string"
             string = ""
             continue
         }
-        if ( $i == "'" ) {
+        if ( $i == "L" && $(i + 1) == "'" ) {
             if (i != 1) if (Index_prepend(i, fix, fix)) ++i
+            continue
+        }
+        if ( $i == "'" ) {
+            if (i != 1 && $(i - 1) != "L") if (Index_prepend(i, fix, fix)) ++i
             inputType = "character"
             continue
         }
@@ -498,8 +498,8 @@ function gcc_preprocess(    fileIn, fileOut) {
     close(fileIn)
 
     fileOut = ".preprocess.C.gcc...pre.c"
-    #system("gcc -std=c11 -nostdinc -E "fileIn"  > "fileOut)
-    system("gcc -std=c11 -nostdinc -dM -E "fileIn" | sort > "fileOut)
+    system("gcc -std=c11 -E "fileIn"  > "fileOut)
+    system("gcc -std=c11 -dM -E "fileIn" | sort > "fileOut)
 
     return fileOut
 }

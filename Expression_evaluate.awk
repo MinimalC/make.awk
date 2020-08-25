@@ -51,6 +51,8 @@ BEGIN {
 
         print ""; print "\""Expression_evaluate( " !( defined ( __GNUG__ ) && defined ( size_t ) ) ", defines)"\""
 
+        print ""; print "\""Expression_evaluate( "L'\0'", defines)"\""
+
     }
 
     exit

@@ -3,7 +3,7 @@
 # 2020 Hans Riehm
 
 function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defineBody,
-                             h, i, I, j, k, l, m, n, name, o, p, q, r, s, t, u, v, w, x, y, z)
+                             h, i, I, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     if (typeof(fixFS) == "untyped") fixFS = FS
     if (typeof(fix) == "untyped") fix = OFS
@@ -71,14 +71,45 @@ function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defi
                 break
             } --i
             if ($(i + 1) ~ /[uUlL]/) {
-                n = i
-                for (; ++n <= NF; ) {
+                for (n = i; ++n <= NF; ) {
                     if ($n ~ /[uUlL]/) continue
                     break
                 } --n
                 Index_removeRange(i + 1, n)
             }
             if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
+        if ($i == "L" && $(i + 1) == "'") {
+            Index_remove(i--); continue
+        }
+        if ($i == "'") {
+            if (Index_prepend(i, " ", " ")) ++i
+            if ($(i + 1) == "\\") {
+                if ($(i + 2) == "x") {
+                    number = ""
+                    for (n = i + 3; n <= NF; ++n) {
+                        if ($n ~ /[0-9a-fA-F]/) { number = number $n; continue }
+                        break
+                    } --n
+                    $i = strtonum("0x"number)
+                }
+                else {
+                    number = ""
+                    for (n = i + 2; n <= NF; ++n) {
+                        if ($n ~ /[0-7]/) { number = number $n; continue }
+                        break
+                    } --n
+                    $i = strtonum(number)
+                }
+                Index_removeRange(i + 1, n)
+            }
+            else {
+                number = $(i + 1)
+                $i = chartonum(number)
+                Index_remove(i + 1)
+            }
+            if ($(i + 1) == "'") Index_remove(i + 1)
             continue
         }
         if ($i ~ /[[:alpha:]_]/) {
@@ -109,18 +140,17 @@ __error("Unknown Character \""$i"\"")
     i = 0
     while (++i) {
         if (i > NF) {
-            if ((l = Index["length"]) > I) {
-                for (o = 1; o <= NF; ++o)
-                    if ($o == "\\") $o = ""
-                Index_reset()
-                i = Index[l]["i"]
-                n = NF
-                $i = Index_pop()
-__debug2("Using "name" "$i)
-                Index_reset()
-                i += n - 1
-                continue
-            }
+#            if ((l = Index["length"]) > I) {
+#                for (o = 1; o <= NF; ++o)
+#                    if ($o == "\\") $o = ""
+#                Index_reset()
+#                i = Index[l]["i"]
+#                n = NF
+#                $i = Index_pop()
+#                Index_reset()
+#                i += n - 1
+#                continue
+#            }
             break
         }
 #        if ($i == ")") {
@@ -201,12 +231,15 @@ __debug2("Define "name" without body")
                 continue
             }
             gsub(fixFS, " ", defineBody)
-#__debug2("Using "name" "defineBody)
-            Index_push(defineBody, " ", " ")
-            l = Index["length"]
-            Index[l]["name"] = name
-            Index[l]["i"] = i
-            i = 0; continue
+__debug2("Using "name" "defineBody)
+#            Index_push(defineBody, " ", " ")
+#            l = Index["length"]
+#            Index[l]["name"] = name
+#            Index[l]["i"] = i
+#            i = 0; continue
+            $i = defineBody
+            Index_reset()
+            --i; continue
         }
     }
 

@@ -76,6 +76,15 @@ function __debug2(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u,
     }
 }
 
+function chartonum(char,    a, b, c, h, i, j, k, l, m, n) {
+    if (!("ALLCHARS" in SYMTAB)) {
+        for (n = 1; n <= 65535; ++n) {
+            c = sprintf("%c", n)
+            ALLCHARS = ALLCHARS c
+        }
+    }
+    return index(ALLCHARS, char)
+}
 
 function ARGV_contains(item,    s, t, u, v) {
     for (v = 1; v < ARGC; ++v)
