@@ -749,9 +749,7 @@ __debug(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["body"])
                 }
 #__debug("real arguments length: "defines[name]["arguments"]["length"])
 #Array_debug(arguments)
-#__debug($0)
                 Index_removeRange(i + 1, o)
-
                 Index_push(defineBody, fixFS, fix)
                 l = defines[name]["arguments"]["length"]
                 for (n = 1; n <= l; ++n) {
@@ -780,13 +778,6 @@ __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
                 Index_remove(i--)
                 continue
             }
-#if (defines[name]["arguments"]["length"]) {
-#__debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["arguments"]["length"]"( "defines[name]["arguments"]["text"]" ) "defineBody)
-## Array_debug(arguments)
-#}
-#else
-#__debug(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
-
             Index_push(defineBody, fixFS, fix)
             for (o = 1; o <= NF; ++o) {
                 if ($o == "\\") { $o = ""; continue }
@@ -808,7 +799,15 @@ __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
                 }
                 if ($o == name) ++noredefines[name]
             }
+            Index_reset()
             defineBody = Index_pop()
+
+if (defines[name]["arguments"]["length"]) {
+__debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["arguments"]["length"]"( "defines[name]["arguments"]["text"]" ) "defineBody)
+# Array_debug(arguments)
+}
+else
+__debug(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
 
             $i = defineBody
             Index_reset()

@@ -53,6 +53,8 @@ BEGIN {
 
         print ""; print "\""Expression_evaluate( "'\\x002B' + L'\\0' + '\\111' + 'A'", defines)"\""
 
+        print ""; print "\""Expression_evaluate( " (5 + 5) ? ( 3 + 5 * 6 ) : 0", defines)"\""
+
     }
 
     exit

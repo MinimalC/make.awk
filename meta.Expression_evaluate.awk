@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defineBody,
+function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defineBody, e, f, g,
                              h, i, I, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     if (typeof(fixFS) == "untyped") fixFS = FS
@@ -134,6 +134,11 @@ function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defi
             Index_remove(i--)
             continue
         }
+        if ($i == "?" || $i == ":") {
+            if (i > 1) if (Index_prepend(i, " ", " ")) ++i
+            if (i < NF) if (Index_append(i, " ", " ")) ++i
+            continue
+        }
         # remove
 __error("Unknown Character \""$i"\"")
         Index_remove(i--)
@@ -163,7 +168,7 @@ __error("Unknown Character \""$i"\"")
 #        }
         if ($i == "(") {
             m = ""
-            for (o = i + 1; o <= NF; ++o) {
+            p = 0; for (o = i + 1; o <= NF; ++o) {
                 if ($o == "(" || $o == "{") ++p
                 if ($o == ")" || $o == "}") { if (p) --p; else break }
                 m = String_concat(m, " ", $o)
@@ -173,14 +178,44 @@ __error("Unknown Character \""$i"\"")
             Index_push(x, " ", " ")
             n = NF
             Index_pop()
-            if (n > 1) {
-                Index_append(i, x" )")
-                i += n + 1
-                continue
-            }
             $i = x
             --i
             continue
+        }
+        if ($i == "?") {
+            q = ""
+            for (n = 1; n < i; ++n) {
+                q = String_concat(q, " ", $n)
+            }
+            t = ""
+            p = 0; for (o = i + 1; o <= NF; ++o) {
+                if (!p && $o == ":") break
+                if ($o == "(" || $o == "{") ++p
+                if ($o == ")" || $o == "}") { if (p) --p }
+                t = String_concat(t, " ", $o)
+            }
+            if ($o != ":") __error("QuestionMark isn't followed by :")
+            f = ""
+            for (p = o + 1; p <= NF; ++p) {
+                f = String_concat(f, " ", $p)
+            }
+__debug2("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
+            x = Expression_evaluate(q, defines)
+            NF = 1
+            if (x) {
+                Index_push(t, " ", " ")
+                n = NF
+                Index_pop()
+                $1 = t
+            }
+            else {
+                Index_push(f, " ", " ")
+                n = NF
+                Index_pop()
+                $1 = f
+            }
+            Index_reset()
+            i = 0; continue
         }
         # Evaluate defined ( AWA )
         if ($i == "defined") {
