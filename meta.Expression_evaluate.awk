@@ -86,30 +86,34 @@ function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defi
         if ($i == "'") {
             if (Index_prepend(i, " ", " ")) ++i
             if ($(i + 1) == "\\") {
+                $(i + 1) = ""
                 if ($(i + 2) == "x") {
+                    $(i + 2) = ""
                     number = ""
                     for (n = i + 3; n <= NF; ++n) {
-                        if ($n ~ /[0-9a-fA-F]/) { number = number $n; continue }
-                        break
-                    } --n
+                        if ($n ~ /[0-9a-fA-F]/) { number = number $n; $n = ""; continue }
+                        --n; break
+                    }
                     $i = strtonum("0x"number)
                 }
                 else {
                     number = ""
                     for (n = i + 2; n <= NF; ++n) {
-                        if ($n ~ /[0-7]/) { number = number $n; continue }
-                        break
-                    } --n
+                        if ($n ~ /[0-7]/) { number = number $n; $n = ""; continue }
+                        --n; break
+                    }
                     $i = strtonum(number)
                 }
-                Index_removeRange(i + 1, n)
+                if ($(n + 1) == "'") $(n + 1) = ""
             }
             else {
                 number = $(i + 1)
                 $i = chartonum(number)
-                Index_remove(i + 1)
+                $(i + 1) = ""
+                if ($(i + 2) == "'") $(i + 2) = ""
             }
-            if ($(i + 1) == "'") Index_remove(i + 1)
+            i += length($i) - 1
+            Index_reset()
             continue
         }
         if ($i ~ /[[:alpha:]_]/) {
