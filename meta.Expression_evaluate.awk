@@ -246,7 +246,7 @@ __debug2("NotDefined "name)
                     p = 0; for ( ; ++o <= NF; ) {
                         if (!p && $o == ",") { --o; break }
                         if ($o == "(" || $o == "{") ++p
-                        if ($o == ")" || $o == "}") { if (p) --p; else { --o; break } }
+                        if ($o == ")" || $o == "}") { if (p) --p; else break }
                         m = String_concat(m, " ", $o)
                     }
                     Array_add(arguments, m)
