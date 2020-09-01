@@ -502,7 +502,7 @@ function gcc_preprocess(    fileIn, fileOut) {
     return fileOut
 }
 
-function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, e, f, g, h,
+function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, defineBody1, e, f, g, h,
                     i, ifExpressions, inputType, j, k, l, m, n, name, noredefines,
                     o, p, q, r, resultI, resultZ, s, t, u, v, w, x, y)
 {
@@ -717,8 +717,10 @@ __debug(input[e]["FILENAME"]" Line "z": undef "$3)
         name = $i
 
         I = Index["length"]
-        i = i + Define_apply(i, e, defines, noredefines)
-        Index_reset()
+__debug(input[e]["FILENAME"]" Line "z": 0 applying "name)
+
+        n = Define_apply(i, e, defines, noredefines)
+        i += n - 1
     }
 
     }
@@ -739,18 +741,17 @@ __debug(input[e]["FILENAME"]" Line "z": undef "$3)
     }
 }
 
-function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defBody, defineBody, f, g, h, j, k, l, m,
-                                                     n, name, o, p, q, r, s, t, u, v, w, x, y)
+function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defineBody, defineBody1, f, g, h, inputType, j, k, l, m,
+                                                     n, name, notapplied, o, p, q, r, s, t, u, v, w, x, y)
 {
     # Evaluate AWA
     if (Array_contains(defines, $i)) {
         name = $i
         # define AWA AWA
         if (noredefines[name]) {
-            --noredefines[name]
+            #--noredefines[name]
             __error(input[e]["FILENAME"]" Line "z": self-referencing define "name" "name)
-            $i = name
-            return 0
+            return 1
         }
         delete noredefines[name]
         # define name ( arg1 , arg2 ) body
@@ -786,23 +787,26 @@ function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defB
             }
             if ($(i + 1) != "(") {
 __debug(input[e]["FILENAME"]" Line "z": not using "name)
-                $i = name
-                return -1
+                return 1
             }
             Index_removeRange(i + 1, o)
             if (arguments["length"] < l) __error(input[e]["FILENAME"]" Line "z": using "name": Not enough arguments used")
-            else if (arguments["length"] > l) __error(input[e]["FILENAME"]" Line "z": using "name": Too many arguments used")
+            else if (arguments["length"] > l && defines[name]["arguments"][l] != "...")
+                __error(input[e]["FILENAME"]" Line "z": using "name": Too many arguments used")
 #Array_debug(arguments)
+#            ++noredefines[name]
             for (n = 1; n <= arguments["length"]; ++n) {
                 Index_push(arguments[n], fixFS, fix)
                 for (j = 1; j <= NF; ++j) {
-                    if (Array_contains(defines, $j) && $(j + 1) == "(") {
-                        j = j + Define_apply(j, e, defines, noredefines)
-                        Index_reset()
+                    if (Array_contains(defines, $j)) {
+__debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
+                        m = Define_apply(j, e, defines, noredefines)
+                        j += m - 1
                     }
                 }
                 arguments[n] = Index_pop()
             }
+#            --noredefines[name]
             Index_push(defineBody, fixFS, fix)
             for (n = 1; n <= l; ++n) {
                 if (n == l && defines[name]["arguments"][l] == "...") break
@@ -827,23 +831,49 @@ __debug(input[e]["FILENAME"]" Line "z": not using "name)
         if (defineBody == "") {
             # define unsafe  /* unsafe */
 __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
-            $i = ""
-            return -1
+            Index_remove(i)
+            return 0
         }
         Index_push(defineBody, fixFS, fix)
-        for (o = 1; o <= NF; ++o) {
-            if ($o == name) { ++noredefines[name]; continue }
-            if (Array_contains(defines, $o) && $(o + 1) == "(") {
-                o = o + Define_apply(o, e, defines, noredefines)
-                Index_reset()
+        ++noredefines[name]
+        notapplied = 0
+        for (j = 1; j <= NF; ++j) {
+#            if ($j == name) {
+#__debug(input[e]["FILENAME"]" Line "z": 0 not applying "$j)
+#                continue
+#            }
+            if (Array_contains(defines, $j)) {
+                if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
+__debug(input[e]["FILENAME"]" Line "z": 1 not applying "$j)
+                    ++notapplied
+                    continue
+                }
+__debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
+                n = Define_apply(j, e, defines, noredefines)
+                j += n-1
             }
         }
+        --noredefines[name]
         for (o = 1; o <= NF; ++o) {
-            if ($o == "\\") { $o = ""; continue }
+            if (inputType == "comment") {
+                if ($o ~ /\*\/$/) inputType = ""
+                Index_remove(o--)
+                continue
+            }
+            if ($o ~ /^\/\*/) {
+                inputType = "comment"
+                if ($o ~ /\*\/$/) inputType = ""
+                Index_remove(o--)
+                continue
+            }
+            if ($o ~ /^\/\//) {
+                NF = o - 1; break
+            }
+            if ($o == "\\") { Index_remove(o--); continue }
             if ($o == "##") {
-                $(o + 1) = $(o - 1) $(o + 1)
-                $(o - 1) = ""; $o = ""
-                ++o; continue
+                $o = $(o - 1) $(o + 1)
+                Index_remove(o - 1, o + 1)
+                --o; continue
             }
             if ($o == "#") {
                 if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
@@ -851,14 +881,16 @@ __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
                 }
                 else {
                     $(o + 1) = "\""$(o + 1)"\""
-                    $o = ""
-                    ++o
+                    Index_remove(o)
                 }
                 continue
             }
+            # if ($o == name) ++noredefines[name]
         }
         Index_reset()
-        defineBody = Index_pop()
+        n = NF
+        $i = defineBody = Index_pop()
+        Index_reset()
 
 if (defines[name]["arguments"]["length"]) {
 __debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["arguments"]["length"]"( "defines[name]["arguments"]["text"]" ) "defineBody)
@@ -867,10 +899,9 @@ __debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["arguments"]
 else
 __debug(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
 
-        $i = defineBody
-        return -1
+        return n - notapplied
     }
-    return 0
+    return 1
 }
 
 function make_printInput(    a, b, c, d, e, f, g, h, i, j, k, l, x, y, z) {
