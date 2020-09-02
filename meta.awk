@@ -70,7 +70,7 @@ function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, 
     }
 }
 function __debug2(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    if ("DEBUG" in SYMTAB && DEBUG >= 2) {
+    if ("DEBUG" in SYMTAB && DEBUG == 2) {
         message = a b c d e f g h i j k l m n o p q r s t u v w x y z
         print message >"/dev/stderr"
     }

@@ -151,7 +151,7 @@ NF > 0 {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 Index_append(i, "\\"); ++i
                 __error(FILENAME" Line "FNR": Line Continuation \\ in Comment")
-if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 continuation = 1; getline; i = 0; continue
             }
@@ -161,11 +161,14 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 __error(FILENAME" Line "FNR": Line Continuation \\ in String")
-if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 continuation = 1; getline; i = 0; continue
             }
-            if ($i == "\\" && $(i + 1) == "\"") { ++i; continue }
+            if ($i == "\\") {
+                # if ($(i + 1) == "\"")
+                ++i; continue
+            }
             if ($i == "\"") {
                 inputType = ""
                 if (hash == "# include") {
@@ -186,7 +189,7 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 __error(FILENAME" Line "FNR": Line Continuation \\ in #include <String>")
-if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 continuation = 1; getline; i = 0; continue
             }
@@ -212,7 +215,9 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
                 Index_append(i, "'"); ++i
             }
             if ($i == "\\") {
-                if ($(i + 1) == "'") { ++i; continue }
+                # if ($(i + 1) == "'")
+                # if ($(i + 1) == "\\")
+                ++i; continue
             }
             if ($i == "'") {
                 inputType = ""
@@ -242,7 +247,7 @@ if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf 
             if (i != NF) { Index_remove(i--); continue }
             if (i != 1) if (Index_prepend(i, fix, fix)) ++i
           # print FILENAME" Line "FNR": Line Continuation \\">"/dev/stderr"
-if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
             input[inputI][inputZ] = input[inputI][inputZ] $0
             continuation = 1; getline; i = 0; continue
         }
@@ -456,7 +461,7 @@ __error("Unknown character "$i)
 
     input[inputI][inputZ] = input[inputI][inputZ] $0
 
-if (DEBUG) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } print "" }
+if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } print "" }
 }
 
 # ENDFILE { }
@@ -503,8 +508,8 @@ function gcc_preprocess(    fileIn, fileOut) {
 }
 
 function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, defineBody1, e, f, g, h,
-                    i, ifExpressions, inputType, j, k, l, m, n, name, noredefines,
-                    o, p, q, r, resultI, resultZ, s, t, u, v, w, x, y)
+                    i, ifExpressions, inputType, inputType1, j, k, l, m, n, name, noredefines,
+                    o, p, q, r, rendered_defineBody, resultI, resultZ, s, t, u, v, w, x, y)
 {
     ifExpressions["length"] = 0
 
@@ -521,7 +526,7 @@ function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, def
 
     #resultZ = ++result[resultI]["length"]
     #result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
-    print "\n# 1 \""input[e]["FILENAME"]"\""
+#    print "\n# 1 \""input[e]["FILENAME"]"\""
 
     inputType = ""
 
@@ -638,7 +643,7 @@ __debug(input[e]["FILENAME"]" Line "z": including "name)
                         defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
                         defines["__LINE__"]["body"] = z
 
-                        print "# "z + 1" \""input[e]["FILENAME"]"\""
+#                        print "# "z + 1" \""input[e]["FILENAME"]"\""
                         break
                     }
                 }
@@ -657,7 +662,7 @@ __debug(input[e]["FILENAME"]" Line "z": including "m)
                 }
                 else __error("File doesn't exist: \""m"\"")
 
-                print "# "z + 1" \""input[e]["FILENAME"]"\""
+#                print "# "z + 1" \""input[e]["FILENAME"]"\""
             }
             NF = 0; break
         }
@@ -690,13 +695,27 @@ __debug(input[e]["FILENAME"]" Line "z": including "m)
                 }
             }
 
-            m = ""; for (n = 1; n <= NF; ++n) m = String_concat(m, fix, $n)
+            m = ""; for (n = 1; n <= NF; ++n) {
+                if ($n == "\\") continue
+                if (inputType1 == "comment") {
+                    if ($n ~ /\*\/$/) inputType1 = ""
+                    continue
+                }
+                if ($n ~ /^\/\*/) {
+                    inputType1 = "comment"
+                    if ($n ~ /\*\/$/) inputType1 = ""
+                    continue
+                }
+                if ($i ~ /^\/\//) break
+                m = String_concat(m, fix, $n)
+            }
             defines[name]["body"] = m
 
+Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
 if (defines[name]["arguments"]["length"])
-__debug(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["arguments"]["length"]"("defines[name]["arguments"]["text"]") "defines[name]["body"])
+__debug(input[e]["FILENAME"]" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
 else
-__debug(input[e]["FILENAME"]" Line "z": define "name"  "defines[name]["body"])
+__debug(input[e]["FILENAME"]" Line "z": define "name"  "rendered_defineBody)
 
             NF = 0; break
         }
@@ -717,15 +736,14 @@ __debug(input[e]["FILENAME"]" Line "z": undef "$3)
         name = $i
 
         I = Index["length"]
-__debug(input[e]["FILENAME"]" Line "z": 0 applying "name)
-
+__debug(input[e]["FILENAME"]" Line "z": applying "name)
         n = Define_apply(i, e, defines, noredefines)
         i += n - 1
     }
 
     }
         if (NF > 0) {
-            if (DEBUG) {
+            if (DEBUG == 3) {
                 for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/ || $h == "\\") ; else printf "(%d)%s", h, $h } print ""
             }
             else {
@@ -742,7 +760,7 @@ __debug(input[e]["FILENAME"]" Line "z": 0 applying "name)
 }
 
 function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defineBody, defineBody1, f, g, h, inputType, j, k, l, m,
-                                                     n, name, notapplied, o, p, q, r, s, t, u, v, w, x, y)
+                                                     n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y)
 {
     # Evaluate AWA
     if (Array_contains(defines, $i)) {
@@ -798,6 +816,10 @@ __debug(input[e]["FILENAME"]" Line "z": not using "name)
             for (n = 1; n <= arguments["length"]; ++n) {
                 Index_push(arguments[n], fixFS, fix)
                 for (j = 1; j <= NF; ++j) {
+#                    if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
+#__debug(input[e]["FILENAME"]" Line "z": 2 not applying "$j)
+#                        continue
+#                    }
                     if (Array_contains(defines, $j)) {
 __debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
                         m = Define_apply(j, e, defines, noredefines)
@@ -835,25 +857,6 @@ __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
             return 0
         }
         Index_push(defineBody, fixFS, fix)
-        ++noredefines[name]
-        notapplied = 0
-        for (j = 1; j <= NF; ++j) {
-#            if ($j == name) {
-#__debug(input[e]["FILENAME"]" Line "z": 0 not applying "$j)
-#                continue
-#            }
-            if (Array_contains(defines, $j)) {
-                if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
-__debug(input[e]["FILENAME"]" Line "z": 1 not applying "$j)
-                    ++notapplied
-                    continue
-                }
-__debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
-                n = Define_apply(j, e, defines, noredefines)
-                j += n-1
-            }
-        }
-        --noredefines[name]
         for (o = 1; o <= NF; ++o) {
             if (inputType == "comment") {
                 if ($o ~ /\*\/$/) inputType = ""
@@ -887,17 +890,37 @@ __debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
             }
             # if ($o == name) ++noredefines[name]
         }
+        ++noredefines[name]
+        notapplied = 0
+        for (j = 1; j <= NF; ++j) {
+#            if ($j == name) {
+#__debug(input[e]["FILENAME"]" Line "z": 0 not applying "$j)
+#                continue
+#            }
+            if (Array_contains(defines, $j)) {
+                if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
+__debug(input[e]["FILENAME"]" Line "z": 1 not applying "$j)
+                    ++notapplied
+                    continue
+                }
+__debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
+                n = Define_apply(j, e, defines, noredefines)
+                j += n-1
+            }
+        }
+        --noredefines[name]
         Index_reset()
         n = NF
         $i = defineBody = Index_pop()
         Index_reset()
 
+Index_push(defineBody, "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
 if (defines[name]["arguments"]["length"]) {
-__debug(input[e]["FILENAME"]" Line "z": using "name" "defines[name]["arguments"]["length"]"( "defines[name]["arguments"]["text"]" ) "defineBody)
+__debug(input[e]["FILENAME"]" Line "z": using "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
 # Array_debug(arguments)
 }
 else
-__debug(input[e]["FILENAME"]" Line "z": using "name" "defineBody)
+__debug(input[e]["FILENAME"]" Line "z": using "name"  "rendered_defineBody)
 
         return n - notapplied
     }
