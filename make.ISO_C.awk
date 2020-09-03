@@ -767,7 +767,6 @@ function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defi
         name = $i
         # define AWA AWA
         if (noredefines[name]) {
-            #--noredefines[name]
             __error(input[e]["FILENAME"]" Line "z": self-referencing define "name" "name)
             return 1
         }
@@ -812,15 +811,14 @@ __debug(input[e]["FILENAME"]" Line "z": not using "name)
             else if (arguments["length"] > l && defines[name]["arguments"][l] != "...")
                 __error(input[e]["FILENAME"]" Line "z": using "name": Too many arguments used")
 #Array_debug(arguments)
-#            ++noredefines[name]
             for (n = 1; n <= arguments["length"]; ++n) {
                 Index_push(arguments[n], fixFS, fix)
                 for (j = 1; j <= NF; ++j) {
-#                    if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
-#__debug(input[e]["FILENAME"]" Line "z": 2 not applying "$j)
-#                        continue
-#                    }
                     if (Array_contains(defines, $j)) {
+                        if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
+__debug(input[e]["FILENAME"]" Line "z": 2 not applying "$j)
+                            continue
+                        }
 __debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
                         m = Define_apply(j, e, defines, noredefines)
                         j += m - 1
@@ -828,7 +826,6 @@ __debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
                 }
                 arguments[n] = Index_pop()
             }
-#            --noredefines[name]
             Index_push(defineBody, fixFS, fix)
             for (n = 1; n <= l; ++n) {
                 if (n == l && defines[name]["arguments"][l] == "...") break
@@ -849,12 +846,6 @@ __debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
                 Index_reset()
             }
             defineBody = Index_pop()
-        }
-        if (defineBody == "") {
-            # define unsafe  /* unsafe */
-__debug(input[e]["FILENAME"]" Line "z": using "name" without body")
-            Index_remove(i)
-            return 0
         }
         Index_push(defineBody, fixFS, fix)
         for (o = 1; o <= NF; ++o) {
@@ -888,15 +879,18 @@ __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
                 }
                 continue
             }
-            # if ($o == name) ++noredefines[name]
         }
+        defineBody = Index_pop()
+        if (defineBody == "") {
+            # define unsafe  /* unsafe */
+__debug(input[e]["FILENAME"]" Line "z": using "name" without body")
+            Index_remove(i)
+            return 0
+        }
+        Index_push(defineBody, fixFS, fix)
         ++noredefines[name]
         notapplied = 0
         for (j = 1; j <= NF; ++j) {
-#            if ($j == name) {
-#__debug(input[e]["FILENAME"]" Line "z": 0 not applying "$j)
-#                continue
-#            }
             if (Array_contains(defines, $j)) {
                 if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
 __debug(input[e]["FILENAME"]" Line "z": 1 not applying "$j)
