@@ -535,26 +535,7 @@ function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, def
 
         defines["__LINE__"]["body"] = z
 
-    for (i = 1; i <= NF; ++i) {
-
-      # if ($i ~ /^[ ]*$/) continue
-
-        if (inputType == "comment") {
-            if ($i ~ /\*\/$/) inputType = ""
-            Index_remove(i--)
-            continue
-        }
-        if ($i ~ /^\/\*/) {
-            inputType = "comment"
-            if ($i ~ /\*\/$/) inputType = ""
-            Index_remove(i--)
-            continue
-        }
-        if ($i ~ /^\/\//) {
-            NF = i - 1; break
-        }
-
-        if (i == 1 && $1 == "#") {
+        if ($1 == "#") {
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
@@ -585,7 +566,7 @@ function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, def
 __debug(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "x)
             ifExpressions[f]["if"] = m
             if (x) ifExpressions[f]["do"] = 1
-            NF = 0; break
+            NF = 0
         }
         if ($2 == "elif") {
             m = ""; c = 0
@@ -604,7 +585,7 @@ __debug(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "x)
 __debug(input[e]["FILENAME"]" Line "z": (Level "f") else if "m"  == "x)
                 ifExpressions[f]["do"] = 1
             }
-            NF = 0; break
+            NF = 0
         }
         if ($2 == "else") {
             f = ifExpressions["length"]
@@ -614,22 +595,21 @@ __debug(input[e]["FILENAME"]" Line "z": (Level "f") else if "m"  == "x)
 __debug(input[e]["FILENAME"]" Line "z": (Level "f") else")
                 ifExpressions[f]["do"] = 1
             }
-            NF = 0; break
+            NF = 0
         }
         if ($2 == "endif") {
             f = ifExpressions["length"]
 __debug(input[e]["FILENAME"]" Line "z": (Level "f") endif")
             Array_remove(ifExpressions, f)
-            NF = 0; break
+            NF = 0
         } }
 
         for (f = 1; f <= ifExpressions["length"]; ++f) {
             if (ifExpressions[f]["do"] == 1) continue
             NF = 0; break
         }
-        if (NF == 0) break
 
-        if (i == 1 && $1 == "#") {
+        if ($1 == "#") {
         if ($2 == "include") {
             if ($3 ~ /^</) {
                 m = substr($3, 2, length($3) - 2)
@@ -664,52 +644,52 @@ __debug(input[e]["FILENAME"]" Line "z": including "m)
 
 #                print "# "z + 1" \""input[e]["FILENAME"]"\""
             }
-            NF = 0; break
+            NF = 0
         }
         if ($2 == "define") {
             name = $3
             if (Array_contains(defines, name)) {
                 __error(input[e]["FILENAME"]" Line "z": define "name" exists already")
-                NF = 0; break
             }
-            Array_add(defines, name)
-            Index_remove(1, 2, 3)
-            if ($1 == "(") {
-                for (n = 2; n <= NF; ++n) {
-                    if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) continue
-                    if ($n == ",") continue
-                    if ($n == "...") continue
-                    if ($n == ")") break
-                    break
-                }
-                if ($n == ")") { # n < NF
-                    m = ""; for (o = 2; o < n; ++o) {
-                        m = String_concat(m, " ", $o)
-                        if ($o == ",") continue
-                        argumentI = ++defines[name]["arguments"]["length"]
-                        defines[name]["arguments"][argumentI] = $o
+            else {
+                Array_add(defines, name)
+                Index_remove(1, 2, 3)
+                if ($1 == "(") {
+                    for (n = 2; n <= NF; ++n) {
+                        if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) continue
+                        if ($n == ",") continue
+                        if ($n == "...") continue
+                        if ($n == ")") break
+                        break
                     }
-                    defines[name]["arguments"]["text"] = m
-                    defines[name]["isFunctional"] = 1
-                    Index_removeRange(1, n)
+                    if ($n == ")") { # n < NF
+                        m = ""; for (o = 2; o < n; ++o) {
+                            m = String_concat(m, " ", $o)
+                            if ($o == ",") continue
+                            argumentI = ++defines[name]["arguments"]["length"]
+                            defines[name]["arguments"][argumentI] = $o
+                        }
+                        defines[name]["arguments"]["text"] = m
+                        defines[name]["isFunctional"] = 1
+                        Index_removeRange(1, n)
+                    }
                 }
-            }
 
-            m = ""; for (n = 1; n <= NF; ++n) {
-                if ($n == "\\") continue
-                if (inputType1 == "comment") {
-                    if ($n ~ /\*\/$/) inputType1 = ""
-                    continue
+                m = ""; for (n = 1; n <= NF; ++n) {
+                    if ($n == "\\") continue
+                    if (inputType1 == "comment") {
+                        if ($n ~ /\*\/$/) inputType1 = ""
+                        continue
+                    }
+                    if ($n ~ /^\/\*/) {
+                        inputType1 = "comment"
+                        if ($n ~ /\*\/$/) inputType1 = ""
+                        continue
+                    }
+                    if ($i ~ /^\/\//) break
+                    m = String_concat(m, fix, $n)
                 }
-                if ($n ~ /^\/\*/) {
-                    inputType1 = "comment"
-                    if ($n ~ /\*\/$/) inputType1 = ""
-                    continue
-                }
-                if ($i ~ /^\/\//) break
-                m = String_concat(m, fix, $n)
-            }
-            defines[name]["body"] = m
+                defines[name]["body"] = m
 
 Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
 if (defines[name]["arguments"]["length"])
@@ -717,7 +697,8 @@ __debug(input[e]["FILENAME"]" Line "z": define "name" ("defines[name]["arguments
 else
 __debug(input[e]["FILENAME"]" Line "z": define "name"  "rendered_defineBody)
 
-            NF = 0; break
+            }
+            NF = 0
         }
         if ($2 == "undef") {
             if (!(f = Array_contains(defines, $3))) __error(input[e]["FILENAME"]" Line "z": undef doesn't exist: "$3)
@@ -726,22 +707,41 @@ __debug(input[e]["FILENAME"]" Line "z": define "name"  "rendered_defineBody)
                 delete defines[$3]
 __debug(input[e]["FILENAME"]" Line "z": undef "$3)
             }
-            NF = 0; break
+            NF = 0
         }
-            $1 = "/*"; $NF = $NF fix "*/"; Index_reset()
-            break
-        }
+        if (NF > 0) {
+            $1 = "/*"$1; $NF = $NF"*/"; Index_reset()
+        } }
 
-    if (Array_contains(defines, $i)) {
-        name = $i
+        for (i = 1; i <= NF; ++i) {
 
-        I = Index["length"]
+          # if ($i ~ /^[ ]*$/) continue
+
+            if (inputType == "comment") {
+                if ($i ~ /\*\/$/) inputType = ""
+                Index_remove(i--)
+                continue
+            }
+            if ($i ~ /^\/\*/) {
+                inputType = "comment"
+                if ($i ~ /\*\/$/) inputType = ""
+                Index_remove(i--)
+                continue
+            }
+            if ($i ~ /^\/\//) {
+                NF = i - 1; break
+            }
+
+            if (Array_contains(defines, $i)) {
+                name = $i
+
+                I = Index["length"]
 __debug(input[e]["FILENAME"]" Line "z": applying "name)
-        n = Define_apply(i, e, defines, noredefines)
-        i += n - 1
-    }
+                n = Define_apply(i, e, defines, noredefines)
+                i += n - 1
+            }
 
-    }
+        }
         if (NF > 0) {
             if (DEBUG == 3) {
                 for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/ || $h == "\\") ; else printf "(%d)%s", h, $h } print ""
