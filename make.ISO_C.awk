@@ -96,33 +96,19 @@ BEGINFILE {
 
     if (!Array_contains(includes, FILENAME)) Array_add(includes, FILENAME)
 
-    z = 0
-    leereZeilen = 0
-
     inputType = ""
 
     FS=""
     OFS=""
     RS="\n"
-    #ORS="\n"
 }
 
-NF == 0 {
-    if (leereZeilen++ < 2) {
-        inputZ = ++input[inputI]["length"]
-        input[inputI][inputZ] = ""
-    }
-}
+{   # Read what you have: this is C
 
-NF > 0 {
-
-    leereZeilen = 0
     inputZ = ++input[inputI]["length"]
 
     hash = ""
     continuation = 0
-
-    # Read what you have: this is C
 
     for (i = 1; i <= NF; ++i) {
         if (i == 1 && continuation) {
@@ -151,7 +137,7 @@ NF > 0 {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 Index_append(i, "\\"); ++i
                 __error(FILENAME" Line "FNR": Line Continuation \\ in Comment")
-if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 continuation = 1; getline; i = 0; continue
             }
@@ -161,7 +147,7 @@ if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 __error(FILENAME" Line "FNR": Line Continuation \\ in String")
-if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 continuation = 1; getline; i = 0; continue
             }
@@ -189,7 +175,7 @@ if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 __error(FILENAME" Line "FNR": Line Continuation \\ in #include <String>")
-if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
                 continuation = 1; getline; i = 0; continue
             }
@@ -247,7 +233,7 @@ if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
             if (i != NF) { Index_remove(i--); continue }
             if (i != 1) if (Index_prepend(i, fix, fix)) ++i
           # print FILENAME" Line "FNR": Line Continuation \\">"/dev/stderr"
-if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
+if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
             input[inputI][inputZ] = input[inputI][inputZ] $0
             continuation = 1; getline; i = 0; continue
         }
@@ -461,19 +447,19 @@ __error("Unknown character "$i)
 
     input[inputI][inputZ] = input[inputI][inputZ] $0
 
-if (DEBUG == 3) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } print "" }
+if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } print "" }
 }
 
 # ENDFILE { }
 
 END {
 
-__debug( "includeDirs:")
- Array_debug(includeDirs)
-
-__debug( "includes:")
- Array_debug(includes)
-
+if (DEBUG == 4) {
+__error( "includeDirs:")
+ Array_error(includeDirs)
+__error( "includes:")
+ Array_error(includes)
+}
     #Array_add(defines, "__STDC__")
     #defines["__STDC__"]["body"] = "1"
     #Array_add(defines, "__GNUC__")
@@ -507,9 +493,9 @@ function gcc_preprocess(    fileIn, fileOut) {
     return fileOut
 }
 
-function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, defineBody1, e, f, g, h,
-                    i, ifExpressions, inputType, inputType1, j, k, l, m, n, name, noredefines,
-                    o, p, q, r, rendered_defineBody, resultI, resultZ, s, t, u, v, w, x, y)
+function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, defineBody1, e, expressionI, expressions, f, g, h,
+                    i, ifExpressions, inputType, inputType1, j, k, l, leereZeilen, m, n, name, noredefines,
+                    o, p, q, r, rendered_defineBody, resultI, resultZ, s, t, u, v, w, x, y) # z
 {
     ifExpressions["length"] = 0
 
@@ -526,7 +512,7 @@ function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, def
 
     #resultZ = ++result[resultI]["length"]
     #result[resultI][resultZ] = "\n# 1 \""input[e]["FILENAME"]"\""
-#    print "\n# 1 \""input[e]["FILENAME"]"\""
+    print "\n# 1 \""input[e]["FILENAME"]"\""
 
     inputType = ""
 
@@ -623,7 +609,7 @@ __debug(input[e]["FILENAME"]" Line "z": including "name)
                         defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
                         defines["__LINE__"]["body"] = z
 
-#                        print "# "z + 1" \""input[e]["FILENAME"]"\""
+                        print "# "z + 1" \""input[e]["FILENAME"]"\""
                         break
                     }
                 }
@@ -642,7 +628,7 @@ __debug(input[e]["FILENAME"]" Line "z": including "m)
                 }
                 else __error("File doesn't exist: \""m"\"")
 
-#                print "# "z + 1" \""input[e]["FILENAME"]"\""
+                print "# "z + 1" \""input[e]["FILENAME"]"\""
             }
             NF = 0
         }
@@ -740,9 +726,61 @@ __debug(input[e]["FILENAME"]" Line "z": applying "name)
                 n = Define_apply(i, e, defines, noredefines)
                 i += n - 1
             }
+        }
+
+        for (i = 1; i <= NF; ++i) {
+
+            if ($i == "typedef") {
+                if (expressionI > 0) {
+                    # do you need semikolon?
+                }
+                expressionI = ++expressions["length"]
+                expressions[expressionI]["Type"] = "TypeDefine"
+            }
+            if ($i == "void" ||
+                $i == "unsigned" || $i == "signed" ||
+                $i == "char" || $i == "short" || $i == "int" || $i == "long" ||
+                $i == "float" || $i == "double")
+            {
+                if (expressions["length"] == 1 && expressions[1]["Type"] == "TypeDefine") { }
+                else if (expressions["length"] > 0) {
+                    # do you need semikolon?
+                }
+                expressionI = ++expressions["length"]
+                expressions[expressionI]["Type"] = "Type"
+                for (n = i + 1; n <= NF; ++n) {
+                    if ($n == "void" ||
+                        $n == "unsigned" || $n == "signed" ||
+                        $n == "char" || $n == "short" || $n == "int" || $n == "long" ||
+                        $n == "float" || $n == "double")
+                    {
+                        $i = String_concat($i, " ", $n); $n = ""; continue
+                    }
+                    break
+                }
+                Index_reset()
+                continue
+            }
+            if ($i == "struct") {
+                if (expressions["length"] == 1 && expressions[1]["Type"] == "TypeDefine") { }
+                else if (expressions["length"] > 0) {
+                    # do you need semikolon?
+                }
+                expressionI = ++expressions["length"]
+                expressions[expressionI]["Type"] = "Type"
+                if ($(i + 1) ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                    $i = String_concat($i, " ", $(i + 1)); $(i + 1) = ""; Index_reset()
+                }
+                continue
+            }
 
         }
+        if (NF == 0) ++leereZeilen
         if (NF > 0) {
+            if (leereZeilen <= 3) for (h = 1; h <= leereZeilen; ++h) print ""
+            else { print ""; print ""; print "# "z" \""input[e]["FILENAME"]"\"" }
+            leereZeilen = 0
+
             if (DEBUG == 3) {
                 for (h = 1; h <= NF; ++h) { if ($h ~ /^[ ]*$/ || $h == "\\") ; else printf "(%d)%s", h, $h } print ""
             }
@@ -760,7 +798,7 @@ __debug(input[e]["FILENAME"]" Line "z": applying "name)
 }
 
 function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defineBody, defineBody1, f, g, h, inputType, j, k, l, m,
-                                                     n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y)
+                                                     n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y) # z
 {
     # Evaluate AWA
     if (Array_contains(defines, $i)) {
