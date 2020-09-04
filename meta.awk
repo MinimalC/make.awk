@@ -143,6 +143,7 @@ function Array_insert(array, i, value,    h, j, k, l) {
 
 function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
     l = array["length"]
+    n0 = 0
     for (n = 1; n <= l; ++n)
         if (array[n] == item) { n0 = n; break }
     return n0

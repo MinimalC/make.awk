@@ -471,11 +471,33 @@ __error( "includes:")
     #Array_add(defines, "__USER_LABEL_PREFIX__")
     #defines["__USER_LABEL_PREFIX__"]["body"] = ""
 
-    precompile(targetDefines, defines)
+    Array_add(types, "void")
+    Array_add(types, "unsigned")
+    Array_add(types, "signed")
+    Array_add(types, "char")
+    Array_add(types, "short")
+    Array_add(types, "int")
+    Array_add(types, "long")
+    Array_add(types, "float")
+    Array_add(types, "double")
+
+    precompile(targetDefines)
 
     for (argI = 1; argI <= origin["length"]; ++argI)
         if (origin[argI])
-            precompile(origin[argI], defines)
+            precompile(origin[argI])
+
+if (DEBUG == 3) {
+for (o = 1; o <= defines["length"]; ++o) { name = defines[o]
+Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
+if (defines[name]["isFunctional"])
+__debug("# define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
+else
+__debug("# define "name"  "rendered_defineBody)
+}
+__error("Types:")
+Array_error(types)
+}
 
 #    if (!error) @make()
 }
@@ -493,9 +515,9 @@ function gcc_preprocess(    fileIn, fileOut) {
     return fileOut
 }
 
-function precompile(fileName, defines,    a, argumentI, b, c, d, defineBody, defineBody1, e, expressionI, expressions, f, g, h,
+function precompile(fileName,    a, argumentI, b, c, d, defineBody, defineBody1, expressionI, expressions, f, g, h,
                     i, ifExpressions, inputType, inputType1, j, k, l, leereZeilen, m, n, name, noredefines,
-                    o, p, q, r, rendered_defineBody, resultI, resultZ, s, t, u, v, w, x, y) # z
+                    o, p, q, r, rendered_defineBody, resultI, resultZ, s, t, u, v, w, x, y) # e, z
 {
     ifExpressions["length"] = 0
 
@@ -603,9 +625,9 @@ __debug(input[e]["FILENAME"]" Line "z": (Level "f") endif")
                     name = Path_join(includeDirs[n], m)
                     if (File_exists(name)) {
 __debug(input[e]["FILENAME"]" Line "z": including "name)
-                        y = z
+                        f = e; y = z
                         precompile(name, defines)
-                        z = y
+                        e = f; z = y
                         defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
                         defines["__LINE__"]["body"] = z
 
@@ -620,9 +642,9 @@ __debug(input[e]["FILENAME"]" Line "z": including "name)
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
 __debug(input[e]["FILENAME"]" Line "z": including "m)
-                    y = z
+                    f = e; y = z
                     precompile(m, defines)
-                    z = y
+                    e = f; z = y
                     defines["__FILE__"]["body"] = "\""input[e]["FILENAME"]"\""
                     defines["__LINE__"]["body"] = z
                 }
@@ -642,7 +664,10 @@ __debug(input[e]["FILENAME"]" Line "z": including "m)
                 Index_remove(1, 2, 3)
                 if ($1 == "(") {
                     for (n = 2; n <= NF; ++n) {
-                        if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) continue
+                        if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                            if (Array_contains(types, $n)) break
+                            continue
+                        }
                         if ($n == ",") continue
                         if ($n == "...") continue
                         if ($n == ")") break
@@ -678,7 +703,7 @@ __debug(input[e]["FILENAME"]" Line "z": including "m)
                 defines[name]["body"] = m
 
 Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
-if (defines[name]["arguments"]["length"])
+if (defines[name]["isFunctional"])
 __debug(input[e]["FILENAME"]" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
 else
 __debug(input[e]["FILENAME"]" Line "z": define "name"  "rendered_defineBody)
@@ -722,8 +747,8 @@ __debug(input[e]["FILENAME"]" Line "z": undef "$3)
                 name = $i
 
                 I = Index["length"]
-__debug(input[e]["FILENAME"]" Line "z": applying "name)
-                n = Define_apply(i, e, defines, noredefines)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": applying "name)
+                n = Define_apply(i, noredefines)
                 i += n - 1
             }
         }
@@ -759,6 +784,7 @@ __debug(input[e]["FILENAME"]" Line "z": applying "name)
                     break
                 }
                 Index_reset()
+                if (!Array_contains(types, $i)) Array_add(types, $i)
                 continue
             }
             if ($i == "struct") {
@@ -770,13 +796,22 @@ __debug(input[e]["FILENAME"]" Line "z": applying "name)
                 expressions[expressionI]["Type"] = "Type"
                 if ($(i + 1) ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
                     $i = String_concat($i, " ", $(i + 1)); $(i + 1) = ""; Index_reset()
+                    if (!Array_contains(types, $i)) Array_add(types, $i)
                 }
+                continue
+            }
+
+            if ($i == ";") {
+                if (!expressionI) {
+                    # you don't need semikolon
+                }
+                Array_clear(expressions)
                 continue
             }
 
         }
         if (NF == 0) ++leereZeilen
-        if (NF > 0) {
+        else {
             if (leereZeilen <= 3) for (h = 1; h <= leereZeilen; ++h) print ""
             else { print ""; print ""; print "# "z" \""input[e]["FILENAME"]"\"" }
             leereZeilen = 0
@@ -797,8 +832,8 @@ __debug(input[e]["FILENAME"]" Line "z": applying "name)
     }
 }
 
-function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defineBody, defineBody1, f, g, h, inputType, j, k, l, m,
-                                                     n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y) # z
+function Define_apply(i, noredefines,    a, arguments, b, c, d, defineBody, defineBody1, f, g, h, inputType, j, k, l, m,
+                                         n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y) # e, z
 {
     # Evaluate AWA
     if (Array_contains(defines, $i)) {
@@ -841,7 +876,7 @@ function Define_apply(i, e, defines, noredefines,    a, arguments, b, c, d, defi
                 m = String_concat(m, fix, $o)
             }
             if ($(i + 1) != "(") {
-__debug(input[e]["FILENAME"]" Line "z": not using "name)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": not using "name)
                 return 1
             }
             Index_removeRange(i + 1, o)
@@ -854,11 +889,11 @@ __debug(input[e]["FILENAME"]" Line "z": not using "name)
                 for (j = 1; j <= NF; ++j) {
                     if (Array_contains(defines, $j)) {
                         if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
-__debug(input[e]["FILENAME"]" Line "z": 2 not applying "$j)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 2 not applying "$j)
                             continue
                         }
-__debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
-                        m = Define_apply(j, e, defines, noredefines)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
+                        m = Define_apply(j, noredefines)
                         j += m - 1
                     }
                 }
@@ -921,7 +956,7 @@ __debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
         defineBody = Index_pop()
         if (defineBody == "") {
             # define unsafe  /* unsafe */
-__debug(input[e]["FILENAME"]" Line "z": using "name" without body")
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
             Index_remove(i)
             return 0
         }
@@ -931,12 +966,12 @@ __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
         for (j = 1; j <= NF; ++j) {
             if (Array_contains(defines, $j)) {
                 if (defines[$j]["isFunctional"] && $(j + 1) != "(") {
-__debug(input[e]["FILENAME"]" Line "z": 1 not applying "$j)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 1 not applying "$j)
                     ++notapplied
                     continue
                 }
-__debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
-                n = Define_apply(j, e, defines, noredefines)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
+                n = Define_apply(j, noredefines)
                 j += n-1
             }
         }
@@ -946,14 +981,13 @@ __debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
         $i = defineBody = Index_pop()
         Index_reset()
 
+if (DEBUG == 3) {
 Index_push(defineBody, "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
-if (defines[name]["arguments"]["length"]) {
+if (defines[name]["isFunctional"]) {
 __debug(input[e]["FILENAME"]" Line "z": using "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
 # Array_debug(arguments)
+} else __debug(input[e]["FILENAME"]" Line "z": using "name"  "rendered_defineBody)
 }
-else
-__debug(input[e]["FILENAME"]" Line "z": using "name"  "rendered_defineBody)
-
         return n - notapplied
     }
     return 1

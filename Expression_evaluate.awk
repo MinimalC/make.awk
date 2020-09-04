@@ -23,6 +23,8 @@ BEGIN {
     defines["__GNUC_PREREQ"]["body"] = "\\ ( ( __GNUC__ << 16 ) + __GNUC_MINOR__ >= ( ( maj ) << 16 ) + ( min ) )"
     Array_add(defines, "SQLITE_THREADSAFE")
     defines["SQLITE_THREADSAFE"]["body"] = "1 /* IMP: R-07272-22309 */"
+    Array_add(defines, "SQLITE_MAX_MMAP_SIZE")
+    defines["SQLITE_MAX_MMAP_SIZE"]["body"] = "0x7fff0000"
 
     Array_add(defines, "__GNUG__")
     defines["__GNUG__"]["body"] = 1
@@ -58,6 +60,8 @@ BEGIN {
         print ""; print "\""Expression_evaluate( " (5 + 5) ? ( 3 + 5 * 6 ) : 0", defines)"\""
 
         print ""; print "\""Expression_evaluate( "defined(SQLITE_THREADSAFE) && SQLITE_THREADSAFE > 0", defines)"\""
+
+        print ""; print "\""Expression_evaluate( " ! defined (SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0 ", defines)"\""
     }
 
     exit

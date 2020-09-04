@@ -401,6 +401,8 @@ __debug2( "GreaterThan: "$0 )
             Index_remove(i - 1, i + 1); --i
 __debug2( "NotEquals: "$0 )
         }
+    }
+    for (i = 1; i <= NF; ++i) {
         # Evaluate Logical Boolean and && or ||
         if ($i == "&&") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
