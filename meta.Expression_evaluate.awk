@@ -66,15 +66,32 @@ function Expression_evaluate(expression, defines,    a, arguments, b, c, d, defi
         }
         if ($i ~ /[0-9]/) {
             if (i > 1 && $(i - 1) != "-") if (Index_prepend(i, " ", " ")) ++i
+            if ($i == "0" && $(i + 1) == "x") {
+                $(i + 1) = ""
+                number = ""
+                for (n = i + 2; n <= NF; ++n) {
+                    if ($n ~ /[0-9a-fA-F]/) { number = number $n; $n = ""; continue }
+                    --n; break
+                }
+                for (n = n + 1; n <= NF; ++n) {
+                    if ($n ~ /[ulUL]/) { $n = ""; continue }
+                    --n; break
+                }
+                $i = strtonum("0x"number)
+                i += length($i) - 1
+                Index_reset()
+                if (i < NF) if (Index_append(i, " ", " ")) ++i
+                continue
+            }
             for (; ++i <= NF; ) {
                 if ($i ~ /[0-9]/) continue
-                break
-            } --i
+                --i; break
+            }
             if ($(i + 1) ~ /[uUlL]/) {
-                for (n = i; ++n <= NF; ) {
+                for (n = i + 1; n <= NF; ++n) {
                     if ($n ~ /[uUlL]/) continue
-                    break
-                } --n
+                    --n; break
+                }
                 Index_removeRange(i + 1, n)
             }
             if (i < NF) if (Index_append(i, " ", " ")) ++i
@@ -276,7 +293,8 @@ __debug2("Using "name" "defineBody)
 #            Index[l]["name"] = name
 #            Index[l]["i"] = i
 #            i = 0; continue
-            $i = defineBody
+            $i = Expression_evaluate(defineBody, defines)
+#            $i = defineBody
             Index_reset()
             --i; continue
         }

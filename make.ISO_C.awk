@@ -21,7 +21,7 @@ BEGIN {
     Array_add(includeDirs, "/usr/include/x86_64-linux-gnu/")
     Array_add(includeDirs, "/usr/lib/gcc/x86_64-linux-gnu/7/include/")
 
-    for (argI = 1; argI <= ARGV_length(); ++argI) {
+    n = 0; for (argI = 1; argI <= ARGV_length(); ++argI) {
 
         if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
             make = "make_"ARGV[argI]
@@ -68,44 +68,81 @@ BEGIN {
             error = "Unknown inputType format: "fileName
             ARGV[argI] = ""; continue
         }
-    }
 
-    n = 0
-    for (argI = 1; argI <= ARGV_length(); ++argI) {
-        if (ARGV[argI])
-            origin[++n] = ARGV[argI]
+        origin[++n] = ARGV[argI]
+        parsing[n] = ARGV[argI]
+        ARGV[argI] = ""
     }
     origin["length"] = n
+    parsing["length"] = n
 
-    targetDefines = gcc_preprocess()
-    ARGV_add(targetDefines)
+    target = gcc_preprocess()
+    parse_C(target)
+
+    for (n = 1; n <= parsing["length"]; ++n)
+        parse_C(parsing[n])
+
+if (DEBUG == 4) {
+__error( "includeDirs:")
+ Array_error(includeDirs)
+__error( "includes:")
+ Array_error(includes)
 }
 
-BEGINFILE {
+    Array_add(types, "void")
+    Array_add(types, "unsigned")
+    Array_add(types, "signed")
+    Array_add(types, "char")
+    Array_add(types, "short")
+    Array_add(types, "int")
+    Array_add(types, "long")
+    Array_add(types, "float")
+    Array_add(types, "double")
 
-    if (FILENAME == "-") { usage(); nextfile }
-    if (ERRNO) { __error("(BEGINFILE) File doesn't exist: "FILENAME); nextfile }
+    precompile(target)
 
-    FileName = get_FileName(FILENAME)
-    Directory = get_DirectoryName(FILENAME)
+    for (n = 1; n <= origin["length"]; ++n)
+        precompile(origin[n])
+
+if (DEBUG == 3) {
+for (o = 1; o <= defines["length"]; ++o) { name = defines[o]
+Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
+if (defines[name]["isFunctional"])
+__debug("# define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
+else
+__debug("# define "name"  "rendered_defineBody)
+}
+__error("Types:")
+Array_error(types)
+}
+
+#    if (!error) @make()
+
+    exit
+}
+
+function parse_C(inputFile,    a, b, c, comments, continuation, d, Directory, e, f, FileName, g, h, hash,
+                               i, includeString, inputI, inputType, inputZ, j, k, l, m, n, name,
+                               o, p, q, r, s, string, t, u, v, w, x, y, z, zahl)
+{
+    if (!File_exists(inputFile)) { __error("(BEGINFILE) File doesn't exist: "inputFile) }
+
+    if (!Array_contains(includes, inputFile)) Array_add(includes, inputFile)
+
+    FileName = get_FileName(inputFile)
+    Directory = get_DirectoryName(inputFile)
 
     inputI = ++input["length"]
-    input[inputI]["FILENAME"] = FILENAME
-    #input[inputI]["FileName"] = FileName
-    #input[inputI]["Directory"] = Directory
-
-    if (!Array_contains(includes, FILENAME)) Array_add(includes, FILENAME)
+    input[inputI]["FILENAME"] = inputFile
 
     inputType = ""
 
-    FS=""
-    OFS=""
-    RS="\n"
-}
-
-{   # Read what you have: this is C
+    Index_push("", "", "", "\n", "\n")
+while (getline < inputFile) {
 
     inputZ = ++input[inputI]["length"]
+
+    # Read what you have: this is C
 
     hash = ""
     continuation = 0
@@ -119,7 +156,7 @@ BEGINFILE {
             if ($i == "/" && $(i + 1) == "*") {
                 $(i++) = "*"
                 ++comments
-                __error(FILENAME" Line "FNR": Comment in Comment /* /*")
+                __error(inputFile" Line "inputZ": Comment in Comment /* /*")
                 continue
             }
             if ($i == "*" && $(i + 1) == "/") {
@@ -136,20 +173,20 @@ BEGINFILE {
             {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
                 Index_append(i, "\\"); ++i
-                __error(FILENAME" Line "FNR": Line Continuation \\ in Comment")
+                __error(inputFile" Line "inputZ": Line Continuation \\ in Comment")
 if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
-                continuation = 1; getline; i = 0; continue
+                continuation = 1; getline < inputFile; i = 0; continue
             }
             continue
         }
         if (inputType == "string") {
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-                __error(FILENAME" Line "FNR": Line Continuation \\ in String")
+                __error(inputFile" Line "inputZ": Line Continuation \\ in String")
 if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
-                continuation = 1; getline; i = 0; continue
+                continuation = 1; getline < inputFile; i = 0; continue
             }
             if ($i == "\\") {
                 # if ($(i + 1) == "\"")
@@ -160,8 +197,8 @@ if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
                 if (hash == "# include") {
                     n = Path_join(Directory, string)
                     if (File_exists(n)) {
-                        List_insertBefore(includes, FILENAME, n)
-                        ARGV_add(n)
+                        List_insertBefore(includes, inputFile, n)
+                        List_add(parsing, n) # ARGV_add(n)
                     }
                   # else __error("(preprocess) File doesn't exist: \""n"\"")
                 }
@@ -174,18 +211,18 @@ if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
         if (inputType == "include string") {
             if (i == NF && $i == "\\") {
                 if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-                __error(FILENAME" Line "FNR": Line Continuation \\ in #include <String>")
+                __error(inputFile" Line "inputZ": Line Continuation \\ in #include <String>")
 if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
                 input[inputI][inputZ] = input[inputI][inputZ] $0
-                continuation = 1; getline; i = 0; continue
+                continuation = 1; getline < inputFile; i = 0; continue
             }
             if ($i == ">") {
                 inputType = ""
                 for (d = 1; d <= includeDirs["length"]; ++d) {
                     n = Path_join(includeDirs[d], includeString)
                     if (File_exists(n)) {
-                        List_insertBefore(includes, FILENAME, n)
-                        ARGV_add(n)
+                        List_insertBefore(includes, inputFile, n)
+                        List_add(parsing, n) # ARGV_add(n)
                         break
                     }
                 }
@@ -232,10 +269,10 @@ if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
         if ($i == "\\") {
             if (i != NF) { Index_remove(i--); continue }
             if (i != 1) if (Index_prepend(i, fix, fix)) ++i
-          # print FILENAME" Line "FNR": Line Continuation \\">"/dev/stderr"
+          # print inputFile" Line "inputZ": Line Continuation \\">"/dev/stderr"
 if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } printf "" }
             input[inputI][inputZ] = input[inputI][inputZ] $0
-            continuation = 1; getline; i = 0; continue
+            continuation = 1; getline < inputFile; i = 0; continue
         }
         if (i == 1 && $i == "#") {
             hash = "#"
@@ -417,6 +454,13 @@ if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
                         break
                     } --i
                 }
+                if ($(i + 1) ~ /[fFlL]/) {
+                    ++i; zahl = zahl $i
+                    for (; ++i <= NF; ) {
+                        if ($i ~ /[fFlL]/) { zahl = zahl $i; continue }
+                        break
+                    } --i
+                }
             }
             if (i != NF) if (Index_append(i, fix, fix)) ++i
             if (hash == "#") hash = "# "zahl
@@ -441,65 +485,16 @@ if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else pr
             continue
         }
 
-__error("Unknown character "$i)
+        __error(inputFile" Line "inputZ": Unknown character "$i)
         Index_remove(i--)
     }
 
     input[inputI][inputZ] = input[inputI][inputZ] $0
 
 if (DEBUG == 4) { for (h = 1; h <= NF; ++h) { if ($h == fix) printf "|"; else printf "%s ", $h } print "" }
-}
 
-# ENDFILE { }
+}   Index_pop()
 
-END {
-
-if (DEBUG == 4) {
-__error( "includeDirs:")
- Array_error(includeDirs)
-__error( "includes:")
- Array_error(includes)
-}
-    #Array_add(defines, "__STDC__")
-    #defines["__STDC__"]["body"] = "1"
-    #Array_add(defines, "__GNUC__")
-    #defines["__GNUC__"]["body"] = "7"
-    #Array_add(defines, "__GNUC_MINOR__")
-    #defines["__GNUC_MINOR__"]["body"] = "5"
-    #Array_add(defines, "__WORDSIZE")
-    #defines["__WORDSIZE"]["body"] = "64"
-    #Array_add(defines, "__USER_LABEL_PREFIX__")
-    #defines["__USER_LABEL_PREFIX__"]["body"] = ""
-
-    Array_add(types, "void")
-    Array_add(types, "unsigned")
-    Array_add(types, "signed")
-    Array_add(types, "char")
-    Array_add(types, "short")
-    Array_add(types, "int")
-    Array_add(types, "long")
-    Array_add(types, "float")
-    Array_add(types, "double")
-
-    precompile(targetDefines)
-
-    for (argI = 1; argI <= origin["length"]; ++argI)
-        if (origin[argI])
-            precompile(origin[argI])
-
-if (DEBUG == 3) {
-for (o = 1; o <= defines["length"]; ++o) { name = defines[o]
-Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
-if (defines[name]["isFunctional"])
-__debug("# define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
-else
-__debug("# define "name"  "rendered_defineBody)
-}
-__error("Types:")
-Array_error(types)
-}
-
-#    if (!error) @make()
 }
 
 function gcc_preprocess(    fileIn, fileOut) {
@@ -568,10 +563,10 @@ function precompile(fileName,    a, argumentI, b, c, d, defineBody, defineBody1,
                 if (c) continue
                 m = String_concat(m, " ", $n)
             }
-            x = Expression_evaluate(m, defines, "")
-            if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
+            w = Expression_evaluate(m, defines, "")
+            if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
             f = Array_add(ifExpressions)
-__debug(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "x)
+__debug(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "w)
             ifExpressions[f]["if"] = m
             if (x) ifExpressions[f]["do"] = 1
             NF = 0
@@ -585,12 +580,12 @@ __debug(input[e]["FILENAME"]" Line "z": (Level "f") if "m"  == "x)
                 m = String_concat(m, " ", $n)
             }
             f = ifExpressions["length"]
-            x = Expression_evaluate(m, defines, "")
-            if (x !~ /^[0-9]+$/) x = 0; else x = x + 0
+            w = Expression_evaluate(m, defines, "")
+            if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
             ifExpressions[f]["else if"] = m
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             if (!ifExpressions[f]["do"] && x) {
-__debug(input[e]["FILENAME"]" Line "z": (Level "f") else if "m"  == "x)
+__debug(input[e]["FILENAME"]" Line "z": (Level "f") else if "m"  == "w)
                 ifExpressions[f]["do"] = 1
             }
             NF = 0
