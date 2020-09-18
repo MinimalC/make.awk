@@ -17,9 +17,10 @@ BEGIN {
     Array_add(defines, "__GNUC_MINOR__")
     defines["__GNUC_MINOR__"]["body"] = 11
     Array_add(defines, "__GNUC_PREREQ")
-    defines["__GNUC_PREREQ"]["function"][1] = "maj"
-    defines["__GNUC_PREREQ"]["function"][2] = "min"
-    defines["__GNUC_PREREQ"]["function"]["length"] = 2
+    defines["__GNUC_PREREQ"]["isFunction"] = 1
+    defines["__GNUC_PREREQ"]["arguments"][1] = "maj"
+    defines["__GNUC_PREREQ"]["arguments"][2] = "min"
+    defines["__GNUC_PREREQ"]["arguments"]["length"] = 2
     defines["__GNUC_PREREQ"]["body"] = "\\ ( ( __GNUC__ << 16 ) + __GNUC_MINOR__ >= ( ( maj ) << 16 ) + ( min ) )"
     Array_add(defines, "SQLITE_THREADSAFE")
     defines["SQLITE_THREADSAFE"]["body"] = "1 /* IMP: R-07272-22309 */"
@@ -32,36 +33,36 @@ BEGIN {
 #    defines["size_t"]["body"] = 1
 
     for (m = 1; m <= ARGV_length(); ++m) {
-        print ""; print "\""Expression_evaluate( ARGV[m], defines)"\""
+        print ""; print "\""Exxpression_evaluate( ARGV[m])"\""
     } --m
 
     if (m == 0) {
 
-        print ""; print "\""Expression_evaluate( " 5 * (AWA) + (5 + 5) + 5 * OHO ", defines)"\""
+        print ""; print "\""Exxpression_evaluate( " 5 * ( AWA ) + ( 5 + 5 ) + 5 * OHO ")"\""
 
-        print ""; print "\""Expression_evaluate( "5 + 5 + 100 / (2 * AWA)", defines)"\""
+        print ""; print "\""Exxpression_evaluate( "5 + 5 + 100 / ( 2 * AWA )")"\""
 
-        print ""; print "\""Expression_evaluate( "5 * 5 + (5 + 1 * AWA)", defines)"\""
+        print ""; print "\""Exxpression_evaluate( "5 * 5 + ( 5 + 1 * AWA )")"\""
 
-        print ""; print "\""Expression_evaluate( "AWA*(30/(12-2*3))+5==6*OHO", defines)"\""
+        print ""; print "\""Exxpression_evaluate( "AWA * ( 30 / ( 12 - 2 * 3 ) ) + 5 == 6 * OHO")"\""
 
-        print ""; print "\""Expression_evaluate( "AWA*(30/(12-2*3))+5==6*5", defines)"\""
+        print ""; print "\""Exxpression_evaluate( "AWA * ( 30 / ( 12 - 2 * 3 ) ) + 5 == 6 * 5")"\""
 
-        print ""; print "\""Expression_evaluate( "defined(AWA) && !defined(OHO)", defines)"\""
+        print ""; print "\""Exxpression_evaluate( "defined ( AWA ) && ! defined ( OHO )")"\""
 
-        print ""; print "\""Expression_evaluate( " 5UL  >  4", defines)"\""
+        print ""; print "\""Exxpression_evaluate( " 5UL  >  4")"\""
 
-        print ""; print "\""Expression_evaluate( " __GNUC_PREREQ (2, 7)", defines)"\""
+        print ""; print "\""Exxpression_evaluate( " __GNUC_PREREQ ( 2 , 7 )")"\""
 
-        print ""; print "\""Expression_evaluate( " !( defined ( __GNUG__ ) && defined ( size_t ) ) ", defines)"\""
+        print ""; print "\""Exxpression_evaluate( " ! ( defined ( __GNUG__ ) && defined ( size_t ) ) ")"\""
 
-        print ""; print "\""Expression_evaluate( "'\\x002B' + L'\\0' + '\\111' + 'A'", defines)"\""
+        print ""; print "\""Exxpression_evaluate( "'\\x002B' + L'\\0' + '\\111' + 'A'")"\""
 
-        print ""; print "\""Expression_evaluate( " (5 + 5) ? ( 3 + 5 * 6 ) : 0", defines)"\""
+        print ""; print "\""Exxpression_evaluate( " ( 5 + 5 ) ? ( 3 + 5 * 6 ) : 0")"\""
 
-        print ""; print "\""Expression_evaluate( "defined(SQLITE_THREADSAFE) && SQLITE_THREADSAFE > 0", defines)"\""
+        print ""; print "\""Exxpression_evaluate( "defined ( SQLITE_THREADSAFE ) && SQLITE_THREADSAFE > 0")"\""
 
-        print ""; print "\""Expression_evaluate( " ! defined (SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0 ", defines)"\""
+        print ""; print "\""Exxpression_evaluate( " ! defined ( SQLITE_OMIT_WAL ) || SQLITE_MAX_MMAP_SIZE > 0 ")"\""
     }
 
     exit
