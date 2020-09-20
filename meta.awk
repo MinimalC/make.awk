@@ -105,9 +105,10 @@ function ARGV_length() {
 }
 
 
-function Array_create(array) {
-    # if (typeof(array) == "array") { error = "this is already Array"; nextfile }
-    Array_clear(array)
+function Array_clear(array,    h, i) {
+    for (i = 1; i <= array["length"]; ++i) delete array[i]
+    for (i in array) delete array[i]
+    array["length"] = 0
 }
 
 function Array_length(array) {
@@ -201,11 +202,6 @@ function Array_remove(array, i,    h, j, k, l, m, n) {
         array[n] = array[n + 1]
     delete array[l]
     --array["length"]
-}
-
-function Array_clear(array,    h, i) {
-    for (i = 1; i <= array["length"]; ++i) delete array[i]
-    array["length"] = 0
 }
 
 function Array_print(array, level,    h, i, prefix) {
@@ -463,6 +459,13 @@ function Index_reset(    h, i, j, k, l, m, n) {
 
 function get_FileName(fileName,    p, q, r) {
     Index_push(fileName, "/", "")
+    r = $NF
+    Index_pop()
+    return r
+}
+
+function get_FileNameExt(fileName,    p, q, r) {
+    Index_push(get_FileName(fileName), ".", "")
     r = $NF
     Index_pop()
     return r
