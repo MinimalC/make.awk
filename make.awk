@@ -84,14 +84,16 @@ BEGIN {
 
 function C_parseFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
     if (Array_contains(parsed, fileName)) return 1
-    Index_push("", "", "", "\0", "\n")
-    if ( -1 == ( getline < fileName ) ) {
+    Index_push("", "", "", "\n", "\n")
+    if ( 0 < y = ( getline < fileName ) ) {
+        C_parse($0, fileName)
+    }
+    if (y == -1) {
         __error("File doesn't exist: "fileName)
         Index_pop()
         return 0
     }
     close(fileName)
-    parsed[fileName] = C_parse($0, fileName)
     Array_add(parsed, fileName)
     Index_pop()
     return 1
@@ -99,26 +101,50 @@ function C_parseFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p
 
 function C_precompileFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
     if (!C_parseFile(fileName)) return
-    precompiled[fileName] = C_precompile(parsed[fileName], fileName)
-    Array_add(precompiled, fileName)
+    C_precompile(parsed[fileName], fileName)
+    #Array_add(precompiled, fileName)
 }
 
-function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h, hash, i, j, k, l, m, n, name, o,
-                                    p, q, r, s, string, t, u, v, w, was, x, y, z, zahl)
+function C_parse(code, fileName,     a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, is, j, k, l, m, n, name, o,
+                                     p, q, r, s, string, t, u, v, w, was, x, y, z, zahl)
 {
-    directory = get_DirectoryName(fileName)
-
-    z = 1
-
+    if (fileName) z = ++parsed[fileName]["length"]
+while (1) {
+    continuation = 0
     Index_push(code, "", "", "\0", "\n")
     for (i = 1; i <= NF; ++i) {
-        if ($i == "\r") {
-            Index_remove(i--)
+        if (comments) {
+            while (++i <= NF) {
+                if ($i == "\\") {
+                    if (i == NF) break
+                }
+                if ($i == "/" && $(i + 1) == "*") {
+                    ++comments
+                    $(i++) = "*"
+                    __error(fileName" Line "z": Comment in Comment /* /*")
+                    continue
+                }
+                if ($i == "*" && $(i + 1) == "/") {
+                    if (comments > 1) {
+                        --comments
+                        $(++i) = "*"
+                        continue
+                    }
+                    --comments
+                    ++i
+                    break
+                }
+            }
+            if (i == NF && $i == "\\") {
+                continuation = 1
+                break
+            }
+            if (i < NF && !comments) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "\n") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
-            ++z; was = "linebreak"; hash = ""
+            z = ++parsed[fileName]["length"]; was = "linebreak"; hash = ""
             while (++i <= NF) {
                 if ($i == "\n") continue
                 if ($i ~ /[ \f\t\v]/) continue
@@ -128,16 +154,14 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
             continue
         }
         if ($i == "\\") {
-            if ($(i + 1) == "\r") Index_remove(i + 1)
-            if ($(i + 1) == "\n") {
-                if (i > 1) if (Index_prepend(i, fix, fix)) ++i
-                ++i; ++z; was = "continuation"
-                if (i < NF) if (Index_append(i, fix, fix)) ++i
+            if (i < NF) {
+                __error(fileName": Line "z": Stray \\")
+                Index_remove(i--)
                 continue
             }
-            __error(fileName": Line "z": Stray \\")
-            Index_remove(i--)
-            continue
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
+            continuation = 1
+            break
         }
         if ($i ~ /[ \f\t\v]/) {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
@@ -153,13 +177,6 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
-        if ($i == "#") {
-            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
-            was = "#"
-            if ($(i + 1) == "#") { ++i; was = was"#" }
-            if (i < NF) if (Index_append(i, fix, fix)) ++i
-            continue
-        }
         if ($i == "L" && $(i + 1) == "\"") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             continue
@@ -170,14 +187,20 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
             string = ""
             while (++i <= NF) {
                 if ($i == "\\") {
+                    if (i == NF) break
                     string = string"\\"$(i + 1)
                     ++i; continue
                 }
                 if ($i == "\"") break
                 string = string $i
             }
+            if (i == NF && $i == "\\") {
+                continuation = 1
+                break
+            }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             #if (hash == "# include") {
+            #    directory = get_DirectoryName(fileName)
             #    n = Path_join(directory, string)
             #    if (File_exists(n)) {
             #        List_add(origin, n) # ARGV_add(n)
@@ -196,12 +219,67 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
             string = ""
             while (++i <= NF) {
                 if ($i == "\\") {
+                    if (i == NF) break
                     string = string"\\"$(i + 1)
                     ++i; continue
                 }
                 if ($i == "'") break
                 string = string $i
             }
+            if (i == NF && $i == "\\") {
+                continuation = 1
+                break
+            }
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
+            continue
+        }
+        if ($i == "/") {
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
+            if ($(i + 1) == "*") {
+                ++i; was = "comment"; ++comments
+                continue
+            }
+            if ($(i + 1) == "/") {
+                was = "comment"
+                NF = --i
+                break
+            }
+            was = "/"
+            if ($(i + 1) == "=") { ++i; was = was"=" }
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
+            continue
+        }
+        if ($i == "<") {
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
+            if (hash == "# include") {
+                string = ""
+                while (++i <= NF) {
+                    if ($i == "\\") {
+                        if (i == NF) break
+                        string = string"\\"$(i + 1)
+                        ++i; continue
+                    }
+                    if ($i == ">") break
+                    string = string $i
+                }
+                if (i == NF && $i == "\\") {
+                    continuation = 1
+                    break
+                }
+                if (i < NF) if (Index_append(i, fix, fix)) ++i
+                #for (d = 1; d <= includeDirs["length"]; ++d) {
+                #    n = Path_join(includeDirs[d], string)
+                #    if (File_exists(n)) {
+                #        List_add(origin, n) # ARGV_add(n)
+                #        break
+                #    }
+                #}
+                #if (d > includeDirs["length"]) __error("File doesn't exist: <"string">")
+                continue
+            }
+            was = "<"
+            if ($(i + 1) == "<") { ++i; was = was"<" }
+            if ($(i + 1) == "=") { ++i; was = was"=" }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
@@ -209,47 +287,6 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
             if ($(i + 1) == "/") { Index_remove(i, i + 1); --i; continue }
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "*"
-            if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (i < NF) if (Index_append(i, fix, fix)) ++i
-            continue
-        }
-        if ($i == "/") {
-            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
-            if ($(i + 1) == "*") {
-                ++i; was = "comment"
-                while (++i <= NF) {
-                    if ($i == "/" && $(i + 1) == "*") {
-                        $(i++) = "*"
-                        ++comments
-                        __error(fileName" Line "z": Comment in Comment /* /*")
-                        continue
-                    }
-                    if ($i == "*" && $(i + 1) == "/") {
-                        if (comments) {
-                            --comments
-                            $(++i) = "*"
-                            continue
-                        } ++i
-                        break
-                    }
-                    if ($i == "\r") { Index_remove(i--); continue }
-                    if ($i == "\n" && hash ~ /^#/)
-                    {
-                        $i = "*/\n/*"
-                        i += 4
-                        hash = ""
-                        continue
-                    }
-                }
-                if (i < NF) if (Index_append(i, fix, fix)) ++i
-                continue
-            }
-            if ($(i + 1) == "/") {
-                ++i; was = "comment"
-                while (++i <= NF) if ($i == "\n") break
-                --i; continue
-            }
-            was = "/"
             if ($(i + 1) == "=") { ++i; was = was"=" }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
@@ -270,6 +307,13 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
             if ($(i + 1) == ">") { ++i; was = was">" }
             else if ($(i + 1) == "-") { ++i; was = was"-" }
             else if ($(i + 1) == "=") { ++i; was = was"=" }
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
+            continue
+        }
+        if ($i == "#") {
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
+            was = "#"
+            if ($(i + 1) == "#") { ++i; was = was"#" }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
@@ -297,35 +341,6 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
         if ($i == ")" || $i == "}" || $i == "]") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             # was
-            if (i < NF) if (Index_append(i, fix, fix)) ++i
-            continue
-        }
-        if ($i == "<") {
-            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
-            if (hash == "# include") {
-                string = ""
-                while (++i <= NF) {
-                    if ($i == "\\") {
-                        string = string"\\"$(i + 1)
-                        ++i; continue
-                    }
-                    if ($i == ">") break
-                    string = string $i
-                }
-                if (i < NF) if (Index_append(i, fix, fix)) ++i
-                #for (d = 1; d <= includeDirs["length"]; ++d) {
-                #    n = Path_join(includeDirs[d], string)
-                #    if (File_exists(n)) {
-                #        List_add(origin, n) # ARGV_add(n)
-                #        break
-                #    }
-                #}
-                #if (d > includeDirs["length"]) __error("File doesn't exist: <"string">")
-                continue
-            }
-            was = "<"
-            if ($(i + 1) == "<") { ++i; was = was"<" }
-            if ($(i + 1) == "=") { ++i; was = was"=" }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
@@ -428,26 +443,34 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
         __error(fileName": Line "z": Unknown Character "$i)
         Index_remove(i--)
     }
-if (DEBUG == 2) __error($0)
-    return Index_pop()
-}
 
-function C_precompile(code,    a, b, c, d, e, f, g, h, i, ifExpressions, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+    if (fileName) parsed[fileName][z] = String_concat(parsed[fileName][z], fix, $0)
+    Index_pop()
 
-    Index_push(code, fixFS, fix, "\0", "\n")
-    Index_reset()
+if (DEBUG == 2) __error(parsed[fileName][z])
 
-    for (i = 1; i <= NF; ++i) {
-        if ($i ~ /^\/\*/) { $i = ""; continue }
-        if ($i ~ /^\/\//) { $i = ""; continue }
+    if (fileName) {
+    if (0 < ( getline < fileName )) {
+        if (!continuation) z = ++parsed[fileName]["length"]
+        code = $0
+        continue
+    } }
+    break
+} }
+
+function C_precompile(code, fileName,    a, b, c, d, e, f, g, h, i, ifExpressions, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+
+    for (z = 1; z <= code["length"]; ++z) {
+        Index_push(code[z], fixFS, fix, "\0", "\n")
+        Index_reset()
+
+
+        print
+
+        code[z] = Index_pop()
     }
-    Index_reset()
-
-    print
-
-    code = Index_pop()
 #    Index_push(code, fixFS, " ", "\0", "\n"); Index_reset(); print; Index_pop()
-    return code
+#    return code[0]
 }
 
 function gcc_precompile(    h, i, j, k, l, m, n, o) {
