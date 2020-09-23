@@ -74,10 +74,6 @@ BEGIN {
             continue
         }
         fun = formatExt[fun]"_precompileFile"
-        if (SYMTAB[fun]) {
-            __error("No function defined: "fun)
-            continue
-        }
         @fun(origin[n])
     }
 
@@ -153,7 +149,6 @@ function C_parse(code, fileName,    a, b, c, comments, d, directory, e, f, g, h,
             continue
         }
         if ((i == 1 || was == "linebreak") && $i == "#") {
-            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "#"; hash = "#"
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
@@ -437,7 +432,7 @@ if (DEBUG == 2) __error($0)
     return Index_pop()
 }
 
-function C_precompile(code,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+function C_precompile(code,    a, b, c, d, e, f, g, h, i, ifExpressions, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
 
     Index_push(code, fixFS, fix, "\0", "\n")
     Index_reset()
