@@ -319,7 +319,7 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
 
         for (n = 1; n <= newArray["length"]; ++n) {
             if (n == 1) m = newArray[1]
-            else m = m OFS newArray[n]
+            else m = m ORS newArray[n]
         }
         return $0 = m
     }

@@ -101,14 +101,17 @@ function C_parseFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p
 
 function C_precompileFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
     if (!C_parseFile(fileName)) return
-    C_precompile(parsed[fileName], fileName)
+    C_precompile(fileName)
     #Array_add(precompiled, fileName)
 }
 
 function C_parse(code, fileName,     a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, is, j, k, l, m, n, name, o,
                                      p, q, r, s, string, t, u, v, w, was, x, y, z, zahl)
 {
-    if (fileName) z = ++parsed[fileName]["length"]
+    if (fileName) {
+        parsed[fileName]["name"] = fileName
+        z = ++parsed[fileName]["length"]
+    }
 while (1) {
     continuation = 0
     Index_push(code, "", "", "\0", "\n")
@@ -236,7 +239,7 @@ while (1) {
         if ($i == "/") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             if ($(i + 1) == "*") {
-                ++i; was = "comment"; ++comments
+                was = "comment"; ++comments
                 continue
             }
             if ($(i + 1) == "/") {
@@ -443,34 +446,247 @@ while (1) {
         __error(fileName": Line "z": Unknown Character "$i)
         Index_remove(i--)
     }
+    if (comments && !continuation && hash ~ /^# /)
+    {
+        $NF = $NF"*/"
+        Index_reset()
+    }
 
     if (fileName) parsed[fileName][z] = String_concat(parsed[fileName][z], fix, $0)
     Index_pop()
 
-if (DEBUG == 2) __error(parsed[fileName][z])
+if (DEBUG == 2 && !continuation) __error(parsed[fileName][z])
 
     if (fileName) {
     if (0 < ( getline < fileName )) {
-        if (!continuation) z = ++parsed[fileName]["length"]
         code = $0
+        if (comments && !continuation && hash ~ /^# /)
+        {
+            --comments
+            code = "/*"code
+        }
+        if (!continuation) {
+            z = ++parsed[fileName]["length"]
+            hash = ""
+        }
         continue
     } }
     break
 } }
 
-function C_precompile(code, fileName,    a, b, c, d, e, f, g, h, i, ifExpressions, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+function C_precompile(fileName,    a, b, c, d, e, f, g, h, I, i, ifExpressions, j, k, l, m, n, name, o,
+                                   p, q, r, s, t, u, v, w, x, y, z)
+{
+    if (!Array_contains(defines, "__FILE__")) Array_add(defines, "__FILE__")
+    if (!Array_contains(defines, "__LINE__")) Array_add(defines, "__LINE__")
+    defines["__FILE__"]["body"] = "\""fileName"\""
 
-    for (z = 1; z <= code["length"]; ++z) {
-        Index_push(code[z], fixFS, fix, "\0", "\n")
+    print "\n# 1 \""fileName"\""
+
+    for (z = 1; z <= parsed[fileName]["length"]; ++z) {
+        Index_push(parsed[fileName][z], fixFS, fix, "\0", "\n")
         Index_reset()
 
+        defines["__LINE__"]["body"] = z
 
-        print
+        if ($1 == "#") {
+        if ($2 == "ifdef") {
+            $2 = "if"
+            for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                    Index_prepend(n, "defined"); n += 2
+                }
+            }
+        }
+        if ($2 == "ifndef") {
+            $2 = "if"
+            for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                    Index_prepend(n, "!"fix"defined"); n += 2
+                }
+            }
+        }
+        if ($2 == "if") {
+            Index_remove(1, 2)
 
-        code[z] = Index_pop()
+            w = Expression_evaluate($0)
+            if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
+
+            f = Array_add(ifExpressions)
+__debug(fileName" Line "z": (Level "f") if "$0"  == "w)
+            ifExpressions[f]["if"] = $0
+            if (x) ifExpressions[f]["do"] = 1
+            NF = 0
+        }
+        if ($2 == "elif") {
+            Index_remove(1, 2)
+
+            w = Expression_evaluate($0)
+            if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
+
+            f = ifExpressions["length"]
+            ifExpressions[f]["else if"] = $0
+            if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
+            if (!ifExpressions[f]["do"]) {
+__debug(fileName" Line "z": (Level "f") else if "$0)
+                ifExpressions[f]["do"] = 1
+            }
+            NF = 0
+        }
+        if ($2 == "else") {
+            f = ifExpressions["length"]
+            ifExpressions[f]["else"] = 1
+            if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
+            if (!ifExpressions[f]["do"]) {
+__debug(fileName" Line "z": (Level "f") else")
+                ifExpressions[f]["do"] = 1
+            }
+            NF = 0
+        }
+        if ($2 == "endif") {
+            f = ifExpressions["length"]
+__debug(fileName" Line "z": (Level "f") endif")
+            Array_remove(ifExpressions, f)
+            NF = 0
+        } }
+
+        for (f = 1; f <= ifExpressions["length"]; ++f) {
+            if (ifExpressions[f]["do"] == 1) continue
+            NF = 0; break
+        }
+
+        if ($1 == "#") {
+        if ($2 == "include") {
+            if ($3 ~ /^</) {
+                m = substr($3, 2, length($3) - 2)
+                for (n = 1; n <= includeDirs["length"]; ++n) {
+                    o = Path_join(includeDirs[n], m)
+                    if (File_exists(o)) {
+__debug(fileName" Line "z": including "o)
+                        C_precompileFile(o)
+                        defines["__FILE__"]["body"] = "\""fileName"\""
+                        defines["__LINE__"]["body"] = z
+
+                        print "# "z" \""fileName"\""
+                        break
+                    }
+                }
+                if (n > includeDirs["length"]) __error("File doesn't exist: <"m">")
+            }
+            else {
+                m = get_DirectoryName(fileName)
+                m = Path_join(m, substr($3, 2, length($3) - 2))
+                if (File_exists(m)) {
+__debug(fileName" Line "z": including "m)
+                    C_precompileFile(m)
+                    defines["__FILE__"]["body"] = "\""fileName"\""
+                    defines["__LINE__"]["body"] = z
+                }
+                else __error("File doesn't exist: \""m"\"")
+
+                print "# "z" \""fileName"\""
+            }
+            NF = 0
+        }
+        if ($2 == "define") {
+            name = $3
+            if (Array_contains(defines, name)) {
+                __error(fileName" Line "z": define "name" exists already")
+            }
+            else {
+                Array_add(defines, name)
+                Index_remove(1, 2, 3)
+                if ($1 == "(") {
+                    for (n = 2; n <= NF; ++n) {
+                        if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                            if (Array_contains(types, $n)) break
+                            continue
+                        }
+                        if ($n == ",") continue
+                        if ($n == "...") continue
+                        if ($n == ")") break
+                        break
+                    }
+                    if ($n == ")") { # n < NF
+                        m = ""; for (o = 2; o < n; ++o) {
+                            m = String_concat(m, fix, $o)
+                            if ($o == ",") continue
+                            argumentI = ++defines[name]["arguments"]["length"]
+                            defines[name]["arguments"][argumentI] = $o
+                        }
+                        defines[name]["arguments"]["text"] = m
+                        defines[name]["isFunction"] = 1
+                        Index_removeRange(1, n)
+                    }
+                }
+
+                m = ""; for (n = 1; n <= NF; ++n) {
+                    # if ($n == "\\") continue
+                    m = String_concat(m, fix, $n)
+                }
+                defines[name]["body"] = m
+
+Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
+if (defines[name]["isFunction"])
+__debug(fileName" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
+else
+__debug(fileName" Line "z": define "name"  "rendered_defineBody)
+
+            }
+            NF = 0
+        }
+        if ($2 == "undef") {
+            if (!(f = Array_contains(defines, $3))) __error(fileName" Line "z": undef doesn't exist: "$3)
+            else {
+                Array_remove(defines, f)
+                delete defines[$3]
+__debug(fileName" Line "z": undef "$3)
+            }
+            NF = 0
+        }
+        # if (NF > 0) { $1 = "/*"$1; $NF = $NF"*/"; Index_reset() }
+        }
+
+        for (i = 1; i <= NF; ++i) {
+            if (Array_contains(defines, $i)) {
+                name = $i
+if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
+                I = Index["length"]
+                parsed[fileName]["z"] = z
+                n = Define_apply(i, I, parsed[fileName])
+                z = parsed[fileName]["z"]
+                i += n - 1
+            }
+        }
+
+        for (i = 1; i <= NF; ++i) {
+            if (comments) {
+                if ($i ~ /\*\/$/) {
+                    Index_remove(i--)
+                    --comments
+                    continue
+                }
+                Index_remove(i--)
+                continue
+            }
+            if ($i ~ /^\/\*/) {
+                ++comments
+                --i; continue
+            }
+            if ($i ~ /^\/\//) {
+                NF = --i
+                break
+            }
+        }
+
+if (DEBUG) print
+
+        precompiled[fileName][z] = Index_pop()
+
+if (!DEBUG) { Index_push(precompiled[fileName][z], fixFS, " ", "\0", "\n"); Index_reset(); print; Index_pop() }
+
     }
-#    Index_push(code, fixFS, " ", "\0", "\n"); Index_reset(); print; Index_pop()
-#    return code[0]
+    precompiled[fileName]["length"] = parsed[fileName]["length"]
 }
 
 function gcc_precompile(    h, i, j, k, l, m, n, o) {

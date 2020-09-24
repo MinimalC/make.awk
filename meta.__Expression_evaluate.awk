@@ -3,15 +3,15 @@
 # 2020 Hans Riehm
 
 
-function Define_apply(i,    I, file,    a, arguments, b, c, d, defineBody, f, g, h, inputType, j, k, l, m,
-                                        n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y) # e, z
+function Define_apply(i, noredefines,    a, arguments, b, c, d, defineBody, defineBody1, f, g, h, inputType, j, k, l, m,
+                                         n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y) # e, z
 {
     # Evaluate AWA
     if (Array_contains(defines, $i)) {
         name = $i
         # define AWA AWA
         if (noredefines[name]) {
-            __error(file["name"]" Line "file["z"]": self-referencing define "name" "name)
+            __error(input[e]["FILENAME"]" Line "z": self-referencing define "name" "name)
             return 1
         }
         delete noredefines[name]
@@ -23,9 +23,9 @@ function Define_apply(i,    I, file,    a, arguments, b, c, d, defineBody, f, g,
             o = i; m = ""; p = 0
             while (++o) {
                 if (o > NF) {
-                    if (I && I == Index["length"] && ++file["z"] <= file["length"]) {
-                        $0 = $0 fix file[file["z"]]
-                        defines["__LINE__"]["body"] = file["z"]
+                    if (I && Index["length"] == I && ++z <= input[e]["length"]) {
+                        $0 = $0 fix input[e][z]
+                        defines["__LINE__"]["body"] = z
                         --o; continue
                     }
                     break
@@ -47,26 +47,24 @@ function Define_apply(i,    I, file,    a, arguments, b, c, d, defineBody, f, g,
                 m = String_concat(m, fix, $o)
             }
             if ($(i + 1) != "(") {
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": not using "name)
                 return 1
             }
             Index_removeRange(i + 1, o)
-#__error(defines[name]["arguments"]["text"])
-#Array_debug(arguments)
-            if (arguments["length"] < l)
-                __error(file["name"]" Line "file["z"]": using "name": Not enough arguments used") # ("arguments["length"]" insteadof "l") "m)
+            if (arguments["length"] < l) __error(input[e]["FILENAME"]" Line "z": using "name": Not enough arguments used")
             else if (arguments["length"] > l && defines[name]["arguments"][l] != "...")
-                __error(file["name"]" Line "file["z"]": using "name": Too many arguments used")
+                __error(input[e]["FILENAME"]" Line "z": using "name": Too many arguments used")
+#Array_debug(arguments)
             for (n = 1; n <= arguments["length"]; ++n) {
                 Index_push(arguments[n], fixFS, fix)
                 for (j = 1; j <= NF; ++j) {
                     if (Array_contains(defines, $j)) {
                         if (defines[$j]["isFunction"] && $(j + 1) != "(") {
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 2 not applying "$j)
                             continue
                         }
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
-                        m = Define_apply(j, I, file)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 2 applying "$j)
+                        m = Define_apply(j, noredefines)
                         j += m - 1
                     }
                 }
@@ -76,10 +74,8 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
             for (n = 1; n <= l; ++n) {
                 if (n == l && defines[name]["arguments"][l] == "...") break
                 for (o = 1; o <= NF; ++o) {
-                    if ($o == defines[name]["arguments"][n]) {
-                        $o = arguments[n]
-                        if (o > 1 && $(o - 1) == "#") { $o = "\""$o"\""; $(o - 1) = "" }
-                    }
+                    if ($o == defines[name]["arguments"][n]) $o = arguments[n]
+                    if (o > 1 && $(o - 1) == "#") { $o = "\""$o"\""; $(o - 1) = "" }
                 }
             }
             if (defines[name]["arguments"][l] == "...") {
@@ -91,26 +87,26 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
                         if (o > 1 && $(o - 1) == "#") { $o = "\""$o"\""; $(o - 1) = "" }
                     }
                 }
+                Index_reset()
             }
-            Index_reset()
             defineBody = Index_pop()
         }
         Index_push(defineBody, fixFS, fix)
         for (o = 1; o <= NF; ++o) {
-#            if (inputType == "comment") {
-#                if ($o ~ /\*\/$/) inputType = ""
-#                Index_remove(o--)
-#                continue
-#            }
-#            if ($o ~ /^\/\*/) {
-#                inputType = "comment"
-#                if ($o ~ /\*\/$/) inputType = ""
-#                Index_remove(o--)
-#                continue
-#            }
-#            if ($o ~ /^\/\//) {
-#                NF = o - 1; break
-#            }
+            if (inputType == "comment") {
+                if ($o ~ /\*\/$/) inputType = ""
+                Index_remove(o--)
+                continue
+            }
+            if ($o ~ /^\/\*/) {
+                inputType = "comment"
+                if ($o ~ /\*\/$/) inputType = ""
+                Index_remove(o--)
+                continue
+            }
+            if ($o ~ /^\/\//) {
+                NF = o - 1; break
+            }
             if ($o == "\\") { Index_remove(o--); continue }
             if ($o == "##") {
                 $o = $(o - 1) $(o + 1)
@@ -131,7 +127,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
         defineBody = Index_pop()
         if (defineBody == "") {
             # define unsafe  /* unsafe */
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without body")
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": using "name" without body")
             Index_remove(i)
             return 0
         }
@@ -141,12 +137,12 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without bod
         for (j = 1; j <= NF; ++j) {
             if (Array_contains(defines, $j)) {
                 if (defines[$j]["isFunction"] && $(j + 1) != "(") {
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 1 not applying "$j)
                     ++notapplied
                     continue
                 }
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 applying "$j)
-                n = Define_apply(j, I, file)
+if (DEBUG == 3) __debug(input[e]["FILENAME"]" Line "z": 1 applying "$j)
+                n = Define_apply(j, noredefines)
                 j += n-1
             }
         }
@@ -159,9 +155,9 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 applying "$j)
 if (DEBUG == 3) {
 Index_push(defineBody, "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
 if (defines[name]["isFunction"]) {
-__debug(file["name"]" Line "file["z"]": using "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
+__debug(input[e]["FILENAME"]" Line "z": using "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
 # Array_debug(arguments)
-} else __debug(file["name"]" Line "file["z"]": using "name"  "rendered_defineBody)
+} else __debug(input[e]["FILENAME"]" Line "z": using "name"  "rendered_defineBody)
 }
         return n - notapplied
     }
@@ -185,14 +181,10 @@ function Expression_evaluate(expression,    a, arguments, b, c, d, defineBody, e
     Index_push(expression, fixFS, fix)
     Index_reset()
     for (i = 1; i <= NF; ++i) {
-        if ($i ~ /^\/\*/) {
-            Index_remove(i--)
-            continue
-        }
-        if ($i == "\\") {
-            Index_remove(i--)
-            continue
-        }
+#        if ($i == ")") {
+#            Index_remove(i--)
+#            continue
+#        }
         if ($i ~ /^0x/) {
             $i = strtonum($i)
         }
