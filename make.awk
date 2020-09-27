@@ -67,6 +67,16 @@ BEGIN {
     formatExt["c"] = "C"
     formatExt["inc"] = "C"
 
+    Array_add(types, "void")
+    Array_add(types, "unsigned")
+    Array_add(types, "signed")
+    Array_add(types, "char")
+    Array_add(types, "short")
+    Array_add(types, "int")
+    Array_add(types, "long")
+    Array_add(types, "float")
+    Array_add(types, "double")
+
     for (n = 1; n <= origin["length"]; ++n) {
         fun = get_FileNameExt(origin[n])
         if (!(fun in formatExt)) {
@@ -76,6 +86,8 @@ BEGIN {
         fun = formatExt[fun]"_precompileFile"
         @fun(origin[n])
     }
+
+if (DEBUG == 6) { __error("Types: "); Array_error(types) }
 
     if (make in SYMTAB) @make()
 
@@ -117,8 +129,9 @@ while (1) {
     Index_push(code, "", "", "\0", "\n")
     for (i = 1; i <= NF; ++i) {
         if (comments) {
-            while (++i <= NF) {
+            for ( ; i <= NF; ++i) {
                 if ($i == "\\") {
+                    if (i > 1) if (Index_prepend(i, fix, fix)) ++i
                     if (i == NF) break
                 }
                 if ($i == "/" && $(i + 1) == "*") {
@@ -157,9 +170,15 @@ while (1) {
             continue
         }
         if ($i == "\\") {
+            if ($(i + 1) == "n") {
+                __error(fileName": Line "z": Stray \\n")
+                Index_remove(i, i + 1)
+                --i; continue
+            }
             if (i < NF) {
-                __error(fileName": Line "z": Stray \\")
-                Index_remove(i--)
+                __error(fileName": Line "z": Stray \\"$(i + 1))
+#                Index_remove(i--)
+                ++i
                 continue
             }
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
@@ -190,7 +209,16 @@ while (1) {
             string = ""
             while (++i <= NF) {
                 if ($i == "\\") {
-                    if (i == NF) break
+                    if (i == NF) {
+                        Index_remove(i--)
+                        code = Index_pop()
+                        if (0 < ( getline < fileName )) {
+                            code = code $0
+                            Index_push(code, "", "", "\0", "\n")
+                            continue
+                        }
+                        break
+                    }
                     string = string"\\"$(i + 1)
                     ++i; continue
                 }
@@ -240,11 +268,12 @@ while (1) {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             if ($(i + 1) == "*") {
                 was = "comment"; ++comments
-                continue
+                ++i; continue
             }
             if ($(i + 1) == "/") {
                 was = "comment"
-                NF = --i
+                $(++i) = "*"
+                $NF = $NF"*/"
                 break
             }
             was = "/"
@@ -455,7 +484,7 @@ while (1) {
     if (fileName) parsed[fileName][z] = String_concat(parsed[fileName][z], fix, $0)
     Index_pop()
 
-if (DEBUG == 2 && !continuation) __error(parsed[fileName][z])
+if (DEBUG == 4 && !continuation) __error(parsed[fileName][z])
 
     if (fileName) {
     if (0 < ( getline < fileName )) {
@@ -474,7 +503,7 @@ if (DEBUG == 2 && !continuation) __error(parsed[fileName][z])
     break
 } }
 
-function C_precompile(fileName,    a, b, c, d, e, f, g, h, I, i, ifExpressions, j, k, l, m, n, name, o,
+function C_precompile(fileName,    a, b, c, d, e, expressions, f, g, h, I, i, ifExpressions, j, k, l, leereZeilen, m, n, name, o,
                                    p, q, r, s, t, u, v, w, x, y, z)
 {
     if (!Array_contains(defines, "__FILE__")) Array_add(defines, "__FILE__")
@@ -513,7 +542,7 @@ function C_precompile(fileName,    a, b, c, d, e, f, g, h, I, i, ifExpressions, 
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
 
             f = Array_add(ifExpressions)
-__debug(fileName" Line "z": (Level "f") if "$0"  == "w)
+if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") if "$0"  == "w)
             ifExpressions[f]["if"] = $0
             if (x) ifExpressions[f]["do"] = 1
             NF = 0
@@ -527,8 +556,8 @@ __debug(fileName" Line "z": (Level "f") if "$0"  == "w)
             f = ifExpressions["length"]
             ifExpressions[f]["else if"] = $0
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
-            if (!ifExpressions[f]["do"]) {
-__debug(fileName" Line "z": (Level "f") else if "$0)
+            if (!ifExpressions[f]["do"] && x) {
+if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") else if "$0)
                 ifExpressions[f]["do"] = 1
             }
             NF = 0
@@ -538,14 +567,14 @@ __debug(fileName" Line "z": (Level "f") else if "$0)
             ifExpressions[f]["else"] = 1
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             if (!ifExpressions[f]["do"]) {
-__debug(fileName" Line "z": (Level "f") else")
+if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") else")
                 ifExpressions[f]["do"] = 1
             }
             NF = 0
         }
         if ($2 == "endif") {
             f = ifExpressions["length"]
-__debug(fileName" Line "z": (Level "f") endif")
+if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") endif")
             Array_remove(ifExpressions, f)
             NF = 0
         } }
@@ -562,7 +591,7 @@ __debug(fileName" Line "z": (Level "f") endif")
                 for (n = 1; n <= includeDirs["length"]; ++n) {
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
-__debug(fileName" Line "z": including "o)
+if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": including "o)
                         C_precompileFile(o)
                         defines["__FILE__"]["body"] = "\""fileName"\""
                         defines["__LINE__"]["body"] = z
@@ -577,7 +606,7 @@ __debug(fileName" Line "z": including "o)
                 m = get_DirectoryName(fileName)
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
-__debug(fileName" Line "z": including "m)
+if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": including "m)
                     C_precompileFile(m)
                     defines["__FILE__"]["body"] = "\""fileName"\""
                     defines["__LINE__"]["body"] = z
@@ -626,12 +655,13 @@ __debug(fileName" Line "z": including "m)
                 }
                 defines[name]["body"] = m
 
+if (DEBUG == 2 || DEBUG == 3) {
 Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
 if (defines[name]["isFunction"])
-__debug(fileName" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
+__error(fileName" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
 else
-__debug(fileName" Line "z": define "name"  "rendered_defineBody)
-
+__error(fileName" Line "z": define "name"  "rendered_defineBody)
+}
             }
             NF = 0
         }
@@ -640,7 +670,7 @@ __debug(fileName" Line "z": define "name"  "rendered_defineBody)
             else {
                 Array_remove(defines, f)
                 delete defines[$3]
-__debug(fileName" Line "z": undef "$3)
+if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": undef "$3)
             }
             NF = 0
         }
@@ -677,13 +707,88 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
                 NF = --i
                 break
             }
+            if ($i == "\\") {
+                Index_remove(i--)
+                continue
+            }
         }
 
-if (DEBUG) print
+        for (i = 1; i <= NF; ++i) {
+
+            if ($i == "typedef") {
+                if (e > 0) {
+                    # do you need semikolon?
+                }
+                e = ++expressions["length"]
+                expressions[e]["Type"] = "TypeDefine"
+                continue
+            }
+            if ($i == "const" || $i == "*" || $i == "struct" || Array_contains(types, $i) ||
+                $i == "void" || $i == "unsigned" || $i == "signed" ||
+                $i == "char" || $i == "short" || $i == "int" || $i == "long" ||
+                $i == "float" || $i == "double")
+            {
+                if (expressions["length"] == 1 && expressions[1]["Type"] == "TypeDefine") { }
+                else if (expressions["length"] > 0) {
+                    # do you need semikolon?
+                }
+                e = ++expressions["length"]
+                expressions[e]["Type"] = "Type"
+                for (n = i + 1; n <= NF; ++n) {
+                    if ($i == "struct" && n == i + 1) {
+                        if ($n !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(fileName" Line "z": struct without name"); break }
+                        else { $i = String_concat($i, " ", $n); $n = ""; continue }
+                    }
+                    if ($n == "const" || $n == "*" ||
+                        $n == "void" || $n == "unsigned" || $n == "signed" ||
+                        $n == "char" || $n == "short" || $n == "int" || $n == "long" ||
+                        $n == "float" || $n == "double")
+                    {
+                        $i = String_concat($i, " ", $n); $n = ""; continue
+                    }
+                    break
+                }
+                Index_reset()
+                if ($i != "struct") if (!Array_contains(types, $i)) Array_add(types, $i)
+                if (expressions["length"] == 2 && expressions[1]["Type"] == "TypeDefine") {
+                    if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __error(fileName" Line "z": typedef without name")
+                    else { ++i; if (!Array_contains(types, $i)) Array_add(types, $i) }
+                }
+                continue
+            }
+
+            if ($i == ";") {
+                if (!e) {
+                    # you don't need semikolon
+                }
+                Array_clear(expressions)
+                continue
+            }
+        }
+
+if (DEBUG) {
+        if (NF == 0) ++leereZeilen
+        else {
+            if (leereZeilen <= 3) for (h = 1; h <= leereZeilen; ++h) print ""
+            else { print ""; print ""; print "# "z" \""fileName"\"" }
+            leereZeilen = 0
+            print
+        }
+}
 
         precompiled[fileName][z] = Index_pop()
 
-if (!DEBUG) { Index_push(precompiled[fileName][z], fixFS, " ", "\0", "\n"); Index_reset(); print; Index_pop() }
+if (!DEBUG) {
+        Index_push(precompiled[fileName][z], fixFS, " ", "\0", "\n"); Index_reset()
+        if (NF == 0) ++leereZeilen
+        else {
+            if (leereZeilen <= 3) for (h = 1; h <= leereZeilen; ++h) print ""
+            else { print ""; print ""; print "# "z" \""fileName"\"" }
+            leereZeilen = 0
+            print
+        }
+        Index_pop()
+}
 
     }
     precompiled[fileName]["length"] = parsed[fileName]["length"]

@@ -3,7 +3,7 @@
 @include "meta.awk"
 
 BEGIN {
-    DEBUG=2
+    DEBUG=5
 
     defines["length"] = definesI = 0
 
@@ -23,7 +23,7 @@ BEGIN {
     defines["__GNUC_PREREQ"]["arguments"]["length"] = 2
     defines["__GNUC_PREREQ"]["body"] = "\\ ( ( __GNUC__ << 16 ) + __GNUC_MINOR__ >= ( ( maj ) << 16 ) + ( min ) )"
     Array_add(defines, "SQLITE_THREADSAFE")
-    defines["SQLITE_THREADSAFE"]["body"] = "1 /* IMP: R-07272-22309 */"
+    defines["SQLITE_THREADSAFE"]["body"] = "1 /*IMP:R-07272-22309*/"
     Array_add(defines, "SQLITE_MAX_MMAP_SIZE")
     defines["SQLITE_MAX_MMAP_SIZE"]["body"] = "0x7fff0000"
 
@@ -54,7 +54,7 @@ BEGIN {
 
         print ""; print "\""Exxpression_evaluate( " __GNUC_PREREQ ( 2 , 7 )")"\""
 
-        print ""; print "\""Exxpression_evaluate( " ! ( defined ( __GNUG__ ) && defined ( size_t ) ) ")"\""
+        print ""; print "\""Exxpression_evaluate( " defined ( __GNUC__ ) && defined ( AWA ) && AWA == 5 ")"\""
 
         print ""; print "\""Exxpression_evaluate( "'\\x002B' + L'\\0' + '\\111' + 'A'")"\""
 
