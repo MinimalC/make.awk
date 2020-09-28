@@ -723,7 +723,7 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
                 expressions[e]["Type"] = "TypeDefine"
                 continue
             }
-            if ($i == "const" || $i == "*" || $i == "struct" || Array_contains(types, $i) ||
+            if ($i == "const" || $i == "*" || $i == "struct" || $i == "union" || Array_contains(types, $i) ||
                 $i == "void" || $i == "unsigned" || $i == "signed" ||
                 $i == "char" || $i == "short" || $i == "int" || $i == "long" ||
                 $i == "float" || $i == "double")
@@ -734,10 +734,20 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
                 }
                 e = ++expressions["length"]
                 expressions[e]["Type"] = "Type"
-                for (n = i + 1; n <= NF; ++n) {
-                    if ($i == "struct" && n == i + 1) {
-                        if ($n !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(fileName" Line "z": struct without name"); break }
-                        else { $i = String_concat($i, " ", $n); $n = ""; continue }
+                name = ""
+                if (Array_contains(types, $i)) name = $i
+                for (n = i; n <= NF; ++n) {
+                    if ($n == "struct") {
+                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(fileName" Line "z": struct without name"); break }
+                        else { $i = String_concat($i, " ", $(n + 1)); name = "struct "$(n + 1); $(++n) = ""; continue }
+                    }
+                    if ($n == "union") {
+                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(fileName" Line "z": union without name"); break }
+                        else { $i = String_concat($i, " ", $(n + 1)); name = "union "$(n + 1); $(++n) = ""; continue }
+                    }
+                    if (i == n) continue
+                    if (!name && Array_contains(types, $n)) {
+                        $i = String_concat($i, " ", $n); name = $n; $n = ""; continue
                     }
                     if ($n == "const" || $n == "*" ||
                         $n == "void" || $n == "unsigned" || $n == "signed" ||
