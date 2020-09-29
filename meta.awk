@@ -212,9 +212,10 @@ function Array_print(array, level,    h, i, prefix) {
         return
     }
     for (i in array)
-        if (typeof(array[i]) == "array")
+        if (typeof(array[i]) == "array") {
+            print prefix i ": "
             Array_print(array[i], level + 1)
-        else
+        } else
             print prefix i ": " array[i]
 }
 
@@ -228,9 +229,10 @@ function Array_error(array, level,    h, i, prefix) {
         return
     }
     for (i in array)
-        if (typeof(array[i]) == "array")
+        if (typeof(array[i]) == "array"){
+            print prefix i ": " >"/dev/stderr"
             Array_error(array[i], level + 1)
-        else
+        } else
             print prefix i ": " array[i] >"/dev/stderr"
 }
 

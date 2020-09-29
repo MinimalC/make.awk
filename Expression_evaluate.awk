@@ -63,6 +63,7 @@ BEGIN {
         print ""; print "\""Exxpression_evaluate( "defined ( SQLITE_THREADSAFE ) && SQLITE_THREADSAFE > 0")"\""
 
         print ""; print "\""Exxpression_evaluate( " ! defined ( SQLITE_OMIT_WAL ) || SQLITE_MAX_MMAP_SIZE > 0 ")"\""
+
     }
 
     exit

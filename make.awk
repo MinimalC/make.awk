@@ -21,6 +21,11 @@ BEGIN {
     target = gcc_precompile()
     Array_add(origin, target)
 
+    Array_add(defines, "_XOPEN_SOURCE")
+    defines["_XOPEN_SOURCE"]["body"] = 1100
+    Array_add(defines, "_XOPEN_SOURCE_EXTENDED")
+    defines["_XOPEN_SOURCE_EXTENDED"]["body"] = 1
+
     for (argI = 1; argI <= ARGV_length(); ++argI) {
 
         if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
@@ -87,6 +92,7 @@ BEGIN {
         @fun(origin[n])
     }
 
+if (DEBUG == 2 || DEBUG == 3) { __error("Defines: "); Array_error(defines) }
 if (DEBUG == 6) { __error("Types: "); Array_error(types) }
 
     if (make in SYMTAB) @make()
@@ -117,7 +123,7 @@ function C_precompileFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n,
     #Array_add(precompiled, fileName)
 }
 
-function C_parse(code, fileName,     a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, is, j, k, l, m, n, name, o,
+function C_parse(code, fileName,     a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, j, k, l, m, n, name, o,
                                      p, q, r, s, string, t, u, v, w, was, x, y, z, zahl)
 {
     if (fileName) {
@@ -503,8 +509,8 @@ if (DEBUG == 4 && !continuation) __error(parsed[fileName][z])
     break
 } }
 
-function C_precompile(fileName,    a, b, c, d, e, expressions, f, g, h, I, i, ifExpressions, j, k, l, leereZeilen, m, n, name, o,
-                                   p, q, r, s, t, u, v, w, x, y, z)
+function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, i, ifExpressions, j, k,
+                                   l, leereZeilen, m, n, name, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     if (!Array_contains(defines, "__FILE__")) Array_add(defines, "__FILE__")
     if (!Array_contains(defines, "__LINE__")) Array_add(defines, "__LINE__")
@@ -625,6 +631,7 @@ if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": including "m)
             else {
                 Array_add(defines, name)
                 Index_remove(1, 2, 3)
+                # defines[name]["isFunction"] = 0
                 if ($1 == "(") {
                     for (n = 2; n <= NF; ++n) {
                         if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
@@ -723,46 +730,67 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
                 expressions[e]["Type"] = "TypeDefine"
                 continue
             }
-            if ($i == "const" || $i == "*" || $i == "struct" || $i == "union" || Array_contains(types, $i) ||
-                $i == "void" || $i == "unsigned" || $i == "signed" ||
-                $i == "char" || $i == "short" || $i == "int" || $i == "long" ||
-                $i == "float" || $i == "double")
-            {
+            if ($i == "const" || $i == "struct" || $i == "union" || Array_contains(types, $i)) {
                 if (expressions["length"] == 1 && expressions[1]["Type"] == "TypeDefine") { }
                 else if (expressions["length"] > 0) {
                     # do you need semikolon?
                 }
                 e = ++expressions["length"]
                 expressions[e]["Type"] = "Type"
-                name = ""
-                if (Array_contains(types, $i)) name = $i
-                for (n = i; n <= NF; ++n) {
-                    if ($n == "struct") {
-                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(fileName" Line "z": struct without name"); break }
-                        else { $i = String_concat($i, " ", $(n + 1)); name = "struct "$(n + 1); $(++n) = ""; continue }
+                name = ""; fun = ""
+#                if (Array_contains(types, $i)) name = $i
+                k = 0; o = 0; for (n = i; n <= NF; ++n) {
+                    if (name && !fun && !o && $n == "(") {
+                        ++k
+                        # name = String_concat(name, " ", $n)
+                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
                     }
-                    if ($n == "union") {
-                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(fileName" Line "z": union without name"); break }
-                        else { $i = String_concat($i, " ", $(n + 1)); name = "union "$(n + 1); $(++n) = ""; continue }
+                    if ($n == "const") {
+                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
                     }
-                    if (i == n) continue
-                    if (!name && Array_contains(types, $n)) {
-                        $i = String_concat($i, " ", $n); name = $n; $n = ""; continue
+                    if ($n == "*") {
+                        # name = String_concat(name, " ", $n)
+                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
                     }
-                    if ($n == "const" || $n == "*" ||
-                        $n == "void" || $n == "unsigned" || $n == "signed" ||
+                    if (!fun && k && $n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                        fun = $n
+                        # name = String_concat(name, " ", $n)
+                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                    }
+                    if (k && $n == ")") {
+                        --k; o = 1
+                        # name = String_concat(name, " ", $n)
+                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                    }
+                    if ($n == "void" || $n == "unsigned" || $n == "signed" ||
                         $n == "char" || $n == "short" || $n == "int" || $n == "long" ||
                         $n == "float" || $n == "double")
                     {
-                        $i = String_concat($i, " ", $n); $n = ""; continue
+                        name = String_concat(name, " ", $n)
+                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                    }
+                    if (!name && ($n == "struct" || $n == "union")) {
+                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(fileName" Line "z": "$n" without name"); break }
+                        name = $n" "$(n + 1)
+                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" }
+                        $i = String_concat($i, " ", $(n + 1)); $(++n) = ""
+                        continue
+                    }
+                    if (!name && Array_contains(types, $n)) {
+                        name = $n; if (i != n) { $i = String_concat($i, " ", $n); $n = ""} continue
                     }
                     break
                 }
                 Index_reset()
-                if ($i != "struct") if (!Array_contains(types, $i)) Array_add(types, $i)
+                if (name) if (!Array_contains(types, name)) Array_add(types, name)
                 if (expressions["length"] == 2 && expressions[1]["Type"] == "TypeDefine") {
-                    if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __error(fileName" Line "z": typedef without name")
-                    else { ++i; if (!Array_contains(types, $i)) Array_add(types, $i) }
+                    if (fun) {
+                        if (!Array_contains(types, fun)) Array_add(types, fun)
+                    }
+                    else {
+                        if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __error(fileName" Line "z": typedef without name")
+                        else { ++i; if (!Array_contains(types, $i)) Array_add(types, $i) }
+                    }
                 }
                 continue
             }
@@ -810,8 +838,8 @@ function gcc_precompile(    h, i, j, k, l, m, n, o) {
     print "/* Gemeinfrei */" > i
 
     o = ".preprocess.C.gcc...pre.c"
-    system("gcc -std=c11 -E "i"  > "o)
-    system("gcc -std=c11 -dM -E "i" | sort >> "o)
+    # system("gcc -std=c11 -E "i"  > "o)
+    system("gcc -std=c11 -dM -E "i" | sort > "o)
 
     return o
 }
