@@ -28,6 +28,7 @@ function Define_apply(i,    I, file,    a, arguments, b, c, code, d, defineBody,
                         code = code fix file[file["z"]]
                         Index_push(code, fixFS, fix, "\0", "\n")
                         Index_reset()
+                        for (j = 1; j <= NF; ++j) if ($j ~ /^[ \f\t\v]+$/) Index_remove(j--)
                         defines["__LINE__"]["body"] = file["z"]
                         --o; continue
                     }
@@ -83,7 +84,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
                 for (o = 1; o <= NF; ++o) {
                     if ($o == defines[name]["arguments"][n]) {
                         $o = arguments[n]
-                        if (o > 1 && $(o - 1) == "#") { $o = "\""$o"\""; $(o - 1) = "" }
+                        if (o > 1 && $(o - 1) == "#") { gsub(fixFS, " ", $o); $o = "\""$o"\""; $(o - 1) = "" }
                     }
                 }
             }
@@ -93,7 +94,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
                         $o = ""
                         for (n = l; n <= arguments["length"]; ++n)
                             $o = String_concat($o, fix","fix, arguments[n])
-                        if (o > 1 && $(o - 1) == "#") { $o = "\""$o"\""; $(o - 1) = "" }
+                        if (o > 1 && $(o - 1) == "#") { gsub(fixFS, " ", $o); $o = "\""$o"\""; $(o - 1) = "" }
                     }
                 }
             }
@@ -127,6 +128,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
                     $o = "\"\""
                 }
                 else {
+                    gsub(fixFS, " ", $(o + 1))
                     $(o + 1) = "\""$(o + 1)"\""
                     Index_remove(o)
                 }
@@ -299,6 +301,9 @@ if (DEBUG == 5) __error("Using "name" "$0)
             continue
         }
     }
+
+    Index_reset()
+if (DEBUG == 5) __error("Expression: "$0)
 
     for (i = 1; i <= NF; ++i) {
         # Evaluate Logical Boolean ! not

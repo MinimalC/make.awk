@@ -7,7 +7,7 @@
 
 BEGIN {
     FS="";OFS="";RS="\0";ORS="\n"
-    fixFS = @/[\x01 \f\t\v]*[\x01]/
+    fixFS = @/\x01/
     fix = "\x01"
 
     make = "make_precompile"
@@ -92,7 +92,7 @@ BEGIN {
         @fun(origin[n])
     }
 
-if (DEBUG == 2 || DEBUG == 3) { __error("Defines: "); Array_error(defines) }
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) { __error("Defines: "); Array_error(defines) }
 if (DEBUG == 6) { __error("Types: "); Array_error(types) }
 
     if (make in SYMTAB) @make()
@@ -522,6 +522,8 @@ function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, 
         Index_push(parsed[fileName][z], fixFS, fix, "\0", "\n")
         Index_reset()
 
+        for (i = 1; i <= NF; ++i) if ($i ~ /^[ \f\t\v]+$/) Index_remove(i--)
+
         defines["__LINE__"]["body"] = z
 
         if ($1 == "#") {
@@ -529,7 +531,7 @@ function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, 
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
                 if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                    Index_prepend(n, "defined"); n += 2
+                    $n = "defined"fix"("fix $n fix")"; Index_reset(); n += 3
                 }
             }
         }
@@ -537,7 +539,7 @@ function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, 
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
                 if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                    Index_prepend(n, "!"fix"defined"); n += 2
+                    $n = "!"fix"defined"fix"("fix $n fix")"; Index_reset(); n += 4
                 }
             }
         }
@@ -548,12 +550,12 @@ function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, 
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
 
             f = Array_add(ifExpressions)
-if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") if "$0"  == "w)
             ifExpressions[f]["if"] = $0
             if (x) ifExpressions[f]["do"] = 1
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             NF = 0
         }
-        if ($2 == "elif") {
+        else if ($2 == "elif") {
             Index_remove(1, 2)
 
             w = Expression_evaluate($0)
@@ -563,24 +565,24 @@ if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") if "$0"  =
             ifExpressions[f]["else if"] = $0
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             if (!ifExpressions[f]["do"] && x) {
-if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") else if "$0)
                 ifExpressions[f]["do"] = 1
             }
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(fileName" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             NF = 0
         }
-        if ($2 == "else") {
+        else if ($2 == "else") {
             f = ifExpressions["length"]
             ifExpressions[f]["else"] = 1
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             if (!ifExpressions[f]["do"]) {
-if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") else")
                 ifExpressions[f]["do"] = 1
             }
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             NF = 0
         }
-        if ($2 == "endif") {
+        else if ($2 == "endif") {
             f = ifExpressions["length"]
-if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") endif")
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(fileName" Line "z": (Level "f") endif")
             Array_remove(ifExpressions, f)
             NF = 0
         } }
@@ -597,7 +599,7 @@ if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": (Level "f") endif")
                 for (n = 1; n <= includeDirs["length"]; ++n) {
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
-if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": including "o)
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(fileName" Line "z": including "o)
                         C_precompileFile(o)
                         defines["__FILE__"]["body"] = "\""fileName"\""
                         defines["__LINE__"]["body"] = z
@@ -612,7 +614,7 @@ if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": including "o)
                 m = get_DirectoryName(fileName)
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
-if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": including "m)
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(fileName" Line "z": including "m)
                     C_precompileFile(m)
                     defines["__FILE__"]["body"] = "\""fileName"\""
                     defines["__LINE__"]["body"] = z
@@ -662,7 +664,7 @@ if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": including "m)
                 }
                 defines[name]["body"] = m
 
-if (DEBUG == 2 || DEBUG == 3) {
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) {
 Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
 if (defines[name]["isFunction"])
 __error(fileName" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
@@ -677,7 +679,7 @@ __error(fileName" Line "z": define "name"  "rendered_defineBody)
             else {
                 Array_remove(defines, f)
                 delete defines[$3]
-if (DEBUG == 2 || DEBUG == 3) __error(fileName" Line "z": undef "$3)
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(fileName" Line "z": undef "$3)
             }
             NF = 0
         }
@@ -695,6 +697,7 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
                 i += n - 1
             }
         }
+
 
         for (i = 1; i <= NF; ++i) {
             if (comments) {
