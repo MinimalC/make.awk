@@ -2,6 +2,17 @@
 
 @include "meta.awk"
 
+function Exxpression_evaluate(expression,    a, b, c, d) {
+    if (typeof(fixFS) == "untyped") fixFS = @/[\x01]/
+    if (typeof(fix) == "untyped") fix = "\x01"
+    gsub(" ", fix, expression)
+    for (d = 1; d <= defines["length"]; ++d) {
+        c = defines[d]
+        gsub(/ +/, fix, defines[c]["body"])
+    }
+    return Expression_evaluate(expression)
+}
+
 BEGIN {
     DEBUG=5
 

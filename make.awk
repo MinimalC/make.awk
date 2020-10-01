@@ -107,14 +107,11 @@ if (DEBUG == 6) { __error("Types: "); Array_error(types) }
 
 function C_parseFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
     if (Array_contains(parsed, fileName)) return 1
-    Index_push("", "", "", "\n", "\n")
     if (!C_parse("", fileName)) {
         __error("File doesn't exist: "fileName)
-        Index_pop()
         return 0
     }
     Array_add(parsed, fileName)
-    Index_pop()
     return 1
 }
 
@@ -127,13 +124,17 @@ function C_precompileFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n,
 function C_parse(code, fileName,     a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, j, k, l, m, n, name, o,
                                      p, q, r, s, string, t, u, v, w, was, x, y, z, zahl)
 {
-    if (fileName) parsed[fileName]["name"] = fileName
+    if (fileName) {
+        parsed[fileName]["name"] = fileName
+        Index_push("", "", "", "\n", "\n")
+    }
+    else Index_push(code, "", "", "\0", "\n")
 
 while (1) {
 
     if (fileName) {
         if (0 < y = ( getline < fileName )) {
-            if (comments && !continuation && hash ~ /^# /)
+            if (!continuation && comments && hash ~ /^# /)
             {
                 --comments
                 $0 = "/*"$0
@@ -149,9 +150,9 @@ while (1) {
         }
         else return 0
     }
-    else Index_push(code, "", "", "\0", "\n")
 
     continuation = 0
+
     for (i = 1; i <= NF; ++i) {
         if (comments) {
             for ( ; i <= NF; ++i) {
@@ -500,7 +501,7 @@ while (1) {
         __error(fileName": Line "z": Unknown Character "$i)
         Index_remove(i--)
     }
-    if (comments && !continuation && hash ~ /^# /)
+    if (!continuation && comments && hash ~ /^# /)
     {
         $NF = $NF"*/"
         Index_reset()
@@ -510,13 +511,13 @@ while (1) {
 
 if (DEBUG == 4 && !continuation) __error(parsed[fileName][z])
 
-    if (!fileName) { Index_pop(); break }
-
+    if (!fileName) break
 }
+    Index_pop()
     return 1
 }
 
-function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, i, ifExpressions, j, k,
+function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, i, ifExpressions, introduction, j, k,
                                    l, leereZeilen, m, n, name, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     if (!Array_contains(defines, "__FILE__")) Array_add(defines, "__FILE__")
@@ -525,9 +526,10 @@ function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, 
 
     print "\n# 1 \""fileName"\""
 
+    Index_push("", fixFS, fix, "\0", "\n")
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
-        Index_push(parsed[fileName][z], fixFS, fix, "\0", "\n")
-        Index_reset()
+        $0 = parsed[fileName][z]
+        # Index_reset()
 
         for (i = 1; i <= NF; ++i) if ($i ~ /^[ \f\t\v]+$/) Index_remove(i--)
 
@@ -817,6 +819,7 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
 if (DEBUG) {
         if (NF == 0) ++leereZeilen
         else {
+            # if (!introduction) { print "# 1 \""fileName"\""; introduction = 1 }
             if (leereZeilen <= 3) for (h = 1; h <= leereZeilen; ++h) print ""
             else { print ""; print ""; print "# "z" \""fileName"\"" }
             leereZeilen = 0
@@ -824,12 +827,13 @@ if (DEBUG) {
         }
 }
 
-        precompiled[fileName][z] = Index_pop()
+        precompiled[fileName][z] = $0
 
 if (!DEBUG) {
         Index_push(precompiled[fileName][z], fixFS, " ", "\0", "\n"); Index_reset()
         if (NF == 0) ++leereZeilen
         else {
+            # if (!introduction) { print "# 1 \""fileName"\""; introduction = 1 }
             if (leereZeilen <= 3) for (h = 1; h <= leereZeilen; ++h) print ""
             else { print ""; print ""; print "# "z" \""fileName"\"" }
             leereZeilen = 0
@@ -837,8 +841,8 @@ if (!DEBUG) {
         }
         Index_pop()
 }
-
     }
+    Index_pop()
     precompiled[fileName]["length"] = parsed[fileName]["length"]
 }
 

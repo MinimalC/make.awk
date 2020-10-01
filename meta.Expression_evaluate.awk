@@ -24,11 +24,9 @@ function Define_apply(i,    I, file,    a, arguments, b, c, code, d, defineBody,
             while (++o) {
                 if (o > NF) {
                     if (I && I == Index["length"] && ++file["z"] <= file["length"]) {
-                        code = Index_pop()
-                        code = code fix file[file["z"]]
-                        Index_push(code, fixFS, fix, "\0", "\n")
-                        Index_reset()
-                        for (j = 1; j <= NF; ++j) if ($j ~ /^[ \f\t\v]+$/) Index_remove(j--)
+                        $0 = $0 fix file[file["z"]]
+                        # Index_reset()
+                        for (j = o; j <= NF; ++j) if ($j ~ /^[ \f\t\v]+$/) Index_remove(j--)
                         defines["__LINE__"]["body"] = file["z"]
                         --o; continue
                     }
@@ -175,31 +173,15 @@ __debug(file["name"]" Line "file["z"]": using "name" ("defines[name]["arguments"
     return 1
 }
 
-function Exxpression_evaluate(expression,    a, b, c, d) {
-    if (typeof(fixFS) == "untyped") fixFS = @/[\x01]/
-    if (typeof(fix) == "untyped") fix = "\x01"
-    gsub(" ", fix, expression)
-    for (d = 1; d <= defines["length"]; ++d) {
-        c = defines[d]
-        gsub(/ +/, fix, defines[c]["body"])
-    }
-    return Expression_evaluate(expression)
-}
-
 function Expression_evaluate(expression,    a, arguments, b, c, d, defineBody, e, f, g,
                              h, i, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     Index_push(expression, fixFS, fix)
     Index_reset()
     for (i = 1; i <= NF; ++i) {
-        if ($i ~ /^\/\*/) {
-            Index_remove(i--)
-            continue
-        }
-        if ($i == "\\") {
-            Index_remove(i--)
-            continue
-        }
+        if ($i ~ /^[ \f\t\v]+$/) { Index_remove(i--); continue }
+        if ($i ~ /^\/\*/) { Index_remove(i--); continue }
+        if ($i == "\\") { Index_remove(i--); continue }
         if ($i ~ /^0x/) {
             $i = strtonum($i)
         }
