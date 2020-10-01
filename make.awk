@@ -10,7 +10,7 @@ BEGIN {
     fixFS = @/\x01/
     fix = "\x01"
 
-    make = "make_precompile"
+    make = "precompile"
 
     if (ARGV_length() == 0) { __error("Usage: make.awk include Program.c"); exit 1 }
 
@@ -29,7 +29,7 @@ BEGIN {
     for (argI = 1; argI <= ARGV_length(); ++argI) {
 
         if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
-            make = "make_"ARGV[argI]
+            make = ARGV[argI]
             ARGV[argI] = ""; continue
         }
 
@@ -71,6 +71,7 @@ BEGIN {
     formatExt["h"] = "C"
     formatExt["c"] = "C"
     formatExt["inc"] = "C"
+#    formatExt["cs"] = "CSharp"
 
     Array_add(types, "void")
     Array_add(types, "unsigned")
@@ -89,13 +90,17 @@ BEGIN {
             continue
         }
         fun = formatExt[fun]"_precompileFile"
+        if (!(fun in FUNCTAB)) {
+            __error("No Format function "fun)
+            continue
+        }
         @fun(origin[n])
     }
 
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) { __error("Defines: "); Array_error(defines) }
 if (DEBUG == 6) { __error("Types: "); Array_error(types) }
 
-    if (make in SYMTAB) @make()
+    if ((m = "make"make) in FUNCTAB) @m()
 
     exit
 }
@@ -103,15 +108,11 @@ if (DEBUG == 6) { __error("Types: "); Array_error(types) }
 function C_parseFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
     if (Array_contains(parsed, fileName)) return 1
     Index_push("", "", "", "\n", "\n")
-    if ( 0 < y = ( getline < fileName ) ) {
-        C_parse($0, fileName)
-    }
-    if (y == -1) {
+    if (!C_parse("", fileName)) {
         __error("File doesn't exist: "fileName)
         Index_pop()
         return 0
     }
-    close(fileName)
     Array_add(parsed, fileName)
     Index_pop()
     return 1
@@ -126,13 +127,31 @@ function C_precompileFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n,
 function C_parse(code, fileName,     a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, j, k, l, m, n, name, o,
                                      p, q, r, s, string, t, u, v, w, was, x, y, z, zahl)
 {
-    if (fileName) {
-        parsed[fileName]["name"] = fileName
-        z = ++parsed[fileName]["length"]
-    }
+    if (fileName) parsed[fileName]["name"] = fileName
+
 while (1) {
+
+    if (fileName) {
+        if (0 < y = ( getline < fileName )) {
+            if (comments && !continuation && hash ~ /^# /)
+            {
+                --comments
+                $0 = "/*"$0
+            }
+            if (!continuation) {
+                z = ++parsed[fileName]["length"]
+                hash = ""
+            }
+        }
+        else if (y == 0) {
+            close(fileName)
+            break
+        }
+        else return 0
+    }
+    else Index_push(code, "", "", "\0", "\n")
+
     continuation = 0
-    Index_push(code, "", "", "\0", "\n")
     for (i = 1; i <= NF; ++i) {
         if (comments) {
             for ( ; i <= NF; ++i) {
@@ -488,26 +507,14 @@ while (1) {
     }
 
     if (fileName) parsed[fileName][z] = String_concat(parsed[fileName][z], fix, $0)
-    Index_pop()
 
 if (DEBUG == 4 && !continuation) __error(parsed[fileName][z])
 
-    if (fileName) {
-    if (0 < ( getline < fileName )) {
-        code = $0
-        if (comments && !continuation && hash ~ /^# /)
-        {
-            --comments
-            code = "/*"code
-        }
-        if (!continuation) {
-            z = ++parsed[fileName]["length"]
-            hash = ""
-        }
-        continue
-    } }
-    break
-} }
+    if (!fileName) { Index_pop(); break }
+
+}
+    return 1
+}
 
 function C_precompile(fileName,    a, b, c, d, e, expressions, f, fun, g, h, I, i, ifExpressions, j, k,
                                    l, leereZeilen, m, n, name, o, p, q, r, s, t, u, v, w, x, y, z)
