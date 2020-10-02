@@ -1,6 +1,7 @@
 #!/usr/bin/awk -f
 
 @include "meta.awk"
+@include "make.CExpression_evaluate.awk"
 
 function Exxpression_evaluate(expression,    a, b, c, d) {
     if (typeof(fixFS) == "untyped") fixFS = @/[\x01]/
@@ -10,7 +11,7 @@ function Exxpression_evaluate(expression,    a, b, c, d) {
         c = defines[d]
         gsub(/ +/, fix, defines[c]["body"])
     }
-    return Expression_evaluate(expression)
+    return CExpression_evaluate(expression)
 }
 
 BEGIN {

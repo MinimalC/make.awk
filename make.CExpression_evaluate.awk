@@ -2,8 +2,10 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
+#include "../make.awk/meta.awk"
+#include "../make.awk/make.C.awk"
 
-function Define_apply(i,    I, file,    a, arguments, b, c, code, d, defineBody, f, g, h, inputType, j, k, l, m,
+function CDefine_apply(i,    I, file,    a, arguments, b, c, code, d, defineBody, f, g, h, inputType, j, k, l, m,
                                         n, name, notapplied, o, p, q, r, rendered_defineBody, s, t, u, v, w, x, y) # e, z
 {
     # Evaluate AWA
@@ -70,7 +72,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                             continue
                         }
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
-                        m = Define_apply(j, I, file)
+                        m = CDefine_apply(j, I, file)
                         j += m - 1
                     }
                 }
@@ -151,7 +153,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
                     continue
                 }
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 applying "$j)
-                n = Define_apply(j, I, file)
+                n = CDefine_apply(j, I, file)
                 j += n-1
             }
         }
@@ -173,7 +175,7 @@ __debug(file["name"]" Line "file["z"]": using "name" ("defines[name]["arguments"
     return 1
 }
 
-function Expression_evaluate(expression,    a, arguments, b, c, d, defineBody, e, f, g,
+function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, e, f, g,
                              h, i, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     Index_push(expression, fixFS, fix)
@@ -219,7 +221,7 @@ function Expression_evaluate(expression,    a, arguments, b, c, d, defineBody, e
                 m = String_concat(m, fix, $o)
             }
             Index_removeRange(i + 1, o)
-            x = Expression_evaluate(m)
+            x = CExpression_evaluate(m)
             # Index_push(x, fixFS, fix); n = NF; Index_pop()
             $i = x
             --i # i += n - 1
@@ -243,7 +245,7 @@ function Expression_evaluate(expression,    a, arguments, b, c, d, defineBody, e
                 f = String_concat(f, fix, $p)
             }
 if (DEBUG == 5) __error("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
-            x = Expression_evaluate(q)
+            x = CExpression_evaluate(q)
             NF = 1
             if (x) {
                 #Index_push(t, fixFS, fix); n = NF; Index_pop()
@@ -277,7 +279,7 @@ if (DEBUG == 5) __error("NotUsing "name)
                 $i = "0"
                 continue
             }
-            n = Define_apply(i, noredefines)
+            n = CDefine_apply(i, noredefines)
 if (DEBUG == 5) __error("Using "name" "$0)
             --i # i += n - 1
             continue

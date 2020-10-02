@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-@include "../make.awk/meta.Expression_evaluate.awk"
+#include "../make.awk/meta.awk"
 
 BEGIN {
     PROCINFO["sorted_in"] = "@ind_num_asc"
