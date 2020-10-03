@@ -524,6 +524,44 @@ function Path_join(directory, fileName,    h, i, j, k, l, m, n, o, p, q, r, s) {
     return r
 }
 
+function File_read(file, fileName,    w, x, y, z) {
+    if (!file["name"]) file["name"] = fileName
+    x = file["length"]
+    Index_push("", "", "", "\n", "\n")
+#    Index_reset()
+    while (0 < y = ( getline < fileName )) {
+        z = ++file["length"]
+        file[z] = $0
+    }
+    Index_pop()
+    if (y == -1) {
+        __error("File doesn't exist: "fileName)
+        return
+    }
+    close(fileName)
+    return z - x
+}
+
+function File_print(file,    x, y, z) {
+    while (++z <= file["length"])
+        print file[z]
+}
+
+function File_error(file,    x, y, z) {
+    while (++z <= file["length"])
+        __error(file[z])
+}
+
+function File_debug(file,    x, y, z) {
+    if ("DEBUG" in SYMTAB && DEBUG)
+        while (++z <= file["length"])
+            __error(file[z])
+}
+
+function String_read(file, string,    w, x, y, z) {
+    return file["length"] = split(string, file, RS)
+}
+
 # DEPRECATED
 
 function __get_FileName(fileName,    h, i, splits, dirName) {
