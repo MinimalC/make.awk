@@ -86,8 +86,8 @@ BEGIN {
 #    input[++input["length"]] = "/* Gemeinfrei */"
 #    input[++input["length"]] = "# include <stdint.h>"
     output["name"] = "gcc"
-    gcc_coprocess("-E", input, output)
     gcc_sort_coprocess("-dM -E", input, output)
+    gcc_coprocess("-E", input, output)
     C_parse(output)
     C_precompile(parsed["gcc"])
 
@@ -125,46 +125,47 @@ function make_parse(    a,b,c,d,e,f) {
     for (e = 1; e <= parsed["length"]; ++e) File_print(parsed[parsed[e]])
 }
 
-function make_precompile(    a,b,c,d,e,f, x,y,z) {
-
-    if (!DEBUG) Index_push("", fixFS, " ", "\0", "\n")
-    else        Index_push("", fixFS, fix, "\0", "\n")
-    for (z = 1; z <= precompiled["length"]; ++z) {
-        $0 = precompiled[z]; Index_reset()
-        print
-    }
-    Index_pop()
-}
-
-function make_compile(    a,b,c,d,e,f, x,y,z,Z) {
+function make_precompile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z) {
 
     Index_push("", fixFS, " ", "\0", "\n")
     for (z = 1; z <= precompiled["length"]; ++z) {
         $0 = precompiled[z]; Index_reset()
-        Z = ++compiled["length"]; compiled[Z] = $0
+        Z = ++pprecompiled["length"]; pprecompiled[Z] = $0
     }
     Index_pop()
 
-    gcc_coprocess(" -fpreprocessed ", compiled, ".make.out")
+    File_print(pprecompiled)
+}
+
+function make_compile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z,Z) {
+
+    Index_push("", fixFS, " ", "\0", "\n")
+    for (z = 1; z <= precompiled["length"]; ++z) {
+        $0 = precompiled[z]; Index_reset()
+        Z = ++pprecompiled["length"]; pprecompiled[Z] = $0
+    }
+    Index_pop()
+
+    gcc_coprocess(" -fpreprocessed ", pprecompiled, ".make.out")
+
+    Array_clear(compiled)
+    File_read(compiled, ".make.out", "\0")
+    File_print(compiled, "\0", "\0")
 }
 
 function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if (typeof(input) == "string") options = options" "input
+    else options = options" -"
     if (typeof(output) == "string") options = options" -o "output
-    command = "gcc -xc "options" -"
+    command = "gcc -xc "options
     if (typeof(input) == "array") {
         for (i = 1; i <= input["length"]; ++i) {
             print input[i] |& command
         }
-        close(command, "to")
-    }
+    } else print "" |& command
+    close(command, "to")
     Index_push("", "", "", "\n", "\n")
-    while (1) {
-        if (typeof(input) == "array") {
-            if (!(0 < y = ( command |& getline ))) break
-        } else {
-            if (!(0 < y = ( command | getline ))) break
-        }
+    while (0 < y = ( command |& getline )) {
         if (typeof(output) == "array") {
             z = ++output["length"]
             output[z] = $0
@@ -181,23 +182,31 @@ function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,
 }
 
 function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    command = "gcc -xc "options" - | sort"
-    for (i = 1; i <= input["length"]; ++i) {
-        print input[i] |& command
-    }
+    if (typeof(input) == "string") options = options" "input
+    else options = options" -"
+    if (typeof(output) == "string") options = options" -o "output
+    command = "gcc -xc "options" | sort"
+    if (typeof(input) == "array") {
+        for (i = 1; i <= input["length"]; ++i) {
+            print input[i] |& command
+        }
+    } else print "" |& command
     close(command, "to")
-    x = output["length"]
     Index_push("", "", "", "\n", "\n")
     while (0 < y = ( command |& getline )) {
-        z = ++output["length"]
-        output[z] = $0
+        if (typeof(output) == "array") {
+            z = ++output["length"]
+            output[z] = $0
+        }
+        else r = String_concat(r, ORS, $0)
     }
     Index_pop()
     if (y == -1) {
         __error("Command doesn't exist: "command)
         return
     }
-    return z - x
+    close(command)
+    return r
 }
 
 function gcc_precompile(    h, i, j, k, l, m, n, o) {

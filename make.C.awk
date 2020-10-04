@@ -594,7 +594,6 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
             }
         }
 
-
         for (i = 1; i <= NF; ++i) {
             if (comments) {
                 if ($i ~ /\*\/$/) {

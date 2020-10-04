@@ -50,27 +50,45 @@ function File_contains(fileName, string,    h, i, j, p, q, r) {
     return r
 }
 
-
-function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-#    warning = String_concat(warning, "\n", message)
-    print message >"/dev/stderr"
+function get_FileName(pathName,    a,b,c,d,e,f,h, i, path, fileName) {
+    path["length"] = split(pathName, path, "/")
+    return fileName = path[path["length"]]
 }
+
+function get_FileNameExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileExt) {
+    path["length"] = split(pathName, path, "/")
+    file["length"] = split(path[path["length"]], file, ".")
+    return fileExt = file[file["length"]]
+}
+
+function get_DirectoryName(pathName,    h, i, path, dirName) {
+    path["length"] = split(pathName, path, "/")
+    for (i = 1; i < path["length"]; ++i)
+        dirName = dirName path[i] "/"
+    return dirName
+}
+
+function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, path1, q, r, s) {
+    path0["length"] = split(pathName0, path0, "/")
+    if (path0[path0["length"]] == "") { delete path[path0["length"]]; --path0["length"] }
+    path1["length"] = split(pathName1, path1, "/")
+    for (p = 1; p <= path1["length"]; ++p) {
+        path0[++path0["length"]] = path1[p]
+    }
+    for (p = 1; p <= path0["length"]; ++p) {
+        if (p > 1 && path0[p] == "..") { Array_remove(path0, p); Array_remove(path0, p - 1); p -= 2; continue }
+        r = r path0[p] (p < path0["length"] ? "/" : "")
+    }
+    return r
+}
+
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-#    error = String_concat(error, "\n", message)
     print message >"/dev/stderr"
-    # nextfile
 }
 
 function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     if ("DEBUG" in SYMTAB && DEBUG) {
-        message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-        print message >"/dev/stderr"
-    }
-}
-function __debug2(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    if ("DEBUG" in SYMTAB && DEBUG == 2) {
         message = a b c d e f g h i j k l m n o p q r s t u v w x y z
         print message >"/dev/stderr"
     }
@@ -108,7 +126,7 @@ function ARGV_length() {
 function Array_clear(array,    h, i) {
     for (i = 1; i <= array["length"]; ++i) delete array[i]
     for (i in array) delete array[i]
-    array["length"] = 0
+    # array["length"] = 0
 }
 
 function Array_length(array) {
@@ -484,50 +502,12 @@ function Index_reset(    h, i, j, k, l, m, n) {
 #    return r
 #}
 
-function get_FileName(fileName,    p, q, r) {
-    Index_push(fileName, "/", "")
-    r = $NF
-    Index_pop()
-    return r
-}
-
-function get_FileNameExt(fileName,    p, q, r) {
-    Index_push(get_FileName(fileName), ".", "")
-    r = $NF
-    Index_pop()
-    return r
-}
-
-function get_DirectoryName(fileName,    p, q, r) {
-    Index_push(fileName, "/", "/")
-    $NF = ""
-#    Index_reset()
-#    ++NF
-    r = $0
-    Index_pop()
-    return r
-}
-
-function Path_join(directory, fileName,    h, i, j, k, l, m, n, o, p, q, r, s) {
-    if (directory == "") directory = "."
-    Index_push(directory"/"fileName, "/", "/")
-    s = $1 != ""
-    for (n = 1; n <= NF; ++n) {
-        if ($n == "") Index_remove(n--)
-        if (n > 1 && $n == ".") Index_remove(n--)
-        if (n == 2 && $n == "..") { Index_remove(n - 1); --n }
-        if (n > 2 && $n == "..") { Index_remove(n - 1, n); n -= 2 }
-    }
-    if (!s && $1 != ".." && $1 != ".") { Index_insert(1, " "); $1 = "" }
-    r = $0
-    Index_pop()
-    return r
-}
-
-function File_read(file, fileName,    w, x, y, z) {
+function File_read(file, fileName, rs, ors,    w, x, y, z) {
     if (!file["name"]) file["name"] = fileName
     x = file["length"]
-    Index_push("", "", "", "\n", "\n")
+    if (typeof(rs) == "untyped") rs = "\n"
+    if (typeof(ors) == "untyped") ors = "\n"
+    Index_push("", "", "", rs, ors)
 #    Index_reset()
     while (0 < y = ( getline < fileName )) {
         z = ++file["length"]
@@ -542,39 +522,35 @@ function File_read(file, fileName,    w, x, y, z) {
     return z - x
 }
 
-function File_print(file,    x, y, z) {
+function File_print(file, rs, ors,    x, y, z) {
+    if (typeof(rs) == "untyped") rs = "\n"
+    if (typeof(ors) == "untyped") ors = "\n"
+    Index_push("", "", "", rs, ors)
     while (++z <= file["length"])
         print file[z]
+    Index_pop()
 }
 
-function File_error(file,    x, y, z) {
+function File_error(file, rs, ors,    x, y, z) {
+    if (typeof(rs) == "untyped") rs = "\n"
+    if (typeof(ors) == "untyped") ors = "\n"
+    Index_push("", "", "", rs, ors)
     while (++z <= file["length"])
         __error(file[z])
+    Index_pop()
 }
 
-function File_debug(file,    x, y, z) {
-    if ("DEBUG" in SYMTAB && DEBUG)
+function File_debug(file, rs, ors,    x, y, z) {
+    if (typeof(rs) == "untyped") rs = "\n"
+    if (typeof(ors) == "untyped") ors = "\n"
+    if ("DEBUG" in SYMTAB && DEBUG) {
+        Index_push("", "", "", rs, ors)
         while (++z <= file["length"])
             __error(file[z])
+        Index_pop()
+    }
 }
 
 function String_read(file, string,    w, x, y, z) {
     return file["length"] = split(string, file, RS)
-}
-
-# DEPRECATED
-
-function __get_FileName(fileName,    h, i, splits, dirName) {
-    split(fileName, splits, "/")
-    dirName = splits[length(splits)]
-    return dirName
-}
-
-function __get_DirectoryName(fileName,    h, i, splits, splitsL, dirName) {
-    split(fileName, splits, "/")
-    splitsL = length(splits)
-    if (splitsL == 1) return ""
-    for (i = 1; i < splitsL; ++i)
-        dirName = dirName splits[i]"/"
-    return dirName
 }
