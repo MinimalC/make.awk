@@ -3,7 +3,6 @@
 # 2020 Hans Riehm
 
 @include "../make.awk/meta.awk"
-#include "../make.awk/make.awk"
 @include "../make.awk/make.C.awk"
 
 BEGIN {
@@ -44,11 +43,10 @@ BEGIN {
             # if (paramName == "Namespace") Namespace = paramWert; else
             if (paramName ~ /^D/) {
                 paramName = substr(paramName, 2)
-                Array_add(defines, paramName)
                 defines[paramName]["body"] = paramWert
             } else
             if (paramName == "debug") DEBUG = paramWert; else
-        __error("Unknown argument: \""paramName "\" = \""paramWert"\"")
+        __warning("Unknown argument: \""paramName "\" = \""paramWert"\"")
             ARGV[argI] = ""; continue
         }
 
@@ -71,20 +69,20 @@ BEGIN {
     formatExt["inc"] = "C"
 #    formatExt["cs"] = "CSharp"
 
-    Array_add(types, "void")
-    Array_add(types, "unsigned")
-    Array_add(types, "signed")
-    Array_add(types, "char")
-    Array_add(types, "short")
-    Array_add(types, "int")
-    Array_add(types, "long")
-    Array_add(types, "float")
-    Array_add(types, "double")
+    types["void"]
+    types["unsigned"]
+    types["signed"]
+    types["char"]
+    types["short"]
+    types["int"]
+    types["long"]
+    types["float"]
+    types["double"]
 
     input["name"] = "gcc"
-    String_read(input, "/* Gemeinfrei */\n# include <stdint.h>")
-#    input[++input["length"]] = "/* Gemeinfrei */"
-#    input[++input["length"]] = "# include <stdint.h>"
+#    String_read(input, "/* Gemeinfrei */\n# include <stdint.h>")
+    input[++input["length"]] = "/* Gemeinfrei */"
+    input[++input["length"]] = "# include <stdint.h>"
     output["name"] = "gcc"
     gcc_sort_coprocess("-dM -E", input, output)
     gcc_coprocess("-E", input, output)
@@ -94,9 +92,7 @@ BEGIN {
 #    target = gcc_precompile()
 #    Array_insert(origin, 1, target)
 
-    Array_add(defines, "_XOPEN_SOURCE")
     defines["_XOPEN_SOURCE"]["body"] = 1100
-    Array_add(defines, "_XOPEN_SOURCE_EXTENDED")
     defines["_XOPEN_SOURCE_EXTENDED"]["body"] = 1
 
     for (n = 1; n <= origin["length"]; ++n) {
@@ -113,8 +109,8 @@ BEGIN {
         @fun(origin[n])
     }
 
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) { __error("Defines: "); Array_error(defines) }
-if (DEBUG == 6) { __error("Types: "); Array_error(types) }
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) { __debug("Defines: "); Array_debug(defines) }
+if (DEBUG == 6) { __debug("Types: "); Array_debug(types) }
 
     if ((m = "make_"make) in FUNCTAB) @m()
 
@@ -146,17 +142,17 @@ function make_compile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z,Z) {
     }
     Index_pop()
 
-    gcc_coprocess(" -fpreprocessed ", pprecompiled, ".make.out")
+    gcc_coprocess(" -c -fpreprocessed ", pprecompiled, ".make.o")
 
     Array_clear(compiled)
-    File_read(compiled, ".make.out", "\0")
+    File_read(compiled, ".make.o", "\0")
     File_print(compiled, "\0", "\0")
 }
 
 function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    if (typeof(input) == "string") options = options" "input
+    if (typeof(input) == "string" && input) options = options" "input
     else options = options" -"
-    if (typeof(output) == "string") options = options" -o "output
+    if (typeof(output) == "string" && output) options = options" -o "output
     command = "gcc -xc "options
     if (typeof(input) == "array") {
         for (i = 1; i <= input["length"]; ++i) {
@@ -182,9 +178,9 @@ function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,
 }
 
 function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    if (typeof(input) == "string") options = options" "input
+    if (typeof(input) == "string" && input) options = options" "input
     else options = options" -"
-    if (typeof(output) == "string") options = options" -o "output
+    if (typeof(output) == "string" && output) options = options" -o "output
     command = "gcc -xc "options" | sort"
     if (typeof(input) == "array") {
         for (i = 1; i <= input["length"]; ++i) {

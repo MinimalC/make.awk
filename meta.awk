@@ -10,29 +10,48 @@ BEGIN {
 #   RS="\0"
 }
 
-BEGINFILE {
-    if ("error" in SYMTAB && error) error = ""
-    if ("warning" in SYMTAB && warning) warning = ""
-}
+# BEGINFILE { }
 
-ENDFILE {
-    if ("error" in SYMTAB && error)
-        print "ERROR! "error > "/dev/stderr"
-    if ("warning" in SYMTAB && warning)
-        print "WARNING: "warning > "/dev/stderr"
-}
+# ENDFILE { }
 
 END {
-    if ("error" in SYMTAB && error) exit 1
+    if (ERROR) exit 1
+}
+
+function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message, fileName) {
+    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+    # if ("OUTPUTFILENAME" in SYMTAB && SYMTAB["OUTPUTFILENAME"]) fileName = SYMTAB["OUTPUTFILENAME"] else
+    fileName = "/dev/stdout"
+    print message > fileName
+}
+
+function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+    print message > "/dev/stderr"
+}
+
+function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+    ERROR = 1
+    print message > "/dev/stderr"
+}
+
+function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) {
+        message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+        print message > "/dev/stderr"
+    }
 }
 
 
-function File_exists(fileName,    h, i, j, r) {
+function File_exists(fileName,    h, i, j, r,x,y,z) {
     if (!fileName) { print "File_exists: fileName is null">"/dev/stderr"; return }
-    #if (!system("test -s "fileName)) return 1
-    if (!((getline j < fileName) < 0)) r = 1
-    close(fileName)
-    return r
+    if (!system("test -s "fileName)) return 1
+    #r = 0
+    #if (-1 < y = (getline j < fileName)) r = 1
+    #else return 0
+    #close(fileName)
+    return 0 #r
 }
 
 function Directory_exists(dirName) {
@@ -40,12 +59,14 @@ function Directory_exists(dirName) {
     if (!system("test -d "dirName)) return 1
 }
 
-function File_contains(fileName, string,    h, i, j, p, q, r) {
+function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
     if (!fileName) { print "File_contains: fileName is null">"/dev/stderr"; return }
     if (!string) { print "File_contains: string is null">"/dev/stderr"; return }
     #if (!system("grep -r '"string"' "fileName" >/dev/null")) return 1
-    while ((getline j < fileName) < 0)
-        if (index($0, string) > 0) { r = 1; break }
+    r = 0
+    while (0 < y = (getline j < fileName))
+        if (index(j, string)) { r = 1; break }
+    if (y == -1) return 0
     close(fileName)
     return r
 }
@@ -70,28 +91,15 @@ function get_DirectoryName(pathName,    h, i, path, dirName) {
 
 function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, path1, q, r, s) {
     path0["length"] = split(pathName0, path0, "/")
-    if (path0[path0["length"]] == "") { delete path[path0["length"]]; --path0["length"] }
+    if (path0[path0["length"]] == "") { delete path0[path0["length"]]; --path0["length"] }
     path1["length"] = split(pathName1, path1, "/")
-    for (p = 1; p <= path1["length"]; ++p) {
+    for (p = 1; p <= path1["length"]; ++p)
         path0[++path0["length"]] = path1[p]
-    }
     for (p = 1; p <= path0["length"]; ++p) {
-        if (p > 1 && path0[p] == "..") { Array_remove(path0, p); Array_remove(path0, p - 1); p -= 2; continue }
+        if (path0[p + 1] == "..") { Array_remove(path0, p + 1); Array_remove(path0, p); --p; continue }
         r = r path0[p] (p < path0["length"] ? "/" : "")
     }
     return r
-}
-
-function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-    print message >"/dev/stderr"
-}
-
-function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    if ("DEBUG" in SYMTAB && DEBUG) {
-        message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-        print message >"/dev/stderr"
-    }
 }
 
 function chartonum(char,    a, b, c, h, i, j, k, l, m, n) {
@@ -124,25 +132,23 @@ function ARGV_length() {
 
 
 function Array_clear(array,    h, i) {
-    for (i = 1; i <= array["length"]; ++i) delete array[i]
+    if ("length" in array) for (i = 1; i <= array["length"]; ++i) delete array[i]
     for (i in array) delete array[i]
-    # array["length"] = 0
 }
 
-function Array_length(array) {
-    if (typeof(array) == "untyped") return 0
-    if (typeof(array) != "array") { error = "this is no Array"; nextfile }
-    # if (typeof(array["length"]) == "untyped") array["length"] = 0
-    return array["length"]
+function Array_getLength(array) {
+    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return 0
+    if (typeof(array) != "array") __error("Array_getLength: array is no Array")
+    return "length" in array ? array["length"] : 0
 }
 
 function Array_first(array) {
-    if (!Array_length(array)) return
+    if (!Array_getLength(array)) return
     return array[1]
 }
 
 function Array_last(array,    h, i, j, k, l) {
-    if (!(l = Array_length(array))) return
+    if (!(l = Array_getLength(array))) return
     return array[l]
 }
 
@@ -237,7 +243,7 @@ function Array_print(array, level,    h, i, prefix) {
             print prefix i ": " array[i]
 }
 
-function Array_debug(array, level) { if ("DEBUG" in SYMTAB && DEBUG) { Array_error(array, level) } }
+function Array_debug(array, level) { if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) { Array_error(array, level) } }
 
 function Array_error(array, level,    h, i, prefix) {
     if (!level) level = 0
@@ -262,15 +268,21 @@ function ENVIRON_debug() {
 function PROCINFO_debug() {
     print "PROCINFO" >"/dev/stderr"
     Array_error(PROCINFO, 1)
-    #print "SYMTAB" >"/dev/stderr"
-    #Array_error(SYMTAB, 1)
-    #print "FUNCTAB" >"/dev/stderr"
-    #Array_error(FUNCTAB, 1)
 }
 
 function ARGV_debug() {
     print "ARGV" >"/dev/stderr"
     Array_error(ARGV, 1)
+}
+
+function SYMTAB_debug() {
+    print "SYMTAB" >"/dev/stderr"
+    Array_error(SYMTAB, 1)
+}
+
+function FUNCTAB_debug() {
+    print "FUNCTAB" >"/dev/stderr"
+    Array_error(FUNCTAB, 1)
 }
 
 function String_join(sepp, array,    h, i, r) {
@@ -341,7 +353,7 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
             if (n == 1) m = newArray[1]
             else m = m ORS newArray[n]
         }
-        return $0 = m
+        $0 = m
     }
     return Index_reset()
 }
@@ -361,11 +373,10 @@ function Index_pushRange(from, to, newFS, newOFS, newRS, newORS,    h, i, j, k, 
     if (typeof(newFS) != "untyped") FS = newFS
 
     # new Index
-    m = ""
     for (i = from; i <= to && i <= NF; ++i)
         m = String_concat(m, OFS, $i)
-    return $0 = m
-    #return Index_reset()
+    $0 = m
+    return Index_reset()
 }
 
 
@@ -384,9 +395,7 @@ function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
     if (typeof(newFS) != "untyped") FS = newFS
 
     # new Index
-    if (typeof(newIndex) != "untyped") {
-        return $0 = newIndex
-    }
+    if (typeof(newIndex) != "untyped") $0 = newIndex
     return Index_reset()
 }
 
@@ -398,7 +407,7 @@ function Index_pop(fromFS, fromOFS, fromRS, fromORS,    h, i, p, q, r) {
     if (typeof(fromFS) != "untyped")  FS  = fromFS
     r = Index_reset()
 
-    if (i = Array_length(Index)) {
+    if (i = Array_getLength(Index)) {
 
         ORS = Index[i]["OUTPUTRECORDSEP"]
         RS  = Index[i]["RECORDSEP"]
@@ -432,39 +441,39 @@ function Index_prepend(i, value, ifNot,    p, q, r) {
     return r
 }
 
-function Index_append(i, value, ifNot) {
+function Index_append(i, value, ifNot,    p,q,r) {
     if (typeof(ifNot) == "untyped" || (i < NF || $(i + 1) != ifNot))
         r = Index_insert(i + 1, value)
     return r
 }
 
 function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
-    if (typeof(a) != "untyped") $a = ""
-    if (typeof(b) != "untyped") $b = ""
-    if (typeof(c) != "untyped") $c = ""
-    if (typeof(d) != "untyped") $d = ""
-    if (typeof(e) != "untyped") $e = ""
-    if (typeof(f) != "untyped") $f = ""
-    if (typeof(g) != "untyped") $g = ""
-    if (typeof(h) != "untyped") $h = ""
-    if (typeof(i) != "untyped") $i = ""
-    if (typeof(j) != "untyped") $j = ""
-    if (typeof(k) != "untyped") $k = ""
-    if (typeof(l) != "untyped") $l = ""
-    if (typeof(m) != "untyped") $m = ""
-    if (typeof(n) != "untyped") $n = ""
-    if (typeof(o) != "untyped") $o = ""
-    if (typeof(p) != "untyped") $p = ""
-    if (typeof(q) != "untyped") $q = ""
-    if (typeof(r) != "untyped") $r = ""
-    if (typeof(s) != "untyped") $s = ""
-    if (typeof(t) != "untyped") $t = ""
-    if (typeof(u) != "untyped") $u = ""
-    if (typeof(v) != "untyped") $v = ""
-    if (typeof(w) != "untyped") $w = ""
-    if (typeof(x) != "untyped") $x = ""
-    if (typeof(y) != "untyped") $y = ""
-    if (typeof(z) != "untyped") $z = ""
+    if (typeof(a) == "number") $a = ""
+    if (typeof(b) == "number") $b = ""
+    if (typeof(c) == "number") $c = ""
+    if (typeof(d) == "number") $d = ""
+    if (typeof(e) == "number") $e = ""
+    if (typeof(f) == "number") $f = ""
+    if (typeof(g) == "number") $g = ""
+    if (typeof(h) == "number") $h = ""
+    if (typeof(i) == "number") $i = ""
+    if (typeof(j) == "number") $j = ""
+    if (typeof(k) == "number") $k = ""
+    if (typeof(l) == "number") $l = ""
+    if (typeof(m) == "number") $m = ""
+    if (typeof(n) == "number") $n = ""
+    if (typeof(o) == "number") $o = ""
+    if (typeof(p) == "number") $p = ""
+    if (typeof(q) == "number") $q = ""
+    if (typeof(r) == "number") $r = ""
+    if (typeof(s) == "number") $s = ""
+    if (typeof(t) == "number") $t = ""
+    if (typeof(u) == "number") $u = ""
+    if (typeof(v) == "number") $v = ""
+    if (typeof(w) == "number") $w = ""
+    if (typeof(x) == "number") $x = ""
+    if (typeof(y) == "number") $y = ""
+    if (typeof(z) == "number") $z = ""
     return Index_reset()
 }
 
@@ -483,32 +492,22 @@ function Index_removeRange(from0, to0,    h, i) {
 #    return Index_reset()
 #}
 
-function Index_reset(    h, i, j, k, l, m, n) {
+function Index_reset(newIndex,    h, i, j, k, l, m, n) {
     for (i = 1; i <= NF; ++i) {
         if ($i == "") { ++n; continue }
         $(i - n) = $i
     }
     NF -= n
+    if (typeof(newIndex) != "untyped") $0 = newIndex
     return $0 = $0
 }
 
-#function Index_save(oldRecords) {
-#    if (!oldRecords) return $0
-#    return oldRecords ORS $0
-#}
-
-#function Index_nextRecord(    p, q, r) {
-#    if ((r = getline) <= 0) r = 0
-#    return r
-#}
-
 function File_read(file, fileName, rs, ors,    w, x, y, z) {
     if (!file["name"]) file["name"] = fileName
-    x = file["length"]
-    if (typeof(rs) == "untyped") rs = "\n"
+    x = z = file["length"]
+    if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-#    Index_reset()
     while (0 < y = ( getline < fileName )) {
         z = ++file["length"]
         file[z] = $0
@@ -523,7 +522,7 @@ function File_read(file, fileName, rs, ors,    w, x, y, z) {
 }
 
 function File_print(file, rs, ors,    x, y, z) {
-    if (typeof(rs) == "untyped") rs = "\n"
+    if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
     while (++z <= file["length"])
@@ -532,7 +531,7 @@ function File_print(file, rs, ors,    x, y, z) {
 }
 
 function File_error(file, rs, ors,    x, y, z) {
-    if (typeof(rs) == "untyped") rs = "\n"
+    if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
     while (++z <= file["length"])
@@ -540,17 +539,15 @@ function File_error(file, rs, ors,    x, y, z) {
     Index_pop()
 }
 
-function File_debug(file, rs, ors,    x, y, z) {
-    if (typeof(rs) == "untyped") rs = "\n"
-    if (typeof(ors) == "untyped") ors = "\n"
-    if ("DEBUG" in SYMTAB && DEBUG) {
-        Index_push("", "", "", rs, ors)
-        while (++z <= file["length"])
-            __error(file[z])
-        Index_pop()
-    }
-}
+function File_debug(file, rs, ors,    x, y, z) { if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) File_error(file, rs, ors) }
 
-function String_read(file, string,    w, x, y, z) {
-    return file["length"] = split(string, file, RS)
+function String_read(file, string, rs,    h,i,s,splits,x,z) {
+    if (typeof(rs) == "untyped") rs = @/\r?\n/
+    splits["length"] = split(string, splits, rs)
+    x = z = file["length"]
+    for (i = 1; i <= splits["length"]; ++i) {
+        z = ++file["length"]
+        file[z] = splits[i]
+    }
+    return z - x
 }

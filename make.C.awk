@@ -55,7 +55,7 @@ for (z = 1; z <= file["length"]; ++z) {
                 if ($i == "/" && $(i + 1) == "*") {
                     ++comments
                     $(i++) = "*"
-                    __error(fileName" Line "z": Comment in Comment /* /*")
+                    __warning(fileName" Line "z": Comment in Comment /* /*")
                     continue
                 }
                 if ($i == "*" && $(i + 1) == "/") {
@@ -89,7 +89,7 @@ for (z = 1; z <= file["length"]; ++z) {
         #}
         if ($i == "\\") {
             if ($(i + 1) == "n") {
-                __error(fileName": Line "z": Stray \\n")
+                __warning(fileName": Line "z": Stray \\n")
                 Index_remove(i, i + 1)
                 --i; continue
             }
@@ -388,7 +388,7 @@ for (z = 1; z <= file["length"]; ++z) {
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
-        __error(fileName": Line "z": Unknown Character "$i)
+        __warning(fileName": Line "z": Unknown Character "$i)
         Index_remove(i--)
     }
     if (!continuation && comments && hash ~ /^# /)
@@ -405,11 +405,9 @@ for (z = 1; z <= file["length"]; ++z) {
     return 1
 }
 
-function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, I, i, ifExpressions, j, k,
-                               l, leereZeilen, m, n, name, o, p, q, r, s, t, u, v, w, x, y, z, Z)
+function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifExpressions, j, k,
+                               l, leereZeilen, m, n, name, o, p, q, r, rendered, s, t, u, v, w, x, y, z, Z)
 {
-    if (!Array_contains(defines, "__FILE__")) Array_add(defines, "__FILE__")
-    if (!Array_contains(defines, "__LINE__")) Array_add(defines, "__LINE__")
     defines["__FILE__"]["body"] = "\""file["name"]"\""
 
     Z = ++precompiled["length"]; precompiled[Z] = "\n#"fix"1"fix"\""file["name"]"\""
@@ -448,7 +446,7 @@ function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, I, i, i
             f = Array_add(ifExpressions)
             ifExpressions[f]["if"] = $0
             if (x) ifExpressions[f]["do"] = 1
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             NF = 0
         }
         else if ($2 == "elif") {
@@ -463,7 +461,7 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": (Lev
             if (!ifExpressions[f]["do"] && x) {
                 ifExpressions[f]["do"] = 1
             }
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             NF = 0
         }
         else if ($2 == "else") {
@@ -473,12 +471,12 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": (Lev
             if (!ifExpressions[f]["do"]) {
                 ifExpressions[f]["do"] = 1
             }
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             NF = 0
         }
         else if ($2 == "endif") {
             f = ifExpressions["length"]
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": (Level "f") endif")
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") endif")
             Array_remove(ifExpressions, f)
             NF = 0
         } }
@@ -495,7 +493,7 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": (Lev
                 for (n = 1; n <= includeDirs["length"]; ++n) {
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": including "o)
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": including "o)
                         C_precompileFile(o)
                         defines["__FILE__"]["body"] = "\""file["name"]"\""
                         defines["__LINE__"]["body"] = z
@@ -504,18 +502,18 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": incl
                         break
                     }
                 }
-                if (n > includeDirs["length"]) __error("File doesn't exist: <"m">")
+                if (n > includeDirs["length"]) __warning("File doesn't exist: <"m">")
             }
             else {
                 m = get_DirectoryName(file["name"])
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": including "m)
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": including "m)
                     C_precompileFile(m)
                     defines["__FILE__"]["body"] = "\""file["name"]"\""
                     defines["__LINE__"]["body"] = z
                 }
-                else __error("File doesn't exist: \""m"\"")
+                else __warning("File doesn't exist: \""m"\"")
 
                 Z = ++precompiled["length"]; precompiled[Z] = "#"fix z fix"\""file["name"]"\""
             }
@@ -523,17 +521,17 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": incl
         }
         if ($2 == "define") {
             name = $3
-            if (Array_contains(defines, name)) {
-                __error(file["name"]" Line "z": define "name" exists already")
+            if (name in defines) {
+                __warning(file["name"]" Line "z": define "name" exists already")
             }
             else {
-                Array_add(defines, name)
                 Index_remove(1, 2, 3)
                 # defines[name]["isFunction"] = 0
                 if ($1 == "(") {
                     for (n = 2; n <= NF; ++n) {
                         if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                            if (Array_contains(types, $n)) break
+                            if ($n in types) break
+                            if ($n in defines) break
                             continue
                         }
                         if ($n == ",") continue
@@ -554,41 +552,53 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": incl
                     }
                 }
 
-                m = ""; for (n = 1; n <= NF; ++n) {
-                    # if ($n == "\\") continue
-                    m = String_concat(m, fix, $n)
-                }
-                defines[name]["body"] = m
+                #m = ""; for (n = 1; n <= NF; ++n) {
+                #    # if ($n == "\\") continue
+                #    m = String_concat(m, fix, $n)
+                #}
+                defines[name]["body"] = $0
 
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) {
-Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered_defineBody = Index_pop()
+Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered = Index_pop()
 if (defines[name]["isFunction"])
-__error(file["name"]" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered_defineBody)
+__debug(file["name"]" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered)
 else
-__error(file["name"]" Line "z": define "name"  "rendered_defineBody)
+__debug(file["name"]" Line "z": define "name"  "rendered)
 }
             }
             NF = 0
         }
         if ($2 == "undef") {
-            if (!(f = Array_contains(defines, $3))) __error(file["name"]" Line "z": undef doesn't exist: "$3)
+            if (!($3 in defines)) __warning(file["name"]" Line "z": undef doesn't exist: "$3)
             else {
-                Array_remove(defines, f)
                 delete defines[$3]
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __error(file["name"]" Line "z": undef "$3)
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": undef "$3)
             }
+            NF = 0
+        }
+        if ($2 == "warning") {
+            Index_push($0, fixFS, " ", "\0", "\n")
+            __warning($0)
+            Index_pop()
+            NF = 0
+        }
+        if ($2 == "error") {
+            Index_push($0, fixFS, " ", "\0", "\n")
+            __error($0)
+            Index_pop()
             NF = 0
         }
         # if (NF > 0) { $1 = "/*"$1; $NF = $NF"*/"; Index_reset() }
         }
 
         for (i = 1; i <= NF; ++i) {
-            if (Array_contains(defines, $i)) {
+            if ($i in defines) {
                 name = $i
 if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
-                I = Index["length"]
+                file["I"] = Index["length"]
                 file["z"] = z
-                n = CDefine_apply(i, I, file)
+                n = CDefine_apply(i, file)
+                delete file["I"]
                 z = file["z"]
                 i += n - 1
             }
@@ -628,7 +638,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
                 expressions[e]["Type"] = "TypeDefine"
                 continue
             }
-            if ($i == "const" || $i == "volatile" || $i == "struct" || $i == "union" || Array_contains(types, $i)) {
+            if ($i == "const" || $i == "volatile" || $i == "struct" || $i == "union" || $i in types) {
                 if (expressions["length"] == 1 && expressions[1]["Type"] == "TypeDefine") { }
                 else if (expressions["length"] > 0) {
                     # do you need semikolon?
@@ -636,7 +646,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
                 e = ++expressions["length"]
                 expressions[e]["Type"] = "Type"
                 name = ""; fun = ""
-#                if (Array_contains(types, $i)) name = $i
+#                if ($i in types) name = $i
                 k = 0; o = 0; for (n = i; n <= NF; ++n) {
                     if (name && !fun && !o && $n == "(") {
                         ++k
@@ -668,26 +678,26 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
                         if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
                     }
                     if (!name && ($n == "struct" || $n == "union")) {
-                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __error(file["name"]" Line "z": "$n" without name"); break }
+                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __warning(file["name"]" Line "z": "$n" without name"); break }
                         name = $n" "$(n + 1)
                         if (i != n) { $i = String_concat($i, " ", $n); $n = "" }
                         $i = String_concat($i, " ", $(n + 1)); $(++n) = ""
                         continue
                     }
-                    if (!name && Array_contains(types, $n)) {
+                    if (!name && ($n in types)) {
                         name = $n; if (i != n) { $i = String_concat($i, " ", $n); $n = ""} continue
                     }
                     break
                 }
                 Index_reset()
-                if (name) if (!Array_contains(types, name)) Array_add(types, name)
+                if (name) if (!(name in types)) types[name]
                 if (expressions["length"] == 2 && expressions[1]["Type"] == "TypeDefine") {
                     if (fun) {
-                        if (!Array_contains(types, fun)) Array_add(types, fun)
+                        if (!(fun in types)) types[fun]
                     }
                     else {
-                        if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __error(file["name"]" Line "z": typedef without name")
-                        else { ++i; if (!Array_contains(types, $i)) Array_add(types, $i) }
+                        if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __warning(file["name"]" Line "z": typedef without name")
+                        else { ++i; if (!($i in types)) types[$i] }
                     }
                 }
                 continue
