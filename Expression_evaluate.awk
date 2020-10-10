@@ -7,42 +7,29 @@ function Exxpression_evaluate(expression,    a, b, c, d) {
     if (typeof(fixFS) == "untyped") fixFS = @/[\x01]/
     if (typeof(fix) == "untyped") fix = "\x01"
     gsub(" ", fix, expression)
-    for (d = 1; d <= defines["length"]; ++d) {
-        c = defines[d]
-        gsub(/ +/, fix, defines[c]["body"])
-    }
+    for (d in defines) if ("body" in defines[d]) gsub(/ +/, fix, defines[d]["body"])
     return CExpression_evaluate(expression)
 }
 
 BEGIN {
     DEBUG=5
 
-    defines["length"] = definesI = 0
-
-    Array_add(defines, "AWA")
     defines["AWA"]["body"] = 5
-    #Array_add(defines, "OHO")
     #defines["OHO"]["body"] = 5
 
-    Array_add(defines, "__GNUC__")
     defines["__GNUC__"]["body"] = 7
-    Array_add(defines, "__GNUC_MINOR__")
     defines["__GNUC_MINOR__"]["body"] = 11
-    Array_add(defines, "__GNUC_PREREQ")
     defines["__GNUC_PREREQ"]["isFunction"] = 1
     defines["__GNUC_PREREQ"]["arguments"][1] = "maj"
     defines["__GNUC_PREREQ"]["arguments"][2] = "min"
     defines["__GNUC_PREREQ"]["arguments"]["length"] = 2
     defines["__GNUC_PREREQ"]["body"] = "\\ ( ( __GNUC__ << 16 ) + __GNUC_MINOR__ >= ( ( maj ) << 16 ) + ( min ) )"
-    Array_add(defines, "SQLITE_THREADSAFE")
     defines["SQLITE_THREADSAFE"]["body"] = "1 /*IMP:R-07272-22309*/"
-    Array_add(defines, "SQLITE_MAX_MMAP_SIZE")
     defines["SQLITE_MAX_MMAP_SIZE"]["body"] = "0x7fff0000"
 
-    Array_add(defines, "__GNUG__")
     defines["__GNUG__"]["body"] = 1
-#    Array_add(defines, "size_t")
 #    defines["size_t"]["body"] = 1
+    defines["_XOPEN_SOURCE"]["body"] = 1100
 
     for (m = 1; m <= ARGV_length(); ++m) {
         print ""; print "\""Exxpression_evaluate( ARGV[m])"\""
@@ -64,7 +51,6 @@ BEGIN {
 
         print ""; print "\""Exxpression_evaluate( " 5UL  >  4")"\""
 
-        print ""; print "\""Exxpression_evaluate( " __GNUC_PREREQ ( 2 , 7 )")"\""
 
         print ""; print "\""Exxpression_evaluate( " defined ( __GNUC__ ) && defined ( AWA ) && AWA == 5 ")"\""
 
@@ -75,6 +61,14 @@ BEGIN {
         print ""; print "\""Exxpression_evaluate( "defined ( SQLITE_THREADSAFE ) && SQLITE_THREADSAFE > 0")"\""
 
         print ""; print "\""Exxpression_evaluate( " ! defined ( SQLITE_OMIT_WAL ) || SQLITE_MAX_MMAP_SIZE > 0 ")"\""
+
+        print ""; print "\""Exxpression_evaluate( " defined __GNUC__ \\ || ( defined __STDC_WANT_LIB_EXT2__ && __STDC_WANT_LIB_EXT2__ > 0 ) ")"\""
+
+        print ""; print "\""Exxpression_evaluate( " ( _XOPEN_SOURCE - 0 ) >= 700 ")"\""
+
+        print ""; print "\""Exxpression_evaluate(" ! defined __GNUC__ || __GNUC__ < 2")"\""
+
+        print ""; print "\""Exxpression_evaluate( " ! __GNUC_PREREQ ( 7 , 0 )")"\""
 
     }
 

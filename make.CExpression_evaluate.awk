@@ -56,10 +56,10 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
             return 1
         }
         Index_removeRange(i + 1, o)
-if (DEBUG == 3) {
-__debug("arguments: "defines[name]["arguments"]["text"])
-Array_debug(arguments)
-}
+#if (DEBUG == 3) {
+#__debug("arguments: "defines[name]["arguments"]["text"])
+#Array_debug(arguments)
+#}
         if (defines[name]["arguments"][l] != "..." ? arguments["length"] < l : arguments["length"] < l - 1)
             __error(file["name"]" Line "file["z"]": using "name": Not enough arguments") # ("arguments["length"]" insteadof "l") "m)
         else if (arguments["length"] > l && defines[name]["arguments"][l] != "...")
@@ -261,12 +261,17 @@ if (DEBUG == 5) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
             if ($(i + 1) != "(") Index_append(i, "(")
             n = $(i + 2)
             if ($(i + 3) != ")") Index_append(i + 2, ")")
-            if (n in defines) $i = "1"; else $i = "0"
+            x = 0; if (n in defines) x = 1
+            Index_remove(i + 1, i + 2, i + 3)
+            if (i > 1 && $(i - 1) == "!") {
+                x = !x
+                Index_remove(--i)
+            }
+            $i = x
 if (DEBUG == 5) {
-if ($i != "0") __debug("Defined "n)
+if (x) __debug("Defined "n)
 else __debug("NotDefined "n)
 }
-            Index_remove(i + 1, i + 2, i + 3)
             continue
         }
         # Evaluate AWA ( a , b ) or AWA
@@ -417,7 +422,7 @@ if (DEBUG == 5) __debug( "NotEquals: "$0 )
             $i = x
             Index_remove(i - 1, i + 1); --i
 if (DEBUG == 5) __debug("and: "$0)
-            if (!x) NF = i
+#            if (!x) NF = i
         }
         if ($i == "||") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue

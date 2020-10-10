@@ -95,10 +95,10 @@ function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, pa
     path1["length"] = split(pathName1, path1, "/")
     for (p = 1; p <= path1["length"]; ++p)
         path0[++path0["length"]] = path1[p]
-    for (p = 1; p <= path0["length"]; ++p) {
-        if (path0[p + 1] == "..") { Array_remove(path0, p + 1); Array_remove(path0, p); --p; continue }
+    for (p = 1; p <= path0["length"]; ++p)
+        if (path0[p + 1] == "..") { Array_remove(path0, p + 1); Array_remove(path0, p); p -= 2; continue }
+    for (p = 1; p <= path0["length"]; ++p)
         r = r path0[p] (p < path0["length"] ? "/" : "")
-    }
     return r
 }
 
@@ -172,6 +172,10 @@ function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
     for (n = 1; n <= l; ++n)
         if (array[n] == item) { n0 = n; break }
     return n0
+}
+
+function Array_copy(array0, array1,    h, i, j, k, l, m, n) {
+    for (i in array0) array1[i] = array[0]
 }
 
 function List_add(array, string) {
@@ -474,6 +478,7 @@ function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t
     if (typeof(x) == "number") $x = ""
     if (typeof(y) == "number") $y = ""
     if (typeof(z) == "number") $z = ""
+    # Index_clearEmpty()
     return Index_reset()
 }
 
@@ -492,12 +497,15 @@ function Index_removeRange(from0, to0,    h, i) {
 #    return Index_reset()
 #}
 
-function Index_reset(newIndex,    h, i, j, k, l, m, n) {
+function Index_clearEmpty(    h, i, j, k, l, m, n) {
     for (i = 1; i <= NF; ++i) {
         if ($i == "") { ++n; continue }
         $(i - n) = $i
     }
     NF -= n
+}
+function Index_reset(newIndex,    h, i, j, k, l, m, n) {
+    Index_clearEmpty()
     if (typeof(newIndex) != "untyped") $0 = newIndex
     return $0 = $0
 }
@@ -550,4 +558,10 @@ function String_read(file, string, rs,    h,i,s,splits,x,z) {
         file[z] = splits[i]
     }
     return z - x
+}
+
+function String_concatFile(file, ors,    o,r,s,x,y,z) {
+    if (typeof(ors) == "untyped") ors = "\n"
+    r = ""; while (++z <= file["length"]); r = String_concat(r, ors, file[z])
+    return r
 }

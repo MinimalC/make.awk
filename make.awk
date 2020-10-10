@@ -80,36 +80,57 @@ BEGIN {
     types["double"]
 
     input["name"] = "gcc"
-#    String_read(input, "/* Gemeinfrei */\n# include <stdint.h>")
-    input[++input["length"]] = "/* Gemeinfrei */"
-    input[++input["length"]] = "# include <stdint.h>"
+    input[++input["length"]] = "# define _GNU_SOURCE 1"
+#    input[++input["length"]] = "# define _XOPEN_SOURCE 1100"
+#    input[++input["length"]] = "# define _XOPEN_SOURCE_EXTENDED 1"
+
+    input[++input["length"]] = "# define CHAR_BIT 8"
+    input[++input["length"]] = "# define CHAR_MIN (-CHAR_MAX - 1)"
+    input[++input["length"]] = "# define CHAR_MAX 0x7F"
+    input[++input["length"]] = "# define UCHAR_MAX 0xFF"
+
+    input[++input["length"]] = "# define SHORT_MIN (-SHORT_MAX - 1)"
+    input[++input["length"]] = "# define SHORT_MAX 0x7FFF"
+    input[++input["length"]] = "# define USHORT_MAX 0xFFFF"
+
+    input[++input["length"]] = "# define INT_MIN (-INT_MAX - 1)"
+    input[++input["length"]] = "# define INT_MAX 0x7FFFFFFF"
+    input[++input["length"]] = "# define UINT_MAX 0xFFFFFFFF"
+
+    input[++input["length"]] = "# define LONG_MIN (-LONG_MAX - 1L)"
+    input[++input["length"]] = "# define LONG_MAX 0x7FFFFFFFFFFFFFFFL"
+    input[++input["length"]] = "# define ULONG_MAX 0xFFFFFFFFFFFFFFFFL"
+
+#    input[++input["length"]] = "# include <stdint.h>"
+
     output["name"] = "gcc"
     gcc_sort_coprocess("-dM -E", input, output)
-    gcc_coprocess("-E", input, output)
+#    gcc_coprocess("-E", "", output)
     C_parse(output)
     C_precompile(parsed["gcc"])
 
-#    target = gcc_precompile()
-#    Array_insert(origin, 1, target)
-
-    defines["_XOPEN_SOURCE"]["body"] = 1100
-    defines["_XOPEN_SOURCE_EXTENDED"]["body"] = 1
-
     for (n = 1; n <= origin["length"]; ++n) {
-        fun = get_FileNameExt(origin[n])
-        if (!(fun in formatExt)) {
-            __error("No Format for FileName."fun)
+        F_precompileFile = get_FileNameExt(origin[n])
+        if (!(F_precompileFile in formatExt)) {
+            __error("No Format for FileName."F_precompileFile)
             continue
         }
-        fun = formatExt[fun]"_precompileFile"
-        if (!(fun in FUNCTAB)) {
-            __error("No Format function "fun)
+        F_precompileFile = formatExt[F_precompileFile]"_precompileFile"
+        if (!(F_precompileFile in FUNCTAB)) {
+            __error("No Format function "F_precompileFile)
             continue
         }
-        @fun(origin[n])
+        @F_precompileFile(origin[n])
     }
 
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) { __debug("Defines: "); Array_debug(defines) }
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5 || DEBUG == 6) {
+    __debug("Defines: ")
+    for (n in defines) {
+        if (defines[n]["isFunction"])
+             __debug("# define "n" ( "defines[n]["arguments"]["text"]" ) "defines[n]["body"])
+        else __debug("# define "n"  "defines[n]["body"])
+    }
+}
 if (DEBUG == 6) { __debug("Types: "); Array_debug(types) }
 
     if ((m = "make_"make) in FUNCTAB) @m()
@@ -126,7 +147,7 @@ function make_precompile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z) {
     Index_push("", fixFS, " ", "\0", "\n")
     for (z = 1; z <= precompiled["length"]; ++z) {
         $0 = precompiled[z]; Index_reset()
-        Z = ++pprecompiled["length"]; pprecompiled[Z] = $0
+        pprecompiled[++pprecompiled["length"]] = $0
     }
     Index_pop()
 
@@ -138,7 +159,7 @@ function make_compile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z,Z) {
     Index_push("", fixFS, " ", "\0", "\n")
     for (z = 1; z <= precompiled["length"]; ++z) {
         $0 = precompiled[z]; Index_reset()
-        Z = ++pprecompiled["length"]; pprecompiled[Z] = $0
+        pprecompiled[++pprecompiled["length"]] = $0
     }
     Index_pop()
 

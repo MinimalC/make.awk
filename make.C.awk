@@ -410,7 +410,7 @@ function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifEx
 {
     defines["__FILE__"]["body"] = "\""file["name"]"\""
 
-    Z = ++precompiled["length"]; precompiled[Z] = "\n#"fix"1"fix"\""file["name"]"\""
+    precompiled[++precompiled["length"]] = "\n#"fix"1"fix"\""file["name"]"\""
 
     Index_push("", fixFS, fix, "\0", "\n")
     for (z = 1; z <= file["length"]; ++z) {
@@ -421,6 +421,10 @@ function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifEx
         defines["__LINE__"]["body"] = z
 
         if ($1 == "#") {
+            for (e = 1; e <= ifExpressions["length"]; ++e) {
+                if (ifExpressions[e]["do"] == 1) continue
+                break
+            }
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
@@ -440,49 +444,57 @@ function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifEx
         if ($2 == "if") {
             Index_remove(1, 2)
 
-            w = CExpression_evaluate($0)
-            if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
-
             f = Array_add(ifExpressions)
             ifExpressions[f]["if"] = $0
-            if (x) ifExpressions[f]["do"] = 1
+
+            if (e == f) {
+                w = CExpression_evaluate($0)
+                if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
+
+                if (x) ifExpressions[f]["do"] = 1
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+            }
             NF = 0
         }
         else if ($2 == "elif") {
             Index_remove(1, 2)
 
+            f = ifExpressions["length"]
+            ifExpressions[f]["else if"] = $0
+
             w = CExpression_evaluate($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
 
-            f = ifExpressions["length"]
-            ifExpressions[f]["else if"] = $0
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
-            if (!ifExpressions[f]["do"] && x) {
-                ifExpressions[f]["do"] = 1
-            }
+            if (!ifExpressions[f]["do"] && x) ifExpressions[f]["do"] = 1
+
+            if (e > f) {
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+            }
             NF = 0
         }
         else if ($2 == "else") {
             f = ifExpressions["length"]
             ifExpressions[f]["else"] = 1
+
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
-            if (!ifExpressions[f]["do"]) {
-                ifExpressions[f]["do"] = 1
-            }
+            if (!ifExpressions[f]["do"]) ifExpressions[f]["do"] = 1
+            if (e > f) {
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+            }
             NF = 0
         }
         else if ($2 == "endif") {
             f = ifExpressions["length"]
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") endif")
             Array_remove(ifExpressions, f)
+            if (e > f) {
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") endif")
+            }
             NF = 0
         } }
 
-        for (f = 1; f <= ifExpressions["length"]; ++f) {
-            if (ifExpressions[f]["do"] == 1) continue
+        for (e = 1; e <= ifExpressions["length"]; ++e) {
+            if (ifExpressions[e]["do"] == 1) continue
             NF = 0; break
         }
 
@@ -498,11 +510,11 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": incl
                         defines["__FILE__"]["body"] = "\""file["name"]"\""
                         defines["__LINE__"]["body"] = z
 
-                        Z = ++precompiled["length"]; precompiled[Z] = "#"fix z fix"\""file["name"]"\""
+                        precompiled[++precompiled["length"]] = "#"fix z fix"\""file["name"]"\""
                         break
                     }
                 }
-                if (n > includeDirs["length"]) __warning("File doesn't exist: <"m">")
+                if (n > includeDirs["length"]) __warning(file["name"]" Line "z": File doesn't exist: <"m">")
             }
             else {
                 m = get_DirectoryName(file["name"])
@@ -513,12 +525,13 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": incl
                     defines["__FILE__"]["body"] = "\""file["name"]"\""
                     defines["__LINE__"]["body"] = z
                 }
-                else __warning("File doesn't exist: \""m"\"")
+                else __warning(file["name"]" Line "z": File doesn't exist: \""m"\"")
 
-                Z = ++precompiled["length"]; precompiled[Z] = "#"fix z fix"\""file["name"]"\""
+                precompiled[++precompiled["length"]] = "#"fix z fix"\""file["name"]"\""
             }
             NF = 0
         }
+        # if ($2 == "include_next")
         if ($2 == "define") {
             name = $3
             if (name in defines) {
@@ -569,10 +582,11 @@ __debug(file["name"]" Line "z": define "name"  "rendered)
             NF = 0
         }
         if ($2 == "undef") {
-            if (!($3 in defines)) __warning(file["name"]" Line "z": undef doesn't exist: "$3)
+            name = $3
+            if (!(name in defines)) __warning(file["name"]" Line "z": undef doesn't exist: "name)
             else {
-                delete defines[$3]
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": undef "$3)
+                delete defines[name]
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": undef "name)
             }
             NF = 0
         }
@@ -588,21 +602,28 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": unde
             Index_pop()
             NF = 0
         }
-        # if (NF > 0) { $1 = "/*"$1; $NF = $NF"*/"; Index_reset() }
-        }
+        # if ($2 == "pragma")
+        if ($2 ~ /^[+-]?[0-9]+$/) NF = 0
+        if (NF > 0) {
+            Index_push($0, fixFS, " ", "\0", "\n")
+            __error("Unknown "$0)
+            Index_pop()
+            $1 = "/*"$1; $NF = $NF"*/"; Index_reset()
+            # NF = 0
+        } }
 
+        file["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
             if ($i in defines) {
                 name = $i
 if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
-                file["I"] = Index["length"]
                 file["z"] = z
                 n = CDefine_apply(i, file)
-                delete file["I"]
                 z = file["z"]
                 i += n - 1
             }
         }
+        delete file["I"]
 
         for (i = 1; i <= NF; ++i) {
             if (comments) {
@@ -716,15 +737,15 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
         else {
             if (leereZeilen <= 3) {
                 for (h = 1; h <= leereZeilen; ++h) {
-                    Z = ++precompiled["length"]; precompiled[Z] = ""
+                    precompiled[++precompiled["length"]] = ""
                 }
             } else {
-                Z = ++precompiled["length"]; precompiled[Z] = ""
-                Z = ++precompiled["length"]; precompiled[Z] = ""
-                Z = ++precompiled["length"]; precompiled[Z] = "#"fix z fix"\""file["name"]"\""
+                precompiled[++precompiled["length"]] = ""
+                precompiled[++precompiled["length"]] = ""
+                precompiled[++precompiled["length"]] = "#"fix z fix"\""file["name"]"\""
             }
             leereZeilen = 0
-            Z = ++precompiled["length"]; precompiled[Z] = $0
+            precompiled[++precompiled["length"]] = $0
         }
     }
     Index_pop()
