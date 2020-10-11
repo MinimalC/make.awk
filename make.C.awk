@@ -421,10 +421,6 @@ function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifEx
         defines["__LINE__"]["body"] = z
 
         if ($1 == "#") {
-            for (e = 1; e <= ifExpressions["length"]; ++e) {
-                if (ifExpressions[e]["do"] == 1) continue
-                break
-            }
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n) {
@@ -447,11 +443,15 @@ function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifEx
             f = Array_add(ifExpressions)
             ifExpressions[f]["if"] = $0
 
-            if (e == f) {
-                w = CExpression_evaluate($0)
-                if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
+            w = CExpression_evaluate($0)
+            if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
+            if (x) ifExpressions[f]["do"] = 1
 
-                if (x) ifExpressions[f]["do"] = 1
+            for (e = 1; e <= ifExpressions["length"]; ++e) {
+                if (ifExpressions[e]["do"] == 1) continue
+                break
+            }
+            if (e > f) {
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             }
             NF = 0
@@ -464,10 +464,13 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Lev
 
             w = CExpression_evaluate($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
-
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
-            if (!ifExpressions[f]["do"] && x) ifExpressions[f]["do"] = 1
+            else if (!ifExpressions[f]["do"] && x) ifExpressions[f]["do"] = 1
 
+            for (e = 1; e <= ifExpressions["length"]; ++e) {
+                if (ifExpressions[e]["do"] == 1) continue
+                break
+            }
             if (e > f) {
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             }
@@ -478,7 +481,12 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Lev
             ifExpressions[f]["else"] = 1
 
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
-            if (!ifExpressions[f]["do"]) ifExpressions[f]["do"] = 1
+            else if (!ifExpressions[f]["do"]) ifExpressions[f]["do"] = 1
+
+            for (e = 1; e <= ifExpressions["length"]; ++e) {
+                if (ifExpressions[e]["do"] == 1) continue
+                break
+            }
             if (e > f) {
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             }
@@ -487,9 +495,7 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Lev
         else if ($2 == "endif") {
             f = ifExpressions["length"]
             Array_remove(ifExpressions, f)
-            if (e > f) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") endif")
-            }
+
             NF = 0
         } }
 

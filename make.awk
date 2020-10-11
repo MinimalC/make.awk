@@ -163,11 +163,11 @@ function make_compile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z,Z) {
     }
     Index_pop()
 
-    gcc_coprocess(" -c -fpreprocessed ", pprecompiled, ".make.o")
-
-    Array_clear(compiled)
-    File_read(compiled, ".make.o", "\0")
-    File_print(compiled, "\0", "\0")
+    if (0 == gcc_coprocess(" -c -fpreprocessed ", pprecompiled, ".make.o")) {
+        Array_clear(compiled)
+        File_read(compiled, ".make.o", "\0")
+        File_print(compiled, "\0", "\0")
+    }
 }
 
 function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
@@ -184,18 +184,15 @@ function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,
     Index_push("", "", "", "\n", "\n")
     while (0 < y = ( command |& getline )) {
         if (typeof(output) == "array") {
-            z = ++output["length"]
-            output[z] = $0
+            output[++output["length"]] = $0
         }
-        else r = String_concat(r, ORS, $0)
     }
     Index_pop()
     if (y == -1) {
         __error("Command doesn't exist: "command)
         return
     }
-    close(command)
-    return r
+    return close(command)
 }
 
 function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
@@ -212,18 +209,15 @@ function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i
     Index_push("", "", "", "\n", "\n")
     while (0 < y = ( command |& getline )) {
         if (typeof(output) == "array") {
-            z = ++output["length"]
-            output[z] = $0
+            output[++output["length"]] = $0
         }
-        else r = String_concat(r, ORS, $0)
     }
     Index_pop()
     if (y == -1) {
         __error("Command doesn't exist: "command)
         return
     }
-    close(command)
-    return r
+    return close(command)
 }
 
 function gcc_precompile(    h, i, j, k, l, m, n, o) {

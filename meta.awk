@@ -46,7 +46,7 @@ function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, 
 
 function File_exists(fileName,    h, i, j, r,x,y,z) {
     if (!fileName) { print "File_exists: fileName is null">"/dev/stderr"; return }
-    if (!system("test -s "fileName)) return 1
+    if (!system("test -s '"fileName"'")) return 1
     #r = 0
     #if (-1 < y = (getline j < fileName)) r = 1
     #else return 0
@@ -56,7 +56,7 @@ function File_exists(fileName,    h, i, j, r,x,y,z) {
 
 function Directory_exists(dirName) {
     if (!dirName) { print "Directory_exists: dirName is null">"/dev/stderr"; return }
-    if (!system("test -d "dirName)) return 1
+    if (!system("test -d '"dirName"'")) return 1
 }
 
 function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
