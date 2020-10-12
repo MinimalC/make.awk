@@ -5,24 +5,14 @@
 #include "../make.awk/meta.awk"
 @include "../make.awk/make.CExpression_evaluate.awk"
 
-function C_parseFile(fileName,    a, b, c, d, e, f, file, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
+function C_parse(fileName, file,    a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, j, k, l, m,
+                                    n, name, o, p, q, r, s, string, t, u, v, w, was, x, y, z, Z, zahl)
+{
     if ( fileName in parsed && parsed[fileName]["length"] ) return 1
 
-    if (!File_read(file, fileName)) return
-    if (!C_parse(file)) return
-    Array_add(parsed, fileName)
-    return 1
-}
+    if ( !file["length"] && !File_read(file, fileName)) return
 
-function C_precompileFile(fileName,    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
-    if (!C_parseFile(fileName)) return
-    C_precompile(parsed[fileName])
-}
-
-function C_parse(file,    a, b, c, comments, continuation, d, directory, e, f, fileName, g, h, hash, i, j, k, l, m, n, name, o,
-                          p, q, r, s, string, t, u, v, w, was, x, y, z, Z, zahl)
-{
-    parsed[fileName]["name"] = fileName = file["name"]
+    parsed[fileName]["name"] = file["name"]
 
     Index_push("", "", "", "\0", "\n")
 for (z = 1; z <= file["length"]; ++z) {
@@ -405,16 +395,23 @@ for (z = 1; z <= file["length"]; ++z) {
     return 1
 }
 
-function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifExpressions, j, k,
-                               l, leereZeilen, m, n, name, o, p, q, r, rendered, s, t, u, v, w, x, y, z, Z)
+function C_precompile(fileName,   a, b, c, d, e, expressions, f, file, fileName_declaration, fun, g, h, i, ifExpressions, j, k,
+                                  l, leereZeilen, m, n, name, o, p, q, r, rendered, s, t, u, v, w, x, y, z, Z)
 {
-    defines["__FILE__"]["body"] = "\""file["name"]"\""
+    if ( !(fileName in parsed) && !C_parse(fileName) ) return
 
-    precompiled[++precompiled["length"]] = "\n#"fix"1"fix"\""file["name"]"\""
+    Index_push(get_FileName(fileName), @/[ \.]+/, "_", "\0", "\0"); fileName_declaration = Index_pop()
+    if ( !("declarations" in precompiled) || !("FILENAME_"fileName_declaration in precompiled["declarations"]) ) {
+        precompiled[++precompiled["length"]] = "static"fix"char"fix"FILENAME_"fileName_declaration fix"["fix"]"fix"="fix"\""fileName"\""fix";"
+        precompiled["declarations"]["FILENAME_"fileName_declaration]
+    }
+    defines["__FILE__"]["body"] = "FILENAME_"fileName_declaration
+
+    precompiled[++precompiled["length"]] = "\n#"fix"1"fix"\""fileName"\""
 
     Index_push("", fixFS, fix, "\0", "\n")
-    for (z = 1; z <= file["length"]; ++z) {
-        $0 = file[z]; Index_reset()
+    for (z = 1; z <= parsed[fileName]["length"]; ++z) {
+        $0 = parsed[fileName][z]; Index_reset()
 
         for (i = 1; i <= NF; ++i) if ($i ~ /^[ \f\t\v]+$/) Index_remove(i--)
 
@@ -452,7 +449,7 @@ function C_precompile(file,    a, b, c, d, e, expressions, f, fun, g, h, i, ifEx
                 break
             }
             if (e > f) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             }
             NF = 0
         }
@@ -472,7 +469,7 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Lev
                 break
             }
             if (e > f) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             }
             NF = 0
         }
@@ -488,7 +485,7 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Lev
                 break
             }
             if (e > f) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
             }
             NF = 0
         }
@@ -511,29 +508,29 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": (Lev
                 for (n = 1; n <= includeDirs["length"]; ++n) {
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": including "o)
-                        C_precompileFile(o)
-                        defines["__FILE__"]["body"] = "\""file["name"]"\""
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": including "o)
+                        C_precompile(o)
+                        defines["__FILE__"]["body"] = "FILENAME_"fileName_declaration
                         defines["__LINE__"]["body"] = z
 
-                        precompiled[++precompiled["length"]] = "#"fix z fix"\""file["name"]"\""
+                        precompiled[++precompiled["length"]] = "#"fix z fix"\""fileName"\""
                         break
                     }
                 }
-                if (n > includeDirs["length"]) __warning(file["name"]" Line "z": File doesn't exist: <"m">")
+                if (n > includeDirs["length"]) __warning(fileName" Line "z": File doesn't exist: <"m">")
             }
             else {
-                m = get_DirectoryName(file["name"])
+                m = get_DirectoryName(fileName)
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": including "m)
-                    C_precompileFile(m)
-                    defines["__FILE__"]["body"] = "\""file["name"]"\""
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": including "m)
+                    C_precompile(m)
+                    defines["__FILE__"]["body"] = "FILENAME_"fileName_declaration
                     defines["__LINE__"]["body"] = z
                 }
-                else __warning(file["name"]" Line "z": File doesn't exist: \""m"\"")
+                else __warning(fileName" Line "z": File doesn't exist: \""m"\"")
 
-                precompiled[++precompiled["length"]] = "#"fix z fix"\""file["name"]"\""
+                precompiled[++precompiled["length"]] = "#"fix z fix"\""fileName"\""
             }
             NF = 0
         }
@@ -541,7 +538,7 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": incl
         if ($2 == "define") {
             name = $3
             if (name in defines) {
-                __warning(file["name"]" Line "z": define "name" exists already")
+                __warning(fileName" Line "z": define "name" exists already")
             }
             else {
                 Index_remove(1, 2, 3)
@@ -580,19 +577,19 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": incl
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) {
 Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered = Index_pop()
 if (defines[name]["isFunction"])
-__debug(file["name"]" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered)
+__debug(fileName" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered)
 else
-__debug(file["name"]" Line "z": define "name"  "rendered)
+__debug(fileName" Line "z": define "name"  "rendered)
 }
             }
             NF = 0
         }
         if ($2 == "undef") {
             name = $3
-            if (!(name in defines)) __warning(file["name"]" Line "z": undef doesn't exist: "name)
+            if (!(name in defines)) __warning(fileName" Line "z": undef doesn't exist: "name)
             else {
                 delete defines[name]
-if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": undef "name)
+if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": undef "name)
             }
             NF = 0
         }
@@ -618,18 +615,18 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(file["name"]" Line "z": unde
             # NF = 0
         } }
 
-        file["I"] = Index["length"]
+        parsed[fileName]["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
             if ($i in defines) {
                 name = $i
-if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
-                file["z"] = z
-                n = CDefine_apply(i, file)
-                z = file["z"]
+if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
+                parsed[fileName]["z"] = z
+                n = CDefine_apply(i, parsed[fileName])
+                z = parsed[fileName]["z"]
                 i += n - 1
             }
         }
-        delete file["I"]
+        delete parsed[fileName]["I"]
 
         for (i = 1; i <= NF; ++i) {
             if (comments) {
@@ -705,7 +702,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
                         if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
                     }
                     if (!name && ($n == "struct" || $n == "union")) {
-                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __warning(file["name"]" Line "z": "$n" without name"); break }
+                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __warning(fileName" Line "z": "$n" without name"); break }
                         name = $n" "$(n + 1)
                         if (i != n) { $i = String_concat($i, " ", $n); $n = "" }
                         $i = String_concat($i, " ", $(n + 1)); $(++n) = ""
@@ -723,7 +720,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
                         if (!(fun in types)) types[fun]
                     }
                     else {
-                        if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __warning(file["name"]" Line "z": typedef without name")
+                        if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __warning(fileName" Line "z": typedef without name")
                         else { ++i; if (!($i in types)) types[$i] }
                     }
                 }
@@ -748,7 +745,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "z": applying "name)
             } else {
                 precompiled[++precompiled["length"]] = ""
                 precompiled[++precompiled["length"]] = ""
-                precompiled[++precompiled["length"]] = "#"fix z fix"\""file["name"]"\""
+                precompiled[++precompiled["length"]] = "#"fix z fix"\""fileName"\""
             }
             leereZeilen = 0
             precompiled[++precompiled["length"]] = $0

@@ -106,21 +106,21 @@ BEGIN {
     output["name"] = "gcc"
     gcc_sort_coprocess("-dM -E", input, output)
 #    gcc_coprocess("-E", "", output)
-    C_parse(output)
-    C_precompile(parsed["gcc"])
+    C_parse("gcc", output)
+    C_precompile("gcc")
 
     for (n = 1; n <= origin["length"]; ++n) {
-        F_precompileFile = get_FileNameExt(origin[n])
-        if (!(F_precompileFile in formatExt)) {
-            __error("No Format for FileName."F_precompileFile)
+        F_precompile = get_FileNameExt(origin[n])
+        if (!(F_precompile in formatExt)) {
+            __error("No Format for FileName."F_precompile)
             continue
         }
-        F_precompileFile = formatExt[F_precompileFile]"_precompileFile"
-        if (!(F_precompileFile in FUNCTAB)) {
-            __error("No Format function "F_precompileFile)
+        F_precompile = formatExt[F_precompile]"_precompile"
+        if (!(F_precompile in FUNCTAB)) {
+            __error("No Format function "F_precompile)
             continue
         }
-        @F_precompileFile(origin[n])
+        @F_precompile(origin[n])
     }
 
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5 || DEBUG == 6) {
