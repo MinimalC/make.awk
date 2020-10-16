@@ -107,7 +107,7 @@ BEGIN {
     gcc_sort_coprocess("-dM -E", input, output)
 #    gcc_coprocess("-E", "", output)
     C_parse("gcc", output)
-    C_precompile("gcc")
+    C_preprocess("gcc")
 
     for (n = 1; n <= origin["length"]; ++n) {
         F_precompile = get_FileNameExt(origin[n])
@@ -144,6 +144,9 @@ function make_parse(    a,b,c,d,e,f) {
 
 function make_precompile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z) {
 
+if (DEBUG == 6)
+    Index_push("", fixFS, fix, "\0", "\n")
+else
     Index_push("", fixFS, " ", "\0", "\n")
     for (z = 1; z <= precompiled["length"]; ++z) {
         $0 = precompiled[z]; Index_reset()

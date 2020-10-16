@@ -395,21 +395,23 @@ for (z = 1; z <= file["length"]; ++z) {
     return 1
 }
 
-function C_precompile(fileName,   a, b, c, d, e, expressions, f, file, fileName_declaration, fun, g, h, i, ifExpressions, j, k,
-                                  l, leereZeilen, m, n, name, o, p, q, r, rendered, s, t, u, v, w, x, y, z, Z)
+function C_preprocess(fileName,   a, b, c, d, e, expressions, f, file, declaration_FileName, fun, g, h,
+                                  i, ifExpressions, including, j, k, l, leereZeilen, m, n, name, o, p, q,
+                                  r, rendered, s, t, u, v, w, x, y, z, zZ, Z)
 {
     if ( !(fileName in parsed) && !C_parse(fileName) ) return
 
-    Index_push(get_FileName(fileName), @/[ \.]+/, "_", "\0", "\0"); fileName_declaration = Index_pop()
-    if ( !("declarations" in precompiled) || !("FILENAME_"fileName_declaration in precompiled["declarations"]) ) {
-        precompiled[++precompiled["length"]] = "static"fix"char"fix"FILENAME_"fileName_declaration fix"["fix"]"fix"="fix"\""fileName"\""fix";"
-        precompiled["declarations"]["FILENAME_"fileName_declaration]
-    }
-    defines["__FILE__"]["body"] = "FILENAME_"fileName_declaration
-
-    precompiled[++precompiled["length"]] = "\n#"fix"1"fix"\""fileName"\""
-
     Index_push("", fixFS, fix, "\0", "\n")
+
+    Z = preprocessed["length"]
+    if (!Z || preprocessed[Z] != "") Z = ++preprocessed["length"]
+
+    preprocessed["declarations"]["length"]
+    Index_push(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_", "\0", "\0")
+    declaration_FileName = "__FILE__"Index_pop()
+
+    defines["__FILE__"]["body"] = declaration_FileName
+
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
         $0 = parsed[fileName][z]; Index_reset()
 
@@ -509,11 +511,12 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": (Level "
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": including "o)
-                        C_precompile(o)
-                        defines["__FILE__"]["body"] = "FILENAME_"fileName_declaration
+                        zZ = preprocessed["length"]
+                        C_preprocess(o)
+                        defines["__FILE__"]["body"] = declaration_FileName
                         defines["__LINE__"]["body"] = z
-
-                        precompiled[++precompiled["length"]] = "#"fix z fix"\""fileName"\""
+                        Z = preprocessed["length"]
+                        if (preprocessed[Z] != "") Z = ++preprocessed["length"]
                         break
                     }
                 }
@@ -524,13 +527,14 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": includin
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": including "m)
-                    C_precompile(m)
-                    defines["__FILE__"]["body"] = "FILENAME_"fileName_declaration
+                    zZ = preprocessed["length"]
+                    C_preprocess(m)
+                    defines["__FILE__"]["body"] = declaration_FileName
                     defines["__LINE__"]["body"] = z
+                    Z = preprocessed["length"]
+                    if (preprocessed[Z] != "") Z = ++preprocessed["length"]
                 }
                 else __warning(fileName" Line "z": File doesn't exist: \""m"\"")
-
-                precompiled[++precompiled["length"]] = "#"fix z fix"\""fileName"\""
             }
             NF = 0
         }
@@ -557,6 +561,8 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": includin
                     }
                     if ($n == ")") { # n < NF
                         m = ""; for (o = 2; o < n; ++o) {
+                            #if ($o in types) __warning(fileName" Line "z": Ambiguous define argument "$o" (typedef)")
+                            #if ($o in defines) __warning(fileName" Line "z": Ambiguous define argument "$o" (define)")
                             m = String_concat(m, fix, $o)
                             if ($o == ",") continue
                             argumentI = ++defines[name]["arguments"]["length"]
@@ -611,8 +617,8 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": undef "n
             Index_push($0, fixFS, " ", "\0", "\n")
             __error("Unknown "$0)
             Index_pop()
-            $1 = "/*"$1; $NF = $NF"*/"; Index_reset()
-            # NF = 0
+            # $1 = "/*"$1; $NF = $NF"*/"; Index_reset()
+            NF = 0
         } }
 
         parsed[fileName]["I"] = Index["length"]
@@ -652,105 +658,174 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
             }
         }
 
-        for (i = 1; i <= NF; ++i) {
-
-            if ($i == "typedef") {
-                if (e > 0) {
-                    # do you need semikolon?
-                }
-                e = ++expressions["length"]
-                expressions[e]["Type"] = "TypeDefine"
-                continue
-            }
-            if ($i == "const" || $i == "volatile" || $i == "struct" || $i == "union" || $i in types) {
-                if (expressions["length"] == 1 && expressions[1]["Type"] == "TypeDefine") { }
-                else if (expressions["length"] > 0) {
-                    # do you need semikolon?
-                }
-                e = ++expressions["length"]
-                expressions[e]["Type"] = "Type"
-                name = ""; fun = ""
-#                if ($i in types) name = $i
-                k = 0; o = 0; for (n = i; n <= NF; ++n) {
-                    if (name && !fun && !o && $n == "(") {
-                        ++k
-                        # name = String_concat(name, " ", $n)
-                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
-                    }
-                    if ($n == "const" || $n == "volatile") {
-                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
-                    }
-                    if ($n == "*") {
-                        # name = String_concat(name, " ", $n)
-                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
-                    }
-                    if (!fun && k && $n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                        fun = $n
-                        # name = String_concat(name, " ", $n)
-                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
-                    }
-                    if (k && $n == ")") {
-                        --k; o = 1
-                        # name = String_concat(name, " ", $n)
-                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
-                    }
-                    if ($n == "void" || $n == "unsigned" || $n == "signed" ||
-                        $n == "char" || $n == "short" || $n == "int" || $n == "long" ||
-                        $n == "float" || $n == "double")
-                    {
-                        name = String_concat(name, " ", $n)
-                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
-                    }
-                    if (!name && ($n == "struct" || $n == "union")) {
-                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __warning(fileName" Line "z": "$n" without name"); break }
-                        name = $n" "$(n + 1)
-                        if (i != n) { $i = String_concat($i, " ", $n); $n = "" }
-                        $i = String_concat($i, " ", $(n + 1)); $(++n) = ""
-                        continue
-                    }
-                    if (!name && ($n in types)) {
-                        name = $n; if (i != n) { $i = String_concat($i, " ", $n); $n = ""} continue
-                    }
-                    break
-                }
-                Index_reset()
-                if (name) if (!(name in types)) types[name]
-                if (expressions["length"] == 2 && expressions[1]["Type"] == "TypeDefine") {
-                    if (fun) {
-                        if (!(fun in types)) types[fun]
-                    }
-                    else {
-                        if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __warning(fileName" Line "z": typedef without name")
-                        else { ++i; if (!($i in types)) types[$i] }
-                    }
-                }
-                continue
-            }
-
-            if ($i == ";") {
-                if (!e) {
-                    # you don't need semikolon
-                }
-                Array_clear(expressions)
-                continue
-            }
-        }
-
         if (NF == 0) ++leereZeilen
         else {
-            if (leereZeilen <= 3) {
-                for (h = 1; h <= leereZeilen; ++h) {
-                    precompiled[++precompiled["length"]] = ""
-                }
-            } else {
-                precompiled[++precompiled["length"]] = ""
-                precompiled[++precompiled["length"]] = ""
-                precompiled[++precompiled["length"]] = "#"fix z fix"\""fileName"\""
+
+            if (!(declaration_FileName in preprocessed["declarations"])) {
+                preprocessed["declarations"][declaration_FileName]
+                if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+                preprocessed[Z] = "static"fix"char"fix declaration_FileName fix"["fix"]"fix"="fix"\""fileName"\""fix";"
+                Z = ++preprocessed["length"]
+                # preprocessed[Z] = "#"fix"1"fix"\""fileName"\""
+                # Z = ++preprocessed["length"]
             }
+            # if (zZ && zZ < Z) {
+            #     if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+            #     preprocessed[Z] = "#"fix z fix"\""fileName"\""
+            #     Z = ++preprocessed["length"]
+            #     zZ = 0
+            # }
+            # if (leereZeilen <= 2) {
+            #     if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+            #     Z = preprocessed["length"] += leereZeilen
+            # }
+            # else {
+            #     if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+            #     Z = ++preprocessed["length"]
+            #     # Z = ++preprocessed["length"]
+            #     preprocessed[Z] = "#"fix z fix"\""fileName"\""
+            #     Z = ++preprocessed["length"]
+            # }
             leereZeilen = 0
-            precompiled[++precompiled["length"]] = $0
+
+            for (i = 1; i <= NF; ++i) {
+
+                if ($i == "{") {
+                    if (i > 0) { preprocessed[Z] = String_concat(preprocessed[Z], fix, Index_removeRange(1, i)); i = 0 }
+                    if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+                    continue
+                }
+                if ($i == "}") {
+                    if (i > 1) { preprocessed[Z] = String_concat(preprocessed[Z], fix, Index_removeRange(1, i - 1)); i = 1 }
+                    if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+                    continue
+                }
+                if ($i == ";") {
+                    if (i > 0) { preprocessed[Z] = String_concat(preprocessed[Z], fix, Index_removeRange(1, i)); i = 0 }
+                    if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+                    continue
+                }
+            }
+            if (!Z) Z = ++preprocessed["length"]
+            preprocessed[Z] = String_concat(preprocessed[Z], fix, $0)
         }
     }
+    # if (preprocessed[Z] != "") Z = ++preprocessed["length"]
     Index_pop()
+    return 1
+}
+
+function C_precompile(fileName,   a, b, c, code, d, e, expressions, f, file, fileName_declaration, fun, g, h, i, ifExpressions, j, k,
+                                  l, leereZeilen, level, m, n, newLine, name, o, p, q, r, rendered, s, t, u, v, w, x, y, z, Z)
+{
+    List_clear(preprocessed)
+
+    if ( !C_preprocess(fileName) ) return
+
+    level = 1
+    expressions[level]["length"]
+
+    Index_push("", fixFS, fix, "\0", "\n")
+
+    for (z = 1; z <= preprocessed["length"]; ++z) {
+        $0 = preprocessed[z]; Index_reset()
+    for (i = 1; i <= NF; ++i) {
+
+        if ($i == "{") {
+            expressions[++level]["length"]
+            continue
+        }
+
+        if ($i == "}") {
+            if (level in expressions) delete expressions[level--]
+            continue
+        }
+
+        if ($i == "typedef") {
+            # if (level > 1) __error()
+            if (e > 0) {
+                # do you need semikolon?
+            }
+            e = ++expressions[level]["length"]
+            expressions[level][e]["Type"] = "TypeDefine"
+            continue
+        }
+        if ($i == "const" || $i == "volatile" || $i == "struct" || $i == "union" || $i == "enum" || $i in types) {
+            if (expressions[level]["length"] == 1 && expressions[level][1]["Type"] == "TypeDefine") { }
+            else if (expressions[level]["length"] > 0) {
+                # do you need semikolon?
+            }
+            e = ++expressions[level]["length"]
+            expressions[level][e]["Type"] = "Type"
+            name = ""; fun = ""
+#                if ($i in types) name = $i
+            k = 0; o = 0; for (n = i; n <= NF; ++n) {
+                if (name && !fun && !o && $n == "(") {
+                    ++k
+                    # name = String_concat(name, " ", $n)
+                    if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                }
+                if ($n == "const" || $n == "volatile") {
+                    if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                }
+                if ($n == "*") {
+                    # name = String_concat(name, " ", $n)
+                    if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                }
+                if (!fun && k && $n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                    fun = $n
+                    # name = String_concat(name, " ", $n)
+                    if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                }
+                if (k && $n == ")") {
+                    --k; o = 1
+                    # name = String_concat(name, " ", $n)
+                    if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                }
+                if ($n == "void" || $n == "unsigned" || $n == "signed" ||
+                    $n == "char" || $n == "short" || $n == "int" || $n == "long" ||
+                    $n == "float" || $n == "double")
+                {
+                    name = String_concat(name, " ", $n)
+                    if (i != n) { $i = String_concat($i, " ", $n); $n = "" } continue
+                }
+                if (!name && ($n == "struct" || $n == "union" || $n == "enum")) {
+                    if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) { __warning(fileName" Line "z": "$n" without name"); break }
+                    name = $n" "$(n + 1)
+                    if (i != n) { $i = String_concat($i, " ", $n); $n = "" }
+                    $i = String_concat($i, " ", $(n + 1)); $(++n) = ""
+                    continue
+                }
+                if (!name && ($n in types)) {
+                    name = $n; if (i != n) { $i = String_concat($i, " ", $n); $n = ""} continue
+                }
+                break
+            }
+            Index_reset()
+            if (name) if (!(name in types)) types[name]
+            if (expressions[level]["length"] == 2 && expressions[level][1]["Type"] == "TypeDefine") {
+                if (fun && !(fun in types)) types[fun]
+            }
+            continue
+        }
+
+        if (expressions[level]["length"] == 2 && expressions[level][1]["Type"] == "TypeDefine") {
+            if ($i !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __warning(fileName" Line "z": typedef without name")
+            else { if (!($i in types)) types[$i]; continue }
+        }
+
+        if ($i == ";") {
+            if (!e) {
+                # you don't need semikolon
+            }
+            if (level in expressions) Array_clear(expressions[level])
+        }
+    }
+
+    precompiled[Z = ++precompiled["length"]] = $0
+    }
+
+    Index_pop()
+    return 1
 }
 

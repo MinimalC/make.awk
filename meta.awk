@@ -131,9 +131,13 @@ function ARGV_length() {
 }
 
 
-function Array_clear(array,    h, i) {
-    if ("length" in array) for (i = 1; i <= array["length"]; ++i) delete array[i]
+function Array_clear(array,    h, i, j, k, l) {
     for (i in array) delete array[i]
+}
+
+function List_clear(array,    h, i) {
+    if ("length" in array) for (i = 1; i <= array["length"]; ++i) delete array[i]
+    array["length"] = 0
 }
 
 function Array_getLength(array) {
@@ -300,8 +304,8 @@ function String_join(sepp, array,    h, i, r) {
 
 function String_concat(string0, sepp, string1) {
     if (typeof(string1) == "untyped") { string1 = sepp; sepp = OFS }
-    if (string0 == "") return string1
-    if (string1 == "") return string0
+    if (typeof(string0) == "untyped" || string0 == "") return string1
+    if (typeof(string1) == "untyped" || string1 == "") return string0
     return string0 sepp string1
 }
 
@@ -451,41 +455,44 @@ function Index_append(i, value, ifNot,    p,q,r) {
     return r
 }
 
-function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) {
-    if (typeof(a) == "number") $a = ""
-    if (typeof(b) == "number") $b = ""
-    if (typeof(c) == "number") $c = ""
-    if (typeof(d) == "number") $d = ""
-    if (typeof(e) == "number") $e = ""
-    if (typeof(f) == "number") $f = ""
-    if (typeof(g) == "number") $g = ""
-    if (typeof(h) == "number") $h = ""
-    if (typeof(i) == "number") $i = ""
-    if (typeof(j) == "number") $j = ""
-    if (typeof(k) == "number") $k = ""
-    if (typeof(l) == "number") $l = ""
-    if (typeof(m) == "number") $m = ""
-    if (typeof(n) == "number") $n = ""
-    if (typeof(o) == "number") $o = ""
-    if (typeof(p) == "number") $p = ""
-    if (typeof(q) == "number") $q = ""
-    if (typeof(r) == "number") $r = ""
-    if (typeof(s) == "number") $s = ""
-    if (typeof(t) == "number") $t = ""
-    if (typeof(u) == "number") $u = ""
-    if (typeof(v) == "number") $v = ""
-    if (typeof(w) == "number") $w = ""
-    if (typeof(x) == "number") $x = ""
-    if (typeof(y) == "number") $y = ""
-    if (typeof(z) == "number") $z = ""
+function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,    removed) {
+    if (typeof(a) == "number") { removed = String_concat(removed, OFS, $a); $a = "" }
+    if (typeof(b) == "number") { removed = String_concat(removed, OFS, $b); $b = "" }
+    if (typeof(c) == "number") { removed = String_concat(removed, OFS, $c); $c = "" }
+    if (typeof(d) == "number") { removed = String_concat(removed, OFS, $d); $d = "" }
+    if (typeof(e) == "number") { removed = String_concat(removed, OFS, $e); $e = "" }
+    if (typeof(f) == "number") { removed = String_concat(removed, OFS, $f); $f = "" }
+    if (typeof(g) == "number") { removed = String_concat(removed, OFS, $g); $g = "" }
+    if (typeof(h) == "number") { removed = String_concat(removed, OFS, $h); $h = "" }
+    if (typeof(i) == "number") { removed = String_concat(removed, OFS, $i); $i = "" }
+    if (typeof(j) == "number") { removed = String_concat(removed, OFS, $j); $j = "" }
+    if (typeof(k) == "number") { removed = String_concat(removed, OFS, $k); $k = "" }
+    if (typeof(l) == "number") { removed = String_concat(removed, OFS, $l); $l = "" }
+    if (typeof(m) == "number") { removed = String_concat(removed, OFS, $m); $m = "" }
+    if (typeof(n) == "number") { removed = String_concat(removed, OFS, $n); $n = "" }
+    if (typeof(o) == "number") { removed = String_concat(removed, OFS, $o); $o = "" }
+    if (typeof(p) == "number") { removed = String_concat(removed, OFS, $p); $p = "" }
+    if (typeof(q) == "number") { removed = String_concat(removed, OFS, $q); $q = "" }
+    if (typeof(r) == "number") { removed = String_concat(removed, OFS, $r); $r = "" }
+    if (typeof(s) == "number") { removed = String_concat(removed, OFS, $s); $s = "" }
+    if (typeof(t) == "number") { removed = String_concat(removed, OFS, $t); $t = "" }
+    if (typeof(u) == "number") { removed = String_concat(removed, OFS, $u); $u = "" }
+    if (typeof(v) == "number") { removed = String_concat(removed, OFS, $v); $v = "" }
+    if (typeof(w) == "number") { removed = String_concat(removed, OFS, $w); $w = "" }
+    if (typeof(x) == "number") { removed = String_concat(removed, OFS, $x); $x = "" }
+    if (typeof(y) == "number") { removed = String_concat(removed, OFS, $y); $y = "" }
+    if (typeof(z) == "number") { removed = String_concat(removed, OFS, $z); $z = "" }
     # Index_clearEmpty()
-    return Index_reset()
+    Index_reset()
+    return removed
 }
 
-function Index_removeRange(from0, to0,    h, i) {
+function Index_removeRange(from0, to0,    h, i, removed) {
     if (typeof(to0) == "untyped") to0 = NF
-    for (i = from0; i <= to0; ++i) $i = ""
-    return Index_reset()
+    for (i = from0; i <= to0; ++i) { removed = String_concat(removed, OFS, $i); $i = "" }
+    Index_reset()
+    # Index_clearEmpty()
+    return removed
 }
 
 #function Index_merge(i, len,    h, j, k, l) {
@@ -560,7 +567,7 @@ function String_read(file, string, rs,    h,i,s,splits,x,z) {
     return z - x
 }
 
-function String_concatFile(file, ors,    o,r,s,x,y,z) {
+function File_toString(file, ors,    o,r,s,x,y,z) {
     if (typeof(ors) == "untyped") ors = "\n"
     r = ""; while (++z <= file["length"]); r = String_concat(r, ors, file[z])
     return r
