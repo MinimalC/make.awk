@@ -44,6 +44,32 @@ function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, 
 }
 
 
+function ENVIRON_debug() {
+    print "ENVIRON" >"/dev/stderr"
+    Array_error(ENVIRON, 1)
+}
+
+function PROCINFO_debug() {
+    print "PROCINFO" >"/dev/stderr"
+    Array_error(PROCINFO, 1)
+}
+
+function ARGV_debug() {
+    print "ARGV" >"/dev/stderr"
+    Array_error(ARGV, 1)
+}
+
+function SYMTAB_debug() {
+    print "SYMTAB" >"/dev/stderr"
+    Array_error(SYMTAB, 1)
+}
+
+function FUNCTAB_debug() {
+    print "FUNCTAB" >"/dev/stderr"
+    Array_error(FUNCTAB, 1)
+}
+
+
 function File_exists(fileName,    h, i, j, r,x,y,z) {
     if (!fileName) { print "File_exists: fileName is null">"/dev/stderr"; return }
     if (!system("test -s '"fileName"'")) return 1
@@ -179,7 +205,7 @@ function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
 }
 
 function Array_copy(array0, array1,    h, i, j, k, l, m, n) {
-    for (i in array0) array1[i] = array[0]
+    for (i in array0) array1[i] = array0[i]
 }
 
 function List_add(array, string) {
@@ -266,31 +292,6 @@ function Array_error(array, level,    h, i, prefix) {
             Array_error(array[i], level + 1)
         } else
             print prefix i ": " array[i] >"/dev/stderr"
-}
-
-function ENVIRON_debug() {
-    print "ENVIRON" >"/dev/stderr"
-    Array_error(ENVIRON, 1)
-}
-
-function PROCINFO_debug() {
-    print "PROCINFO" >"/dev/stderr"
-    Array_error(PROCINFO, 1)
-}
-
-function ARGV_debug() {
-    print "ARGV" >"/dev/stderr"
-    Array_error(ARGV, 1)
-}
-
-function SYMTAB_debug() {
-    print "SYMTAB" >"/dev/stderr"
-    Array_error(SYMTAB, 1)
-}
-
-function FUNCTAB_debug() {
-    print "FUNCTAB" >"/dev/stderr"
-    Array_error(FUNCTAB, 1)
 }
 
 function String_join(sepp, array,    h, i, r) {

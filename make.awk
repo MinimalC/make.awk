@@ -5,7 +5,12 @@
 @include "../make.awk/meta.awk"
 @include "../make.awk/make.C.awk"
 
-BEGIN {
+BEGIN { BEGIN_make() }
+
+END { SYMTAB_debug() }
+
+function BEGIN_make(    a,argI,b,c,d,e,f,formatExt,g,h,i,input,j,k,l,m,make,n,
+                        o,origin,output,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z) {
     FS="";OFS="";RS="\0";ORS="\n"
     fixFS = @/\x01/
     fix = "\x01"
@@ -27,9 +32,9 @@ BEGIN {
 
         paramName = ""
         if (ARGV[argI] ~ /^.*=.*$/) {
-            paramI = index(ARGV[argI], "=")
-            paramName = substr(ARGV[argI], 1, paramI - 1)
-            paramWert = substr(ARGV[argI], paramI + 1)
+            paramWert = index(ARGV[argI], "=")
+            paramName = substr(ARGV[argI], 1, paramWert - 1)
+            paramWert = substr(ARGV[argI], paramWert + 1)
         } else
         if (ARGV[argI] ~ /^\+.*$/) {
             paramName = substr(ARGV[argI], 2)
@@ -110,17 +115,11 @@ BEGIN {
     C_preprocess("gcc")
 
     for (n = 1; n <= origin["length"]; ++n) {
-        F_precompile = get_FileNameExt(origin[n])
-        if (!(F_precompile in formatExt)) {
-            __error("No Format for FileName."F_precompile)
-            continue
-        }
-        F_precompile = formatExt[F_precompile]"_precompile"
-        if (!(F_precompile in FUNCTAB)) {
-            __error("No Format function "F_precompile)
-            continue
-        }
-        @F_precompile(origin[n])
+        f = get_FileNameExt(origin[n])
+        if (!(f in formatExt)) { __error("No Format for FileName."f); continue }
+        f = formatExt[f]"_precompile"
+        if (!(f in FUNCTAB)) { __error("No Format function "f); continue }
+        @f(origin[n])
     }
 
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5 || DEBUG == 6) {

@@ -395,7 +395,7 @@ for (z = 1; z <= file["length"]; ++z) {
     return 1
 }
 
-function C_preprocess(fileName,   a, b, c, d, e, expressions, f, file, declaration_FileName, fun, g, h,
+function C_preprocess(fileName,   a, b, c, comments, d, e, expressions, f, file, declaration_FileName, fun, g, h,
                                   i, ifExpressions, including, j, k, l, leereZeilen, m, n, name, o, p, q,
                                   r, rendered, s, t, u, v, w, x, y, z, zZ, Z)
 {
@@ -565,8 +565,8 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5) __debug(fileName" Line "z": includin
                             #if ($o in defines) __warning(fileName" Line "z": Ambiguous define argument "$o" (define)")
                             m = String_concat(m, fix, $o)
                             if ($o == ",") continue
-                            argumentI = ++defines[name]["arguments"]["length"]
-                            defines[name]["arguments"][argumentI] = $o
+                            g = ++defines[name]["arguments"]["length"]
+                            defines[name]["arguments"][g] = $o
                         }
                         defines[name]["arguments"]["text"] = m
                         defines[name]["isFunction"] = 1
@@ -666,13 +666,11 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
                 if (preprocessed[Z] != "") Z = ++preprocessed["length"]
                 preprocessed[Z] = "static"fix"char"fix declaration_FileName fix"["fix"]"fix"="fix"\""fileName"\""fix";"
                 Z = ++preprocessed["length"]
-                # preprocessed[Z] = "#"fix"1"fix"\""fileName"\""
-                # Z = ++preprocessed["length"]
+                # preprocessed[Z] = "#"fix"1"fix"\""fileName"\""; Z = ++preprocessed["length"]
             }
             # if (zZ && zZ < Z) {
             #     if (preprocessed[Z] != "") Z = ++preprocessed["length"]
-            #     preprocessed[Z] = "#"fix z fix"\""fileName"\""
-            #     Z = ++preprocessed["length"]
+            #     preprocessed[Z] = "#"fix z fix"\""fileName"\""; Z = ++preprocessed["length"]
             #     zZ = 0
             # }
             # if (leereZeilen <= 2) {
@@ -683,8 +681,7 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
             #     if (preprocessed[Z] != "") Z = ++preprocessed["length"]
             #     Z = ++preprocessed["length"]
             #     # Z = ++preprocessed["length"]
-            #     preprocessed[Z] = "#"fix z fix"\""fileName"\""
-            #     Z = ++preprocessed["length"]
+            #     preprocessed[Z] = "#"fix z fix"\""fileName"\""; Z = ++preprocessed["length"]
             # }
             leereZeilen = 0
 
@@ -706,11 +703,11 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
                     continue
                 }
             }
-            if (!Z) Z = ++preprocessed["length"]
+
             preprocessed[Z] = String_concat(preprocessed[Z], fix, $0)
         }
     }
-    # if (preprocessed[Z] != "") Z = ++preprocessed["length"]
+
     Index_pop()
     return 1
 }
