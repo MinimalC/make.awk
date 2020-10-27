@@ -7,7 +7,7 @@
 
 BEGIN { BEGIN_make() }
 
-END { SYMTAB_debug() }
+# END { }
 
 function BEGIN_make(    a,argI,b,c,d,e,f,formatExt,g,h,i,input,j,k,l,m,make,n,
                         o,origin,output,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z) {

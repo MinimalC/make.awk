@@ -162,8 +162,10 @@ function Array_clear(array,    h, i, j, k, l) {
 }
 
 function List_clear(array,    h, i) {
-    if ("length" in array) for (i = 1; i <= array["length"]; ++i) delete array[i]
-    array["length"] = 0
+    if ("length" in array) {
+        for (i = 1; i <= array["length"]; ++i) delete array[i]
+        array["length"] = 0
+    }
 }
 
 function Array_getLength(array) {
@@ -572,4 +574,47 @@ function File_toString(file, ors,    o,r,s,x,y,z) {
     if (typeof(ors) == "untyped") ors = "\n"
     r = ""; while (++z <= file["length"]); r = String_concat(r, ors, file[z])
     return r
+}
+
+function File_clearLines(file, regex,    h, i) {
+    for (i = 1; i <= file["length"]; ++i)
+        if (file[i] ~ regex) file[i] = ""
+}
+
+function List_copy(file, copy,    h, i) {
+    for (i = 1; i <= file["length"]; ++i)
+        copy[i] = file[i]
+    copy["length"] = file["length"]
+}
+
+function File_splitBy(file, sepp, before, after,    h, i, m,n,o,old,x,y,z) {
+    List_copy(file, old)
+    List_clear(file)
+    Index_push("")
+    Z = ++file["length"]
+    for (z = 1; z <= old["length"]; ++z) {
+        $0 = old[z]; Index_reset()
+
+        for (i = 1; i <= NF; ++i) {
+            if ($i ~ before) {
+                if (i > 1) {
+                    file[Z] = String_concat(file[Z], sepp, Index_removeRange(1, i - 1))
+                    Z = ++file["length"]
+                    i = 0; continue
+                }
+                continue
+            }
+            if ($i ~ after) {
+                if (NF > 1 && i < NF) {
+                    file[Z] = String_concat(file[Z], sepp, Index_removeRange(1, i))
+                    Z = ++file["length"]
+                    i = 0; continue
+                }
+                continue
+            }
+        }
+
+        file[Z] = String_concat(file[Z], sepp, $0)
+    }
+    Index_pop()
 }
