@@ -4,10 +4,9 @@
 
 @include "../make.awk/meta.awk"
 @include "../make.awk/make.C.awk"
+#include "../make.awk/make.CSharp.awk"
 
-BEGIN { BEGIN_make() }
-
-# END { }
+BEGIN { BEGIN_make() } # END { }
 
 function BEGIN_make(    a,argI,b,c,d,e,f,formatExt,g,h,i,input,j,k,l,m,make,n,
                         o,origin,output,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z) {
@@ -118,8 +117,8 @@ function BEGIN_make(    a,argI,b,c,d,e,f,formatExt,g,h,i,input,j,k,l,m,make,n,
         f = get_FileNameExt(origin[n])
         if (!(f in formatExt)) { __error("No Format for FileName."f); continue }
         f = formatExt[f]"_precompile"
-        if (!(f in FUNCTAB)) { __error("No Format function "f); continue }
-        @f(origin[n])
+        if (f in FUNCTAB) @f(origin[n])
+        else { __error("No Format function "f); continue }
     }
 
 if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5 || DEBUG == 6) {
@@ -133,6 +132,7 @@ if (DEBUG == 2 || DEBUG == 3 || DEBUG == 5 || DEBUG == 6) {
 if (DEBUG == 6) { __debug("Types: "); Array_debug(types) }
 
     if ((m = "make_"make) in FUNCTAB) @m()
+    else __error("make.awk: No function "m)
 
     exit
 }
