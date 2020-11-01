@@ -105,13 +105,12 @@ function BEGIN_make(    a,argI,b,c,d,e,f,formatExt,g,h,i,input,j,k,l,m,make,n,
     input[++input["length"]] = "# define LONG_MAX 0x7FFFFFFFFFFFFFFFL"
     input[++input["length"]] = "# define ULONG_MAX 0xFFFFFFFFFFFFFFFFL"
 
-#    input[++input["length"]] = "# include <stdint.h>"
+    input[++input["length"]] = "# include <stdint.h>"
 
     output["name"] = "gcc"
     gcc_sort_coprocess("-dM -E", input, output)
-#    gcc_coprocess("-E", "", output)
+    gcc_coprocess("-E", input, output)
     C_parse("gcc", output)
-    C_preprocess("gcc")
 
     for (n = 1; n <= origin["length"]; ++n) {
         f = get_FileNameExt(origin[n])
@@ -165,7 +164,7 @@ function make_compile(    a,b,c,d,e,f, o,p,pprecompiled,q, x,y,z,Z) {
     }
     Index_pop()
 
-    if (0 == gcc_coprocess(" -c -fpreprocessed ", pprecompiled, ".make.o")) {
+    if (0 == gcc_coprocess(" -c -fpreprocessed -fPIC ", pprecompiled, ".make.o")) {
         Array_clear(compiled)
         File_read(compiled, ".make.o", "\0")
         File_print(compiled, "\0", "\0")

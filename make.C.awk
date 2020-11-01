@@ -800,6 +800,9 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
 function C_precompile(fileName,   x, y, z)
 {
     List_clear(preprocessed)
+
+    C_preprocess("gcc")
+
     if ( !C_preprocess(fileName) ) return
 
     # TODO: this is PROTOTYPE
