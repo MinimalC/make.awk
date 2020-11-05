@@ -5,6 +5,57 @@
 #include "../make.awk/meta.awk"
 @include "../make.awk/make.CExpression_evaluate.awk"
 
+function C_prepare(    a,b,c,input, output)
+{
+    Array_clear(defines)
+
+    Array_clear(types)
+    types["void"]
+    types["unsigned"]
+    types["signed"]
+    types["char"]
+    types["short"]
+    types["int"]
+    types["long"]
+    types["float"]
+    types["double"]
+
+    if (!("gcc" in parsed)) {
+        input["name"] = "gcc"
+        input[++input["length"]] = "# define _GNU_SOURCE 1"
+        # input[++input["length"]] = "# define _XOPEN_SOURCE 1100"
+        # input[++input["length"]] = "# define _XOPEN_SOURCE_EXTENDED 1"
+
+        input[++input["length"]] = "# define CHAR_BIT 8"
+        input[++input["length"]] = "# define CHAR_MIN (-CHAR_MAX - 1)"
+        input[++input["length"]] = "# define CHAR_MAX 0x7F"
+        input[++input["length"]] = "# define UCHAR_MAX 0xFF"
+
+        input[++input["length"]] = "# define SHORT_MIN (-SHORT_MAX - 1)"
+        input[++input["length"]] = "# define SHORT_MAX 0x7FFF"
+        input[++input["length"]] = "# define USHORT_MAX 0xFFFF"
+
+        input[++input["length"]] = "# define INT_MIN (-INT_MAX - 1)"
+        input[++input["length"]] = "# define INT_MAX 0x7FFFFFFF"
+        input[++input["length"]] = "# define UINT_MAX 0xFFFFFFFF"
+
+        input[++input["length"]] = "# define LONG_MIN (-LONG_MAX - 1L)"
+        input[++input["length"]] = "# define LONG_MAX 0x7FFFFFFFFFFFFFFFL"
+        input[++input["length"]] = "# define ULONG_MAX 0xFFFFFFFFFFFFFFFFL"
+
+        input[++input["length"]] = "# include <stdint.h>"
+
+        output["name"] = "gcc"
+        gcc_sort_coprocess("-dM -E", input, output)
+        gcc_coprocess("-E", input, output)
+        C_parse("gcc", output)
+    }
+
+    Array_clear(preprocessed)
+
+    Array_clear(precompiled)
+}
+
 function C_parse(fileName, file,    a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, j, k, l, m,
                                     n, name, o, p, q, r, s, string, t, u, v, w, was, x, y, z, Z, zahl)
 {
@@ -797,20 +848,98 @@ if (DEBUG == 3) __debug(fileName" Line "z": applying "name)
     return 1
 }
 
-function C_precompile(fileName,   x, y, z)
-{
+function C_precompile(fileName,   x, y, z) {
+
     List_clear(preprocessed)
-
-    C_preprocess("gcc")
-
+    if (!("gcc" in preprocessed)) {
+        preprocessed["gcc"]
+        C_preprocess("gcc")
+    }
     if ( !C_preprocess(fileName) ) return
 
-    # TODO: this is PROTOTYPE
+    # C_precompile is PROTOTYPE
 
     for (z = 1; z <= preprocessed["length"]; ++z)
         precompiled[++precompiled["length"]] = preprocessed[z]
 
-    Index_pop()
     return 1
 }
 
+function C_compile(    o,p,pprecompiled,x,y,z)
+{
+    Index_push("", fixFS, " ", "\0", "\n")
+    for (z = 1; z <= precompiled["length"]; ++z) {
+        $0 = precompiled[z]; Index_reset()
+        pprecompiled[++pprecompiled["length"]] = $0
+    }
+    Index_pop()
+
+    Array_clear(compiled)
+    if (gcc_coprocess(" -c -fpreprocessed -fPIC ", pprecompiled, ".make.o")) return
+    File_read(compiled, ".make.o", "\0")
+    return 1
+}
+
+function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    if (typeof(input) == "string" && input) options = options" "input
+    else options = options" -"
+    if (typeof(output) == "string" && output) options = options" -o "output
+    command = "gcc -xc "options
+    if (typeof(input) == "array") {
+        for (i = 1; i <= input["length"]; ++i) {
+            print input[i] |& command
+        }
+    } else print "" |& command
+    close(command, "to")
+    Index_push("", "", "", "\n", "\n")
+    while (0 < y = ( command |& getline )) {
+        if (typeof(output) == "array") {
+            output[++output["length"]] = $0
+        }
+    }
+    Index_pop()
+    if (y == -1) {
+        __error("Command doesn't exist: "command)
+        return
+    }
+    return close(command)
+}
+
+function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    if (typeof(input) == "string" && input) options = options" "input
+    else options = options" -"
+    if (typeof(output) == "string" && output) options = options" -o "output
+    command = "gcc -xc "options" | sort"
+    if (typeof(input) == "array") {
+        for (i = 1; i <= input["length"]; ++i) {
+            print input[i] |& command
+        }
+    } else print "" |& command
+    close(command, "to")
+    Index_push("", "", "", "\n", "\n")
+    while (0 < y = ( command |& getline )) {
+        if (typeof(output) == "array") {
+            output[++output["length"]] = $0
+        }
+    }
+    Index_pop()
+    if (y == -1) {
+        __error("Command doesn't exist: "command)
+        return
+    }
+    return close(command)
+}
+
+function gcc_precompile(    h, i, j, k, l, m, n, o) {
+
+    i = ".preprocess.C.gcc.c"
+    print "/* Gemeinfrei */" > i
+    print "#include <stdint.h>" > i
+    close(i)
+
+    o = ".preprocess.C.gcc...pre.c"
+    system("gcc -std=c11 -E "i"  > "o)
+    system("gcc -std=c11 -dM -E "i" | sort >> "o)
+
+    return o
+}
