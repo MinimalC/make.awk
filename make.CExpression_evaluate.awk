@@ -24,12 +24,12 @@ function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e
     if (defines[name]["isFunction"]) {
         l = defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
-        while (++o) {
+        while (++o <= NF) {
+            if ($o ~ /^[ \f\n\t\v]+$/) { Index_remove(o--); continue }
             if (o > NF) {
                 if (typeof(file["I"]) == "number" && file["I"] == Index["length"] && ++file["z"] <= file["length"]) {
-                    $0 = $0 fix file[file["z"]]
-                    # Index_reset()
-                    for (j = o; j <= NF; ++j) if ($j ~ /^[ \f\t\v]+$/) Index_remove(j--)
+                    Index_reset($0 fix file[file["z"]])
+                    for (j = o; j <= NF; ++j) if ($j ~ /^[ \f\n\t\v]+$/) Index_remove(j--)
                     defines["__LINE__"]["body"] = file["z"]
                     --o; continue
                 }
@@ -215,7 +215,7 @@ function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, 
     Index_push(expression, fixFS, fix)
     Index_reset()
     for (i = 1; i <= NF; ++i) {
-        if ($i ~ /^[ \f\t\v]+$/) { Index_remove(i--); continue }
+        if ($i ~ /^[ \f\n\t\v]+$/) { Index_remove(i--); continue }
         if ($i ~ /^\/\*/) { Index_remove(i--); continue }
         if ($i == "\\") { Index_remove(i--); continue }
         if ($i ~ /^0x/) {

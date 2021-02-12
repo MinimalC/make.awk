@@ -342,7 +342,7 @@ function String_trim(string, sepp,    h, i, j) {
     return Index_pop()
 }
 
-function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, l, m, n) {
+function Index_pushArray(newArray, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
     # save old Index
     i = Array_add(Index)
     Index[i]["OUTPUTRECORDSEP"] = ORS
@@ -351,10 +351,10 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
     Index[i]["FIELDSEP"] = FS
     Index[i][0] = $0
 
-    if (typeof(newORS) != "untyped") ORS = newORS
-    if (typeof(newRS) != "untyped") RS = newRS
-    if (typeof(newOFS) != "untyped") OFS = newOFS
-    if (typeof(newFS) != "untyped") FS = newFS
+    if (typeof(ors) != "untyped") ORS = ors
+    if (typeof(rs) != "untyped") RS = rs
+    if (typeof(ofs) != "untyped") OFS = ofs
+    if (typeof(fs) != "untyped") FS = fs
 
     # new Index
     if (typeof(newArray) != "untyped") {
@@ -369,7 +369,7 @@ function Index_pushArray(newArray, newFS, newOFS, newRS, newORS,    h, i, j, k, 
     return Index_reset()
 }
 
-function Index_pushRange(from, to, newFS, newOFS, newRS, newORS,    h, i, j, k, l, m, n) {
+function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
     # save old Index
     i = Array_add(Index)
     Index[i]["OUTPUTRECORDSEP"] = ORS
@@ -378,10 +378,10 @@ function Index_pushRange(from, to, newFS, newOFS, newRS, newORS,    h, i, j, k, 
     Index[i]["FIELDSEP"] = FS
     Index[i][0] = $0
 
-    if (typeof(newORS) != "untyped") ORS = newORS
-    if (typeof(newRS) != "untyped") RS = newRS
-    if (typeof(newOFS) != "untyped") OFS = newOFS
-    if (typeof(newFS) != "untyped") FS = newFS
+    if (typeof(ors) != "untyped") ORS = ors
+    if (typeof(rs) != "untyped") RS = rs
+    if (typeof(ofs) != "untyped") OFS = ofs
+    if (typeof(fs) != "untyped") FS = fs
 
     # new Index
     for (i = from; i <= to && i <= NF; ++i)
@@ -391,7 +391,7 @@ function Index_pushRange(from, to, newFS, newOFS, newRS, newORS,    h, i, j, k, 
 }
 
 
-function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
+function Index_push(newIndex, fs, ofs, rs, ors,    h, i) {
     # save old Index
     i = Array_add(Index)
     Index[i]["OUTPUTRECORDSEP"] = ORS
@@ -400,10 +400,10 @@ function Index_push(newIndex, newFS, newOFS, newRS, newORS,    h, i) {
     Index[i]["FIELDSEP"] = FS
     Index[i][0] = $0
 
-    if (typeof(newORS) != "untyped") ORS = newORS
-    if (typeof(newRS) != "untyped") RS = newRS
-    if (typeof(newOFS) != "untyped") OFS = newOFS
-    if (typeof(newFS) != "untyped") FS = newFS
+    if (typeof(ors) != "untyped") ORS = ors
+    if (typeof(rs) != "untyped") RS = rs
+    if (typeof(ofs) != "untyped") OFS = ofs
+    if (typeof(fs) != "untyped") FS = fs
 
     # new Index
     if (typeof(newIndex) != "untyped") $0 = newIndex
@@ -459,43 +459,47 @@ function Index_append(i, value, ifNot,    p,q,r) {
 }
 
 function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,    removed) {
-    if (typeof(a) == "number") { removed = String_concat(removed, OFS, $a); $a = "" }
-    if (typeof(b) == "number") { removed = String_concat(removed, OFS, $b); $b = "" }
-    if (typeof(c) == "number") { removed = String_concat(removed, OFS, $c); $c = "" }
-    if (typeof(d) == "number") { removed = String_concat(removed, OFS, $d); $d = "" }
-    if (typeof(e) == "number") { removed = String_concat(removed, OFS, $e); $e = "" }
-    if (typeof(f) == "number") { removed = String_concat(removed, OFS, $f); $f = "" }
-    if (typeof(g) == "number") { removed = String_concat(removed, OFS, $g); $g = "" }
-    if (typeof(h) == "number") { removed = String_concat(removed, OFS, $h); $h = "" }
-    if (typeof(i) == "number") { removed = String_concat(removed, OFS, $i); $i = "" }
-    if (typeof(j) == "number") { removed = String_concat(removed, OFS, $j); $j = "" }
-    if (typeof(k) == "number") { removed = String_concat(removed, OFS, $k); $k = "" }
-    if (typeof(l) == "number") { removed = String_concat(removed, OFS, $l); $l = "" }
-    if (typeof(m) == "number") { removed = String_concat(removed, OFS, $m); $m = "" }
-    if (typeof(n) == "number") { removed = String_concat(removed, OFS, $n); $n = "" }
-    if (typeof(o) == "number") { removed = String_concat(removed, OFS, $o); $o = "" }
-    if (typeof(p) == "number") { removed = String_concat(removed, OFS, $p); $p = "" }
-    if (typeof(q) == "number") { removed = String_concat(removed, OFS, $q); $q = "" }
-    if (typeof(r) == "number") { removed = String_concat(removed, OFS, $r); $r = "" }
-    if (typeof(s) == "number") { removed = String_concat(removed, OFS, $s); $s = "" }
-    if (typeof(t) == "number") { removed = String_concat(removed, OFS, $t); $t = "" }
-    if (typeof(u) == "number") { removed = String_concat(removed, OFS, $u); $u = "" }
-    if (typeof(v) == "number") { removed = String_concat(removed, OFS, $v); $v = "" }
-    if (typeof(w) == "number") { removed = String_concat(removed, OFS, $w); $w = "" }
-    if (typeof(x) == "number") { removed = String_concat(removed, OFS, $x); $x = "" }
-    if (typeof(y) == "number") { removed = String_concat(removed, OFS, $y); $y = "" }
-    if (typeof(z) == "number") { removed = String_concat(removed, OFS, $z); $z = "" }
-    # Index_clearEmpty()
+    if (typeof(a) == "number") { removed = String_concat(removed, OFS, $a); $a = "\a\b" }
+    if (typeof(b) == "number") { removed = String_concat(removed, OFS, $b); $b = "\a\b" }
+    if (typeof(c) == "number") { removed = String_concat(removed, OFS, $c); $c = "\a\b" }
+    if (typeof(d) == "number") { removed = String_concat(removed, OFS, $d); $d = "\a\b" }
+    if (typeof(e) == "number") { removed = String_concat(removed, OFS, $e); $e = "\a\b" }
+    if (typeof(f) == "number") { removed = String_concat(removed, OFS, $f); $f = "\a\b" }
+    if (typeof(g) == "number") { removed = String_concat(removed, OFS, $g); $g = "\a\b" }
+    if (typeof(h) == "number") { removed = String_concat(removed, OFS, $h); $h = "\a\b" }
+    if (typeof(i) == "number") { removed = String_concat(removed, OFS, $i); $i = "\a\b" }
+    if (typeof(j) == "number") { removed = String_concat(removed, OFS, $j); $j = "\a\b" }
+    if (typeof(k) == "number") { removed = String_concat(removed, OFS, $k); $k = "\a\b" }
+    if (typeof(l) == "number") { removed = String_concat(removed, OFS, $l); $l = "\a\b" }
+    if (typeof(m) == "number") { removed = String_concat(removed, OFS, $m); $m = "\a\b" }
+    if (typeof(n) == "number") { removed = String_concat(removed, OFS, $n); $n = "\a\b" }
+    if (typeof(o) == "number") { removed = String_concat(removed, OFS, $o); $o = "\a\b" }
+    if (typeof(p) == "number") { removed = String_concat(removed, OFS, $p); $p = "\a\b" }
+    if (typeof(q) == "number") { removed = String_concat(removed, OFS, $q); $q = "\a\b" }
+    if (typeof(r) == "number") { removed = String_concat(removed, OFS, $r); $r = "\a\b" }
+    if (typeof(s) == "number") { removed = String_concat(removed, OFS, $s); $s = "\a\b" }
+    if (typeof(t) == "number") { removed = String_concat(removed, OFS, $t); $t = "\a\b" }
+    if (typeof(u) == "number") { removed = String_concat(removed, OFS, $u); $u = "\a\b" }
+    if (typeof(v) == "number") { removed = String_concat(removed, OFS, $v); $v = "\a\b" }
+    if (typeof(w) == "number") { removed = String_concat(removed, OFS, $w); $w = "\a\b" }
+    if (typeof(x) == "number") { removed = String_concat(removed, OFS, $x); $x = "\a\b" }
+    if (typeof(y) == "number") { removed = String_concat(removed, OFS, $y); $y = "\a\b" }
+    if (typeof(z) == "number") { removed = String_concat(removed, OFS, $z); $z = "\a\b" }
     Index_reset()
     return removed
 }
 
 function Index_removeRange(from0, to0,    h, i, removed) {
     if (typeof(to0) == "untyped") to0 = NF
-    for (i = from0; i <= to0; ++i) { removed = String_concat(removed, OFS, $i); $i = "" }
+    for (i = from0; i <= to0; ++i) { removed = String_concat(removed, OFS, $i); $i = "\a\b" }
     Index_reset()
-    # Index_clearEmpty()
     return removed
+}
+
+function Index_getRange(from0, to0,    h, i, text) {
+    if (typeof(to0) == "untyped") to0 = NF
+    for (i = from0; i <= to0; ++i) text = String_concat(text, OFS, $i)
+    return text
 }
 
 #function Index_merge(i, len,    h, j, k, l) {
@@ -507,16 +511,16 @@ function Index_removeRange(from0, to0,    h, i, removed) {
 #    return Index_reset()
 #}
 
-function Index_clearEmpty(    h, i, j, k, l, m, n) {
+function Index_clear(    h, i, j, k, l, m, n) {
     for (i = 1; i <= NF; ++i) {
-        if ($i == "") { ++n; continue }
+        if ($i == "\a\b") { ++n; continue }
         $(i - n) = $i
     }
     NF -= n
 }
 function Index_reset(newIndex,    h, i, j, k, l, m, n) {
-    Index_clearEmpty()
     if (typeof(newIndex) != "untyped") $0 = newIndex
+    Index_clear()
     return $0 = $0
 }
 
@@ -587,7 +591,7 @@ function List_copy(file, copy,    h, i) {
     copy["length"] = file["length"]
 }
 
-function File_splitBy(file, sepp, before, after,    h, i, m,n,o,old,x,y,z) {
+function File_splitBy(file, sepp, before, after,    h, i, m,n,o,old,x,y,z,Z) {
     List_copy(file, old)
     List_clear(file)
     Index_push("")
