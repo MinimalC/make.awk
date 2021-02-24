@@ -1,4 +1,4 @@
-#!/usr/bin/awk -f
+
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
@@ -340,6 +340,13 @@ function String_trim(string, sepp,    h, i, j) {
         $i = ""
     }
     return Index_pop()
+}
+
+function String_countChar(string, char,    a,b,c,d,e,f,g,h,i,j,k,l,m,n) {
+    Index_push(string, "", "")
+    for (n = 1; n <= NF; ++n) if ($n == char) ++c
+    Index_pop()
+    return c
 }
 
 function Index_pushArray(newArray, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {

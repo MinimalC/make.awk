@@ -68,7 +68,6 @@ if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
     if ( fileName in parsed && parsed[fileName]["length"] ) return 1
     if ( !file["length"] && !File_read(file, fileName)) return
     parsed[fileName]["name"] = fileName
-    ++parsed[fileName]["length"]
 
     Index_push("", "", "", "\0", "\n")
 while (++z <= file["length"]) {
@@ -123,17 +122,17 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": comments "was)
             continue
         }
         if ($i == "\\") {
-            if ($(i + 1) == "n") {
-                __warning(fileName": Line "z": Stray \\n")
-                Index_remove(i, i + 1); --i
-                continue
-            }
             if (i == NF) {
                 if (!hash)__warning(fileName": Line "z": Stray Line Continuation \\"$(i + 1))
                 was = "\\"
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 Index_remove(i - 1, i); i -= 2
                 if (++z <= file["length"]) Index_append(i, file[z])
+                continue
+            }
+            if ($(i + 1) == "n") {
+                __warning(fileName": Line "z": Stray \\n")
+                Index_remove(i, i + 1); --i
                 continue
             }
             __error(fileName": Line "z": Stray \\ or \\"$(i + 1))
@@ -456,15 +455,12 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
         Index_remove(i--)
     }
 
-    l = parsed[fileName]["length"]
     if (hash) {
-        if (parsed[fileName][l]) l = ++parsed[fileName]["length"]
         if ($NF ~ fixFS) Index_remove(NF)
-        parsed[fileName][l] = $0
-        l = ++parsed[fileName]["length"]
+        parsed[fileName][++parsed[fileName]["length"]] = $0
         continue
     }
-    parsed[fileName][l] = parsed[fileName][l] $0 "\n"
+    parsed[fileName][++parsed[fileName]["length"]] = $0
 }
     Index_pop()
 if (DEBUG == 2) __debug("A: C_parse File "fileName)
@@ -482,18 +478,15 @@ function C_preprocess(fileName,   a, b, c, comments, d, e, expressions, f, __FIL
     Index_push(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_", "\0", "\0")
     __FILE__Name = "__FILE__"Index_pop()
 
-#    if (!preprocessed["length"]) ++preprocessed["length"]
-    if (!preprocessed["length"] || preprocessed[preprocessed["length"]]) ++preprocessed["length"]
+    if (!preprocessed["length"]) ++preprocessed["length"]
 
     preprocessed["declarations"]["length"]
     if (!(__FILE__Name in preprocessed["declarations"])) {
         preprocessed["declarations"][__FILE__Name]
-        preprocessed[preprocessed["length"]] = preprocessed[preprocessed["length"]] fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
+        preprocessed[++preprocessed["length"]] = fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
     }
 
-    if (preprocessed[preprocessed["length"]]) ++preprocessed["length"]
-    preprocessed[preprocessed["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "preprocessed["length"]" */"
-    ++preprocessed["length"]
+    preprocessed[preprocessed["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
 
     defines["__FILE__"]["body"] = __FILE__Name
 
@@ -618,9 +611,7 @@ if (DEBUG == 3 || DEBUG == 4 || DEBUG == 5) __debug(fileName" Line "z": includin
                 else __warning(fileName" Line "z": File doesn't exist: \""m"\"")
             }
             if (zZ && zZ < preprocessed["length"]) {
-                if (preprocessed[preprocessed["length"]]) ++preprocessed["length"]
-                preprocessed[preprocessed["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "preprocessed["length"]" */"
-                ++preprocessed["length"]
+                preprocessed[preprocessed["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
                 zZ = 0
             }
             NF = 0
@@ -703,14 +694,9 @@ if (DEBUG == 3 || DEBUG == 4 || DEBUG == 5) __debug(fileName" Line "z": undef "n
             # $1 = "/*"$1; $NF = $NF"*/"; Index_reset()
             NF = 0
         }
-        if (NF == 0) preprocessed[preprocessed["length"]] = preprocessed[preprocessed["length"]] "\n"
-        else {
-            if (preprocessed[preprocessed["length"]]) ++preprocessed["length"]
-            preprocessed[preprocessed["length"]] = $0
-            ++preprocessed["length"]
-        }
-        continue
-        }
+        if (NF == 0) ++leereZeilen
+        else preprocessed[++preprocessed["length"]] = $0
+        continue }
 
         parsed[fileName]["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
@@ -837,16 +823,24 @@ if (DEBUG == 4) __debug(fileName" Line "z": applying "name)
                 continue
             }
         }
-#        for (i = 1; i <= NF; ++i) {
-#            if (comments) {
-#                if ($i ~ /\*\/$/) { Index_remove(i--); --comments; continue }
-#                Index_remove(i--); continue
-#            }
-#            if ($i ~ /^\/\*/) { ++comments; --i; continue }
-#            if ($i ~ /^\/\//) { NF = --i; break }
-#            if ($i == "\\") { Index_remove(i--); continue }
-#        }
-        preprocessed[preprocessed["length"]] = preprocessed[preprocessed["length"]] $0 "\n"
+        #for (i = 1; i <= NF; ++i) {
+        #    if (comments) {
+        #        if ($i ~ /\*\/$/) { Index_remove(i--); --comments; continue }
+        #        Index_remove(i--); continue
+        #    }
+        #    if ($i ~ /^\/\* \w[^#]\w* \*\/$/) continue
+        #    if ($i ~ /^\/\*/) { ++comments; --i; continue }
+        #    if ($i ~ /^\/\//) { NF = --i; break }
+        #    if ($i == "\\") { Index_remove(i--); continue }
+        #}
+        if (NF == 0) { ++leereZeilen; continue }
+        if (leereZeilen <= 7) preprocessed["length"] += leereZeilen
+        else {
+            preprocessed["length"] += 2
+            preprocessed[preprocessed["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
+        }
+        leereZeilen = 0
+        preprocessed[++preprocessed["length"]] = $0
     }
     Index_pop()
     return 1

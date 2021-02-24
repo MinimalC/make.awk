@@ -26,15 +26,15 @@ function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e
         o = i; m = ""; n = 0; p = 0
         while (++o <= NF) {
             if ($o ~ /^[ \f\n\t\v]+$/) { Index_remove(o--); continue }
-            if (o > NF) {
-                if (typeof(file["I"]) == "number" && file["I"] == Index["length"] && ++file["z"] <= file["length"]) {
-                    Index_reset($0 fix file[file["z"]])
-                    for (j = o; j <= NF; ++j) if ($j ~ /^[ \f\n\t\v]+$/) Index_remove(j--)
-                    defines["__LINE__"]["body"] = file["z"]
-                    --o; continue
-                }
-                break
-            }
+            # if (o > NF) {
+            #     if (typeof(file["I"]) == "number" && file["I"] == Index["length"] && ++file["z"] <= file["length"]) {
+            #         Index_reset($0 fix file[file["z"]])
+            #         for (j = o; j <= NF; ++j) if ($j ~ /^[ \f\n\t\v]+$/) Index_remove(j--)
+            #         defines["__LINE__"]["body"] = file["z"]
+            #         --o; continue
+            #     }
+            #     break
+            # }
             if (o == i + 1) {
                 if ($o != "(") break
                 continue
