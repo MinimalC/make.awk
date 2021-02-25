@@ -532,6 +532,7 @@ function Index_reset(newIndex,    h, i, j, k, l, m, n) {
 }
 
 function File_read(file, fileName, rs, ors,    w, x, y, z) {
+    if (typeof(fileName) == "untyped" || !fileName) { __error("File_read without fileName"); return }
     if (!file["name"]) file["name"] = fileName
     x = z = file["length"]
     if (typeof(rs) == "untyped") rs = @/\r?\n/
