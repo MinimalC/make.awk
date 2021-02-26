@@ -18,28 +18,26 @@ END {
     if (ERROR) exit 1
 }
 
-function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message, fileName) {
-    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-    # if ("OUTPUTFILENAME" in SYMTAB && SYMTAB["OUTPUTFILENAME"]) fileName = SYMTAB["OUTPUTFILENAME"] else
-    fileName = "/dev/stdout"
-    print message > fileName
+function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
+    print message #>"/dev/stdout"
 }
 
 function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-    print message > "/dev/stderr"
+    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
+    print message >"/dev/stderr"
 }
 
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    message = a b c d e f g h i j k l m n o p q r s t u v w x y z
+    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
     ERROR = 1
-    print message > "/dev/stderr"
+    print message >"/dev/stderr"
 }
 
 function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) {
-        message = a b c d e f g h i j k l m n o p q r s t u v w x y z
-        print message > "/dev/stderr"
+        message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
+        print message >"/dev/stderr"
     }
 }
 
@@ -568,8 +566,10 @@ function File_print(file, rs, ors,    x, y, z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    while (++z <= file["length"])
+    while (++z <= file["length"]) {
+        # if (z == file["length"]) { printf "%s", file[z]; break }
         print file[z]
+    }
     Index_pop()
 }
 
@@ -577,8 +577,10 @@ function File_error(file, rs, ors,    x, y, z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    while (++z <= file["length"])
-        __error(file[z])
+    while (++z <= file["length"]) {
+        # if (z == file["length"]) { printf "%s", file[z] >"/dev/stderr"; break }
+        print file[z] >"/dev/stderr"
+    }
     Index_pop()
 }
 
