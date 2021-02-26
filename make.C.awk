@@ -78,6 +78,8 @@ while (++z <= file["length"]) {
         hash = ""
         if (comments) { Index_prepend(1, "/*") }
     }
+    while ($NF ~ /\s/)
+        Index_remove(NF)
     while ($NF == "\\") {
         Index_remove(NF)
         if (++z <= file["length"]) Index_append(NF, file[z])
@@ -142,37 +144,41 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if ($(i + 1) == "#") {
                 if (Index_prepend(i, fix, fix)) ++i
                 ++i; was = "##"
+if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+                if (Index_append(i, fix, fix)) ++i
+                continue
             }
-            else {
-                if (was == "newline") {
-#if (DEBUG == 2) __debug(fileName": Line "z":"i": was "was)
-                    hash = "#"
-                    if (i > 2) { Index_removeRange(2, i - 1); i = 2 }
-                    n = i; while (++n <= NF) {
-                        if ($n ~ /[ \f\t\v]/) continue
-                        --n; break
-                    }
-                    if (n > i) Index_removeRange(i + 1, n)
+            if (was == "newline") {
+                was = "#"; hash = "#"
+                if (i > 1) { Index_removeRange(1, i - 1); i = 1 }
+                n = i; while (++n <= NF) {
+                    if ($n ~ /\s/) continue
+                    --n; break
                 }
-                else if (Index_prepend(i, fix, fix)) ++i
+                if (n > i) Index_removeRange(i + 1, n)
+# if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+                if (Index_append(i, fix, fix)) ++i
+                continue
             }
+            if (Index_prepend(i, fix, fix)) ++i
             was = "#"
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if (Index_append(i, fix, fix)) ++i
             continue
         }
-        if ($i ~ /[ \f\t\v]/) {
-            if (Index_prepend(i, fix, fix)) ++i
+        if ($i ~ /\s/) {
             n = i; while (++n <= NF) {
-                if ($n ~ /[ \f\t\v]/) continue
+                if ($n ~ /\s/) continue
                 --n; break
             }
-            #if (hash) {
-            #    Index_removeRange(i, n); --i
-            #    continue
-            #}
-            was = "space"
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
+            # was = "space"
+            if (hash) {
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": space")
+                Index_removeRange(i, n); --i
+                continue
+            }
+            if (Index_prepend(i, fix, fix)) ++i
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": space")
             i = n
             if (Index_append(i, fix, fix)) ++i
             continue
@@ -448,10 +454,9 @@ function C_preprocess(fileName,   a, b, c, comments, d, e, expressions, f, __FIL
 
     if (!preprocessed["length"]) ++preprocessed["length"]
 
-    preprocessed["declarations"]["length"]
+    preprocessed["declarations"]["length"]["length"]
     if (!(__FILE__Name in preprocessed["declarations"])) {
-        preprocessed["declarations"][__FILE__Name]
-        preprocessed[++preprocessed["length"]] = fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
+        preprocessed["declarations"][__FILE__Name]["body"] = fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
     }
 
     preprocessed[preprocessed["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
@@ -463,7 +468,7 @@ function C_preprocess(fileName,   a, b, c, comments, d, e, expressions, f, __FIL
 
         defines["__LINE__"]["body"] = z
 
-        for (i = 1; i <= NF; ++i) if ($i ~ /^[ \f\t\v]+$/) Index_remove(i--)
+        for (i = 1; i <= NF; ++i) if ($i ~ /^\s+$/) Index_remove(i--)
 
         if ($1 == "#") {
         if ($2 == "ifdef") {
@@ -595,8 +600,8 @@ if (DEBUG == 3 || DEBUG == 4 || DEBUG == 5) __debug(fileName" Line "z": includin
                 if ($1 == "(") {
                     for (n = 2; n <= NF; ++n) {
                         if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                            if ($n in types) { __warning(fileName" Line "z": Ambiguous define argument "$n" (typedef)"); break }
-                            if ($n in defines) { __warning(fileName" Line "z": Ambiguous define argument "$n" (define)"); break }
+                            if ($n in types) { __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (typedef)"); break }
+                            if ($n in defines) { __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (define)"); break }
                             continue
                         }
                         if ($n == ",") continue
@@ -606,8 +611,8 @@ if (DEBUG == 3 || DEBUG == 4 || DEBUG == 5) __debug(fileName" Line "z": includin
                     }
                     if ($n == ")") { # n < NF
                         m = ""; for (o = 2; o < n; ++o) {
-                            # if ($o in types) __warning(fileName" Line "z": Ambiguous define argument "$o" (typedef)")
-                            # if ($o in defines) __warning(fileName" Line "z": Ambiguous define argument "$o" (define)")
+                            # if ($o in types) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (typedef)")
+                            # if ($o in defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (define)")
                             m = String_concat(m, fix, $o)
                             if ($o == ",") continue
                             g = ++defines[name]["arguments"]["length"]
@@ -635,8 +640,14 @@ __debug(fileName" Line "z": define "name"  "rendered)
             name = $3
             if (!(name in defines)) __warning(fileName" Line "z": undef doesn't exist: "name)
             else {
+if (DEBUG) {
+Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m ~ fixFS) $m = " "; rendered = Index_pop()
+if (defines[name]["isFunction"])
+__debug(fileName" Line "z": undefine "name" ("defines[name]["arguments"]["text"]")  "rendered)
+else
+__debug(fileName" Line "z": undefine "name"  "rendered)
+}
                 delete defines[name]
-if (DEBUG == 3 || DEBUG == 4 || DEBUG == 5) __debug(fileName" Line "z": undef "name)
             }
             NF = 0
         }
@@ -814,7 +825,7 @@ if (DEBUG == 4) __debug(fileName" Line "z": applying "name)
     return 1
 }
 
-function C_precompile(fileName,   x, y, z) {
+function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z) {
 
     List_clear(preprocessed)
     if (!("gcc" in preprocessed)) {
@@ -825,6 +836,8 @@ function C_precompile(fileName,   x, y, z) {
 
     # C_precompile is PROTOTYPE
 
+    for (n in preprocessed["declarations"])
+        precompiled[++precompiled["length"]] = preprocessed["declarations"][n]["body"]
     for (z = 1; z <= preprocessed["length"]; ++z)
         precompiled[++precompiled["length"]] = preprocessed[z]
 

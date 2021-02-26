@@ -9,7 +9,7 @@
 BEGIN { BEGIN_make() } # END { }
 
 function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
-                        o,origin,output,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z) {
+                        o,origin,output,p,paramName,paramWert,q,r,rendered,s,t,u,v,w,x,y,z) {
     FS="";OFS="";RS="\0";ORS="\n"
     fixFS = @/\x01/
     fix = "\x01"
@@ -90,9 +90,10 @@ function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
 if (DEBUG) {
     __debug("Defines: ")
     for (n in defines) {
+        Index_push(defines[n]["body"], "", ""); for (r = 1; r <= NF; ++r) if ($r ~ fixFS) $r = " "; rendered = Index_pop()
         if (defines[n]["isFunction"])
-             __debug("# define "n" ( "defines[n]["arguments"]["text"]" ) "defines[n]["body"])
-        else __debug("# define "n"  "defines[n]["body"])
+             __debug("# define "n" ( "defines[n]["arguments"]["text"]" ) "rendered)
+        else __debug("# define "n"  "rendered)
     }
 }
 if (DEBUG) { __debug("Types: "); Array_debug(types) }

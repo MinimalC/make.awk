@@ -110,14 +110,15 @@ function get_FileNameExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileExt) {
 
 function get_DirectoryName(pathName,    h, i, path, dirName) {
     path["length"] = split(pathName, path, "/")
-    for (i = 1; i < path["length"]; ++i)
+    for (i = 1; i < path["length"]; ++i) {
         dirName = dirName path[i] "/"
+    }
     return dirName
 }
 
 function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, path1, q, r, s) {
     path0["length"] = split(pathName0, path0, "/")
-    if (path0[path0["length"]] == "") { delete path0[path0["length"]]; --path0["length"] }
+    if (path0["length"] && path0[path0["length"]] == "") delete path0[path0["length"]--]
     path1["length"] = split(pathName1, path1, "/")
     for (p = 1; p <= path1["length"]; ++p)
         path0[++path0["length"]] = path1[p]
@@ -206,8 +207,20 @@ function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
     return n0
 }
 
-function Array_copy(array0, array1,    h, i, j, k, l, m, n) {
-    for (i in array0) array1[i] = array0[i]
+function Array_copyTo(array0, array1,    h, i, j, k, l, m, n) {
+    if (typeof(array0) != "array") { __error("Array_copyTo: array0 is not array, but "typeof(array0)); return }
+    if (typeof(array1) != "array") { __error("Array_copyTo: array1 is not array, but "typeof(array1)); return }
+    for (i in array0) {
+        if (typeof(array0[i]) == "unassigned") {
+            array1[i]
+            continue
+        }
+        if (typeof(array0[i]) == "array") {
+            Array_copyTo(array0[i], array1[i])
+            continue
+        }
+        array1[i] = array0[i]
+    }
 }
 
 function List_add(array, string) {
