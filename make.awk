@@ -11,7 +11,7 @@ BEGIN { BEGIN_make() } # END { }
 function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
                         o,origin,output,p,paramName,paramWert,q,r,rendered,s,t,u,v,w,x,y,z) {
     FS="";OFS="";RS="\0";ORS="\n"
-    fixFS = @/\x01/
+    fixFS = @/\x01\s*\x01?/
     fix = "\x01"
 
     make = "compile"

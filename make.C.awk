@@ -454,12 +454,14 @@ function C_preprocess(fileName,   a, b, c, comments, d, e, expressions, f, __FIL
 
     # if (!preprocessed["length"]) ++preprocessed["length"]
 
-    preprocessed["declarations"]["length"]["length"]
+    preprocessed["declarations"]["length"]
     if (!(__FILE__Name in preprocessed["declarations"])) {
         preprocessed["declarations"][__FILE__Name]["body"] = fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
     }
 
-    preprocessed[++preprocessed["length"]] = "#"fix"1"fix"\""fileName"\""#" /* Zeile "++preprocessed["length"]" */"
+    # preprocessed[++preprocessed["length"]] = "#"fix 1 fix"\""fileName"\""
+    preprocessed[preprocessed["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
+    ++preprocessed["length"]
 
     defines["__FILE__"]["body"] = __FILE__Name
 
@@ -468,24 +470,22 @@ function C_preprocess(fileName,   a, b, c, comments, d, e, expressions, f, __FIL
 
         defines["__LINE__"]["body"] = z
 
-        for (i = 1; i <= NF; ++i) if ($i ~ /^\s+$/) Index_remove(i--)
+        # for (i = 1; i <= NF; ++i) if ($i ~ /^\s+$/) Index_remove(i--)
 
     if ($1 == "#") {
         if ($2 == "ifdef") {
             $2 = "if"
-            for (n = 3; n <= NF; ++n) {
+            for (n = 3; n <= NF; ++n)
                 if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
                     $n = "defined"fix"("fix $n fix")"; Index_reset(); n += 3
                 }
-            }
         }
         if ($2 == "ifndef") {
             $2 = "if"
-            for (n = 3; n <= NF; ++n) {
+            for (n = 3; n <= NF; ++n)
                 if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
                     $n = "!"fix"defined"fix"("fix $n fix")"; Index_reset(); n += 4
                 }
-            }
         }
         if ($2 == "if") {
             Index_remove(1, 2)
@@ -578,7 +578,9 @@ if (DEBUG == 3 || DEBUG == 4 || DEBUG == 5) __debug(fileName" Line "z": includin
                 else __warning(fileName" Line "z": File doesn't exist: \""m"\"")
             }
             if (zZ && zZ < preprocessed["length"]) {
-                preprocessed[++preprocessed["length"]] = "#"fix z fix"\""fileName"\""#" /* Zeile "++preprocessed["length"]" */"
+            # preprocessed[++preprocessed["length"]] = "#"fix z fix"\""fileName"\""
+                preprocessed[preprocessed["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
+                ++preprocessed["length"]
                 zZ = 0
             }
             NF = 0
@@ -637,9 +639,9 @@ __debug(fileName" Line "z": define "name"  "rendered)
 if (DEBUG) {
 Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m ~ fixFS) $m = " "; rendered = Index_pop()
 if (defines[name]["isFunction"])
-__debug(fileName" Line "z": undefine "name" ("defines[name]["arguments"]["text"]")  "rendered)
+__debug(fileName" Line "z": undef "name" ("defines[name]["arguments"]["text"]")  "rendered)
 else
-__debug(fileName" Line "z": undefine "name"  "rendered)
+__debug(fileName" Line "z": undef "name"  "rendered)
 }
                 delete defines[name]
             }
@@ -669,7 +671,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             NF = 0
         }
         if (NF == 0) { ++leereZeilen; continue }
-        preprocessed[++preprocessed["length"]] = $0; continue
+        preprocessed[++preprocessed["length"]] = $0; ++preprocessed["length"]; continue
     }
 
         parsed[fileName]["I"] = Index["length"]
@@ -718,23 +720,22 @@ if (DEBUG == 4) __debug(fileName" Line "z": applying "name)
                 continue
             }
             if ($i == ";") {
-                if (!e) ; # you don't need semikolon
-                if (level in expressions) Array_clear(expressions[level])
+                # if (!e) ; # you don't need semikolon
+                Array_clear(expressions[level])
                 continue
             }
             if ($i == "}") {
-                if (level in expressions) delete expressions[level]
+                delete expressions[level]
                 level = --expressions["length"]
                 continue
             }
             if ($i == "typedef") {
                 # if (level > 1) __error()
-                if (e > 0) ; # do you need semikolon?
+                # if (e > 0) ; # do you need semikolon?
                 expressions[level]["isTypedef"]
                 continue
             }
             if ($i == "const" || $i == "volatile" || $i == "struct" || $i == "union" || $i == "enum" || $i in types) {
-                if (expressions[level]["length"] > 1) __warning(fileName" Line "z": Semikolon?")
                 # expressions[level]["Type"]
                 name = ""; fun = ""
                 # if ($i in types) name = $i
@@ -782,21 +783,32 @@ if (DEBUG == 4) __debug(fileName" Line "z": applying "name)
                 if ("isTypedef" in expressions[level]) {
                     if (fun) { if (!(fun in types)) types[fun] }
                     else {
-                        if ($(i + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) __warning(fileName" Line "z": typedef without name")
-                        else { if (!($(i + 1) in types)) types[$(i + 1)]; continue }
+                        if ($(i + 1) ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/)
+                            if (!($(i + 1) in types))
+                                types[$(i + 1)] = name
                     }
                 }
                 continue
             }
         }
         if (NF == 0) { ++leereZeilen; continue }
-        if (leereZeilen <= 5) preprocessed["length"] += leereZeilen
-        else {
-            preprocessed["length"] += 2
-            preprocessed[++preprocessed["length"]] = "#"fix z fix"\""fileName"\""#" /* Zeile "++preprocessed["length"]" */"
-        }
-        leereZeilen = 0
-        preprocessed[++preprocessed["length"]] = $0
+
+        #if (leereZeilen <= 5) preprocessed["length"] += leereZeilen
+        #else {
+        #    preprocessed["length"] += 2
+        ## preprocessed[++preprocessed["length"]] = "#"fix z fix"\""fileName"\""
+        ## preprocessed[preprocessed["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
+        #}
+        #leereZeilen = 0
+        #preprocessed[++preprocessed["length"]] = $0
+
+        # Index_prepend(1, "")
+        Index_append(NF, "\n")
+
+        # if (leereZeilen > 5) leereZeilen = 5; for (l = leereZeilen; l; --l) $NF = $NF"\n"
+        if (leereZeilen) $NF = $NF"\n"; leereZeilen = 0
+
+        preprocessed[preprocessed["length"]] = preprocessed[preprocessed["length"]] $0
     }
     Index_pop()
     return 1
@@ -814,7 +826,8 @@ function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z) {
     # C_precompile is PROTOTYPE
 
     for (n in preprocessed["declarations"])
-        precompiled[++precompiled["length"]] = preprocessed["declarations"][n]["body"]
+        if (typeof(preprocessed["declarations"][n]) == "array")
+            precompiled[++precompiled["length"]] = preprocessed["declarations"][n]["body"]
     for (z = 1; z <= preprocessed["length"]; ++z)
         precompiled[++precompiled["length"]] = preprocessed[z]
 
