@@ -157,6 +157,8 @@ function ARGV_length() {
 
 
 function Array_clear(array,    h, i, j, k, l) {
+    if (typeof(array) == "untyped") return
+    if (typeof(array) != "array") { __error("Array_clear: array is no Array"); return }
     for (i in array) delete array[i]
 }
 
@@ -416,7 +418,7 @@ function Index_push(newIndex, fs, ofs, rs, ors,    h, i) {
     Index[i]["RECORDSEP"] = RS
     Index[i]["OUTPUTFIELDSEP"] = OFS
     Index[i]["FIELDSEP"] = FS
-    Index[i][0] = $0
+    Index[i][0] = Index_reset()
 
     if (typeof(ors) != "untyped") ORS = ors
     if (typeof(rs) != "untyped") RS = rs

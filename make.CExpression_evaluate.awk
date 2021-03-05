@@ -13,28 +13,34 @@ function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e
     # Evaluate AWA
     name = $i
     # define AWA AWA
-    if (noredefines[name]) {
+    if (typeof(noredefines) == "array" && name in noredefines) {
         __warning(file["name"]" Line "file["z"]": self-referencing define "name" "name)
         return 1
     }
-    delete noredefines[name]
+    # delete noredefines[name]
+
+if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
+
     # define name ( arg1 , arg2 ) body
     defineBody = defines[name]["body"]
     # Array_clear(arguments)
     if (defines[name]["isFunction"]) {
         l = defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
-        while (++o) { # <= NF) {
-            if (o > NF) {
-                if (typeof(file["I"]) == "number" && file["I"] == Index["length"] && ++file["z"] <= file["length"]) {
-                    Index_reset($0 fix file[file["z"]])
-                    for (j = o; j <= NF; ++j) if ($j ~ /^[ \f\n\t\v]+$/) Index_remove(j--)
-                    defines["__LINE__"]["body"] = file["z"]
-                    --o; continue
-                }
-                break
-            }
-            if ($o ~ /^[ \f\n\t\v]+$/) { Index_remove(o--); continue }
+        while (++o <= NF) {
+            #if (o > NF) {
+            #    if (typeof(file["I"]) == "number" && file["I"] == Index["length"] &&
+            #        file["z"] + 1 <= file["length"] && file[file["z"] + 1] !~ /^\s*#/)
+            #    {
+            #        Index_append(NF, file[++file["z"]])
+            #        for (j = o; j <= NF; ++j) if ($j ~ /^\s+$/) Index_remove(j--)
+            #        defines["__LINE__"]["body"] = file["z"]
+            #        o -= 2
+            #        continue
+            #    }
+            #    break
+            #}
+            if ($o ~ /^\s*$/) { Index_remove(o--); continue }
             if (o == i + 1) {
                 if ($o != "(") break
                 continue
@@ -65,7 +71,13 @@ function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
             return 1
         }
-        Index_removeRange(i + 1, o)
+        if ($o != ")") {
+            __error(file["name"]" Line "file["z"]": define "name" expression without )")
+            Index_removeRange(i + 1, o - 1)
+        }
+        else {
+            Index_removeRange(i + 1, o)
+        }
 if (DEBUG == 3) {
 __debug("arguments: "defines[name]["arguments"]["text"])
 Array_debug(arguments)
@@ -82,7 +94,7 @@ Array_debug(arguments)
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                         continue
                     }
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
+# if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
                     m = CDefine_apply(j, file)
                     j += m - 1
                 }
@@ -150,9 +162,10 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
     for (o = 1; o <= NF; ++o) {
         if ($o == "\\") { Index_remove(o--); continue }
         if ($o == "##") {
-            $o = $(o - 1) $(o + 1)
-            Index_remove(o - 1, o + 1)
-            --o; continue
+            --o
+            $o = $o $(o + 2)
+            Index_remove(o + 1, o + 2)
+            continue
         }
         if ($o == "#") {
             if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
@@ -165,8 +178,8 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
 #                    if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
 #                }
 #                $(o + 1) = "\""Index_pop()"\""
-                $(o + 1) = "\""$(o + 1)"\""
-                Index_remove(o)
+                $o = "\""$(o + 1)"\""
+                Index_remove(o + 1)
             }
             continue
         }
@@ -188,7 +201,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
                 ++notapplied
                 continue
             }
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 applying "$j)
+#if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 applying "$j)
             n = CDefine_apply(j, file)
             j += n-1
         }
@@ -196,15 +209,16 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 applying "$j)
     --noredefines[name]; if (!noredefines[name]) delete noredefines[name]
     Index_reset()
     n = NF
-    $i = defineBody = Index_pop()
+    defineBody = Index_pop()
+    $i = defineBody
     Index_reset()
 
 if (DEBUG == 3) {
 Index_push(defineBody, "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered = Index_pop()
 if (defines[name]["isFunction"]) {
-__debug(file["name"]" Line "file["z"]": using "name" ("defines[name]["arguments"]["text"]")  "rendered)
+__debug(file["name"]" Line "file["z"]": using "name" "n"("defines[name]["arguments"]["text"]")  "rendered)
 # Array_debug(arguments)
-} else __debug(file["name"]" Line "file["z"]": using "name"  "rendered)
+} else __debug(file["name"]" Line "file["z"]": using "name" "n"  "rendered)
 }
     return n - notapplied
 }
@@ -215,7 +229,7 @@ function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, 
     Index_push(expression, fixFS, fix)
     Index_reset()
     for (i = 1; i <= NF; ++i) {
-        if ($i ~ /^[ \f\n\t\v]+$/) { Index_remove(i--); continue }
+        if ($i ~ /^\s+$/) { Index_remove(i--); continue }
         if ($i ~ /^\/\*/) { Index_remove(i--); continue }
         if ($i == "\\") { Index_remove(i--); continue }
         if ($i ~ /^0x/) {
@@ -278,7 +292,7 @@ function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, 
             for (p = o + 1; p <= NF; ++p) {
                 f = String_concat(f, fix, $p)
             }
-if (DEBUG == 5) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
+if (DEBUG == 4) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
             x = CExpression_evaluate(q)
             NF = 1
             if (x) {
@@ -304,7 +318,7 @@ if (DEBUG == 5) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
                 Index_remove(--i)
             }
             $i = x
-if (DEBUG == 5) {
+if (DEBUG == 4) {
 if (x) __debug("Defined "n)
 else __debug("NotDefined "n)
 }
@@ -314,19 +328,19 @@ else __debug("NotDefined "n)
         if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
             name = $i
             if (!(name in defines)) {
-if (DEBUG == 5) __debug("NotUsing "name)
+if (DEBUG == 4) __debug("NotUsing "name)
                 $i = "0"
                 continue
             }
             n = CDefine_apply(i)
-if (DEBUG == 5) __debug("Using "name" "$0)
+if (DEBUG == 4) __debug("Using "name" "$0)
             --i # i += n - 1
             continue
         }
     }
 
     Index_reset()
-if (DEBUG == 5) __debug("Expression: "$0)
+if (DEBUG == 4) __debug("Expression: "$0)
 
     for (i = 1; i <= NF; ++i) {
         # Evaluate Logical Boolean ! not
@@ -338,7 +352,7 @@ if (DEBUG == 5) __debug("Expression: "$0)
 
             Index_remove(i + 1)
             if ($(i - 1) == "!") --i
-if (DEBUG == 5) __debug("not: "$0)
+if (DEBUG == 4) __debug("not: "$0)
             continue
         }
         # Evaluate Binary, Bitwise NOT ~ Negation: the complement of n
@@ -348,7 +362,7 @@ if (DEBUG == 5) __debug("not: "$0)
             $i = compl($(i + 1))
             Index_remove(i + 1)
             if ($(i - 1) == "~") --i
-if (DEBUG == 5) __debug("NOT: "$0)
+if (DEBUG == 4) __debug("NOT: "$0)
             continue
         }
     }
@@ -359,19 +373,19 @@ if (DEBUG == 5) __debug("NOT: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             if (!$(i + 1)) {
                 $i = 0
-if (DEBUG == 5) __debug("Division through null: "$0)
+if (DEBUG == 4) __debug("Division through null: "$0)
             }
             else {
                 $i = $(i - 1) / $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("Division: "$0)
+if (DEBUG == 4) __debug("Division: "$0)
             }
         }
         if ($i == "*") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) * $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("Multiplikation: "$0)
+if (DEBUG == 4) __debug("Multiplikation: "$0)
         }
     }
 
@@ -382,14 +396,14 @@ if (DEBUG == 5) __debug("Multiplikation: "$0)
             if ((i > 3 && ($(i - 2) == "*" || $(i - 2) == "/")) || ($(i + 2) == "*" || $(i + 2) == "/")) continue
             $i = $(i - 1) - $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("Subtraktion: "$0)
+if (DEBUG == 4) __debug("Subtraktion: "$0)
         }
         if ($i == "+") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             if ((i > 3 && ($(i - 2) == "*" || $(i - 2) == "/")) || ($(i + 2) == "*" || $(i + 2) == "/")) continue
             $i = $(i - 1) + $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("Addition: "$0)
+if (DEBUG == 4) __debug("Addition: "$0)
         }
     }
 
@@ -399,13 +413,13 @@ if (DEBUG == 5) __debug("Addition: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = lshift($(i - 1), $(i + 1))
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("LeftShift: "$0)
+if (DEBUG == 4) __debug("LeftShift: "$0)
         }
         if ($i == ">>") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = rshift($(i - 1), $(i + 1))
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("RightShift: "$0)
+if (DEBUG == 4) __debug("RightShift: "$0)
         }
     }
 
@@ -415,37 +429,37 @@ if (DEBUG == 5) __debug("RightShift: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) == $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("Equals: "$0)
+if (DEBUG == 4) __debug("Equals: "$0)
         }
         if ($i == "<=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) <= $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug( "LowerThanEquals: "$0 )
+if (DEBUG == 4) __debug( "LowerThanEquals: "$0 )
         }
         if ($i == "<") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) < $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug( "LowerThan: "$0 )
+if (DEBUG == 4) __debug( "LowerThan: "$0 )
         }
         if ($i == ">=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) >= $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug( "GreaterThanEquals: "$0 )
+if (DEBUG == 4) __debug( "GreaterThanEquals: "$0 )
         }
         if ($i == ">") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) > $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug( "GreaterThan: "$0 )
+if (DEBUG == 4) __debug( "GreaterThan: "$0 )
         }
         if ($i == "!=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) != $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug( "NotEquals: "$0 )
+if (DEBUG == 4) __debug( "NotEquals: "$0 )
         }
     }
     for (i = 1; i <= NF; ++i) {
@@ -457,7 +471,7 @@ if (DEBUG == 5) __debug( "NotEquals: "$0 )
             x = v && w
             $i = x
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("and: "$0)
+if (DEBUG == 4) __debug("and: "$0)
 #            if (!x) NF = i
         }
         if ($i == "||") {
@@ -467,11 +481,11 @@ if (DEBUG == 5) __debug("and: "$0)
             x = v || w
             $i = x
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 5) __debug("or: "$0)
+if (DEBUG == 4) __debug("or: "$0)
         }
     }
     r = Index_pop()
-#if (DEBUG == 5) __debug("Expression: "r)
+#if (DEBUG == 4) __debug("Expression: "r)
     return r
 }
 

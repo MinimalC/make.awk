@@ -15,7 +15,7 @@ function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
     fix = "\x01"
 
     make = "compile"
-    if (ARGV_length() == 0) { __error("Usage: make.awk [compile|precompile] [include] Program.c"); exit 1 }
+    if (ARGV_length() == 0) { __error("Usage: make.awk [parse|precompile|compile] [include] Program.c"); exit 1 }
     for (argI = 1; argI <= ARGV_length(); ++argI) {
 
         if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
