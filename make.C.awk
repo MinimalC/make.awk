@@ -17,6 +17,7 @@ function C_prepare(    a,b,c,input, output)
     types["void"]["isLiteral"]
     types["unsigned"]["isLiteral"]
     types["signed"]["isLiteral"]
+    types["_Bool"]["isLiteral"]
     types["char"]["isLiteral"]
     types["short"]["isLiteral"]
     types["int"]["isLiteral"]
@@ -740,7 +741,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
 
             # or just struct SomeThing { ... }, even struct { }
 
-            name = ""
+            name = ""; s = 0
 
             if ($i == "(") {
                 level = ++expressions["length"]
@@ -788,57 +789,53 @@ if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level)
                 name = expressions[level]["Type"]
             }
             if ($i == "const" || $i == "volatile" || $i in types || $i == "struct" || $i == "union" || $i == "enum" ||
-                name)
+                ((name && $i == "}") || ("isTypedef" in expressions[level] && $i == ",")))
             {
-                s = 0
-
                 if (!name) {
-                    for (n = i; n <= NF; ++n) {
-                        if ($n == "const" || $n == "volatile") {
-                            if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                            continue
-                        }
-                        if ($n in types && "isLiteral" in types[$n]) {
-                            s = 1; name = String_concat(name, " ", $n)
-                            if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                            continue
-                        }
-                        if (!name && ($n in types)) {
-                            if ("isLiteral" in types[$n]) s = 1
-                            name = $n
-                            if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                            ++n; break
-                        }
-                        if (!name && ($n == "struct" || $n == "union" || $n == "enum")) {
-                            s = 1; name = $n
-                            if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                            if ($(++n) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                                __warning(fileName" Line "z": "$i" without name")
-                                break
-                            }
-                            name = String_concat(name, " ", $n)
-                            if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                            ++n; break
-                        }
-                        break
-                    }
-                    if (name) {
-                        if (!("Type" in expressions[level]) || !expressions[level]["Type"]) expressions[level]["Type"] = name
-                        if (level == 1 && !(name == "struct" || name == "union" || name == "enum") && !(name in types) ) {
-if (DEBUG == 5) __debug(fileName" Line "z": name: "name)
-                            if (s) types[name]["isLiteral"]
-                            else types[name]["baseType"]
-                        }
-                    }
-                    if ("isTypedef" in expressions[level]) {
-                        if (!expressions[level]["isTypedef"]) expressions[level]["isTypedef"] = $i
-                    }
-                    if ($n == "{") {
-if (DEBUG == 5) __debug(fileName" Line "z": delay "name" "$n)
+                for (n = i; n <= NF; ++n) {
+                    if ($n == "const" || $n == "volatile") {
+                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         continue
                     }
+                    if ($n in types && "isLiteral" in types[$n]) {
+                        s = 1; name = String_concat(name, " ", $n)
+                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
+                        continue
+                    }
+                    if (!name && ($n in types)) {
+                        if ("isLiteral" in types[$n]) s = 1
+                        name = $n
+                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
+                        ++n; break
+                    }
+                    if (!name && ($n == "struct" || $n == "union" || $n == "enum")) {
+                        s = 1; name = $n
+                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
+                        if ($(++n) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                            __warning(fileName" Line "z": "$i" without name")
+                            break
+                        }
+                        name = String_concat(name, " ", $n)
+                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
+                        ++n; break
+                    }
+                    break
+                } }
+                if (name) {
+                    if (!("Type" in expressions[level]) || !expressions[level]["Type"]) expressions[level]["Type"] = name
+                    if (level == 1 && !(name == "struct" || name == "union" || name == "enum") && !(name in types) ) {
+if (DEBUG == 5) __debug(fileName" Line "z": name: "name)
+                        if (s) types[name]["isLiteral"]
+                        else types[name]["baseType"]
+                    }
                 }
-
+                if ("isTypedef" in expressions[level]) {
+                    if (!expressions[level]["isTypedef"]) expressions[level]["isTypedef"] = $i
+                }
+                if ($n == "{") {
+if (DEBUG == 5) __debug(fileName" Line "z": delay "name" "$n)
+                    continue
+                }
                 if ($i == "}" || $i == ",") {
 if (DEBUG == 5) __debug(fileName" Line "z": continue "$i" "name)
                 }
@@ -869,7 +866,14 @@ if (DEBUG == 5) __debug(fileName" Line "z": continue "$i" "name)
                         if (k == 0) break
                         continue
                     }
-                    break
+                    --n; break
+                }
+                if (n < i) {
+                    --i
+                    if (level == 1 && "isTypedef" in expressions[level]) {
+if (DEBUG == 5) __debug(fileName" Line "z": typedef "name"  without name")
+                    }
+                    continue
                 }
                 if ($n == "__restrict") {
                     if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
