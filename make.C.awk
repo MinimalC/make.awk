@@ -444,9 +444,9 @@ if (DEBUG == 2) __debug("A: C_parse File "fileName)
     return 1
 }
 
-function C_preprocess(fileName,   a, b, c, comments, d, e, expressions, f, __FILE__Name, fun, g, h,
-                                  i,I,ifExpressions, j, k, l, leereZeilen, level, m, moved, n, name, o, p, q,
-                                  r, rendered, s, t, u, v, w, x, y, z, zZ, Z)
+function C_preprocess(fileName,   a,b,c,comments,d,e,expressions,f,__FILE__Name,fun,g,h,
+                                  i,I,ifExpressions,j,k,l,leereZeilen,level,m,moved,n,name,o,p,q,
+                                  r,rendered,s,t,u,v,var,w,x,y,z,zZ,Z)
 {
     if ( !(fileName in parsed) && !C_parse(fileName) ) return
 
@@ -662,6 +662,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         }
         # if ($2 == "pragma")
 
+        if ($2 == "line") Index_remove(2)
         if ($2 ~ /^[+-]?[0-9]+$/) NF = 0 # Line Numbers
 
         if (NF > 0) {
@@ -822,7 +823,11 @@ if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level)
                     break
                 } }
                 if (name) {
-                    if (!("Type" in expressions[level]) || !expressions[level]["Type"]) expressions[level]["Type"] = name
+                    if (!("Type" in expressions[level])) {
+                        if (expressions[level]["Type"])
+if (DEBUG == 5) __debug(fileName" Line "z": name: "name" is already "expressions[level]["Type"])
+                        expressions[level]["Type"] = name
+                    }
                     if (level == 1 && !(name == "struct" || name == "union" || name == "enum") && !(name in types) ) {
 if (DEBUG == 5) __debug(fileName" Line "z": name: "name)
                         if (s) types[name]["isLiteral"]
@@ -840,28 +845,28 @@ if (DEBUG == 5) __debug(fileName" Line "z": delay "name" "$n)
 if (DEBUG == 5) __debug(fileName" Line "z": continue "$i" "name)
                 }
 
-                fun = ""; k = p = 0
+                fun = var = ""; k = p = 0
 
                 for (n = ++i; n <= NF; ++n) {
                     if (!fun && $n == "(") {
-                        ++k # fun = String_concat(fun, " ", $n)
+                        ++k; var = String_concat(var, " ", $n)
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         continue
                     }
                     if (!fun && $n == "*") {
-                        ++p # fun = String_concat(fun, " ", $n)
+                        ++p; var = String_concat(var, " ", $n)
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         if ($(n + 1) == "const")
                             if (n + 1 > i) { $i = String_concat($i, " ", $(n + 1)); Index_remove(n + 1) }
                         continue
                     }
                     if (!fun && $n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                        fun = $n # String_concat(fun, " ", $n)
+                        fun = $n
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         continue
                     }
                     if (k && $n == ")") {
-                        --k # fun = String_concat(fun, " ", $n)
+                        --k; var = String_concat(var, " ", $n)
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         if (k == 0) break
                         continue
@@ -882,10 +887,10 @@ if (DEBUG == 5) __debug(fileName" Line "z": typedef "name"  without name")
                     name = expressions[level]["isTypedef"]
 
                     if (fun && !(fun in types)) {
-                        types[fun]["baseType"] = String_concat(name, " ", $i)
+                        types[fun]["baseType"] = String_concat(name, " ", var)
                         if (name in types && "isLiteral" in types[name] && !p)
                             types[fun]["isLiteral"]
-if (DEBUG == 5) __debug(fileName" Line "z": typedef "fun": "name"  "$i)
+if (DEBUG == 5) __debug(fileName" Line "z": typedef "fun": "name"  "var)
                     }
 else if (DEBUG == 5) __debug(fileName" Line "z": typedef "name"  without name")
                 }
