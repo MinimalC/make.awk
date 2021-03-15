@@ -160,9 +160,12 @@ function Array_clear(array,    h, i, j, k, l) {
     if (typeof(array) == "untyped") return
     if (typeof(array) != "array") { __error("Array_clear: array is no Array"); return }
     for (i in array) delete array[i]
+    # array["length"]
 }
 
 function List_clear(array,    h, i) {
+    if (typeof(array) == "untyped") return
+    if (typeof(array) != "array") { __error("List_clear: array is no Array"); return }
     if ("length" in array) {
         for (i = 1; i <= array["length"]; ++i) delete array[i]
         array["length"] = 0

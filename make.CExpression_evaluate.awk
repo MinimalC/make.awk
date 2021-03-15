@@ -9,12 +9,13 @@ function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e
                                          n, name, notapplied, o, p, q, r, rendered, s, t, u, v, w, x, y, z)
 {
     if (!($i in defines)) return 1
+    if (typeof(defines[$i]) != "array") return 1
 
     # Evaluate AWA
     name = $i
     # define AWA AWA
     if (typeof(noredefines) == "array" && name in noredefines) {
-        __warning(file["name"]" Line "file["z"]": self-referencing define "name" "name)
+        __warning(file["name"]" Line "file["z"]": self-referencing define1 "name" "name)
         return 1
     }
     # delete noredefines[name]
@@ -23,7 +24,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
 
     # define name ( arg1 , arg2 ) body
     defineBody = defines[name]["body"]
-    # Array_clear(arguments)
+    arguments["length"]
     if (defines[name]["isFunction"]) {
         l = defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
@@ -45,25 +46,16 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
                 if ($o != "(") break
                 continue
             }
-            if (!p && $o == ",") {
+            if (!p && ($o == "," || $o == ")")) {
                 a = ++arguments["length"]
                 arguments[a]["value"] = m
                 arguments[a]["length"] = n
                 m = ""; n = 0
+                if ($o == ")") break
                 continue
             }
             if ($o == "(" || $o == "{") ++p
-            if ($o == ")" || $o == "}") {
-                if (p) --p
-                else {
-                    if (l) {
-                        a = ++arguments["length"]
-                        arguments[a]["value"] = m
-                        arguments[a]["length"] = n
-                    }
-                    break
-                }
-            }
+            if (p && ($o == ")" || $o == "}")) --p
             m = String_concat(m, fix, $o)
             ++n
         }
@@ -72,7 +64,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
             return 1
         }
         if ($o != ")") {
-            __error(file["name"]" Line "file["z"]": define "name" expression without )")
+            __error(file["name"]" Line "file["z"]": define "name" expression without )") # i: "i" "$i" o: "o" "$o)
             Index_removeRange(i + 1, o - 1)
         }
         else {
@@ -114,7 +106,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                             if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
                         }
                         $o = "\""Index_pop()"\""
-#                        $o = "\""arguments[n]["value"]"\""
+                        #$o = "\""arguments[n]["value"]"\""
                         Index_remove(--o)
                         continue
                     }
@@ -143,7 +135,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                             if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
                         }
                         $o = "\""Index_pop()"\""
-#                        $o = "\""$o"\""
+                        #$o = "\""$o"\""
                         Index_remove(--o)
                         continue
                     }
@@ -160,27 +152,29 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
     }
     Index_push(defineBody, fixFS, fix)
     for (o = 1; o <= NF; ++o) {
-        if ($o == "\\") { Index_remove(o--); continue }
+        # if ($o == "\\") { Index_remove(o--); continue }
         if ($o == "##") {
-            --o
-            $o = $o $(o + 2)
-            Index_remove(o + 1, o + 2)
+            s = ""
+            if ($(o - 1) ~ /^[[:alpha:]_0-9]+$/) {
+                s = $(o - 1)
+                Index_remove(--o)
+            }
+            if ($(o + 1) ~ /^[[:alpha:]_0-9]+$/) {
+                s = s $(o + 1)
+                Index_remove(o + 1)
+            }
+            if (s == "") Index_remove(o--)
+            else $o = s
             continue
         }
         if ($o == "#") {
-            if ($(o + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                $o = "\"\""
-            }
-            else {
-#                Index_push($(o + 1), "", "")
-#                for (s = 1; s <= NF; ++s) {
-#                    if ($s ~ fixFS) { $s = " "; continue }
-#                    if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
-#                }
-#                $(o + 1) = "\""Index_pop()"\""
-                $o = "\""$(o + 1)"\""
+            s = ""
+            if ($(o + 1) ~ /^[[:alpha:]_0-9]+$/) {
+                s = "\""$(o + 1)"\""
                 Index_remove(o + 1)
             }
+            if (s != "") $o = s
+            else $o = "\"\""
             continue
         }
     }
@@ -195,6 +189,10 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without bod
     ++noredefines[name]
     notapplied = 0
     for (j = 1; j <= NF; ++j) {
+        #if ($j == name) {
+        #    __warning(file["name"]" Line "file["z"]": self-referencing define0 "name" "name)
+        #    continue
+        #}
         if ($j in defines) {
             if (defines[$j]["isFunction"] && $(j + 1) != "(") {
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
@@ -216,9 +214,9 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
 if (DEBUG == 3) {
 Index_push(defineBody, "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered = Index_pop()
 if (defines[name]["isFunction"]) {
-__debug(file["name"]" Line "file["z"]": using "name" "n"("defines[name]["arguments"]["text"]")  "rendered)
+__debug(file["name"]" Line "file["z"]": using "name" ("defines[name]["arguments"]["text"]")  "rendered)
 # Array_debug(arguments)
-} else __debug(file["name"]" Line "file["z"]": using "name" "n"  "rendered)
+} else __debug(file["name"]" Line "file["z"]": using "name"  "rendered)
 }
     return n - notapplied
 }

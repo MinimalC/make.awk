@@ -95,8 +95,8 @@ if (DEBUG) {
              __debug("# define "n" ( "defines[n]["arguments"]["text"]" ) "rendered)
         else __debug("# define "n"  "rendered)
     }
+    __debug("Types: "); Array_debug(types)
 }
-if (DEBUG) { __debug("Types: "); Array_debug(types) }
 
     @m()
     exit
