@@ -34,32 +34,50 @@ function C_prepare(    a,b,c,input, output)
     if (!("gcc" in parsed)) {
         input["name"] = "gcc"
         input[++input["length"]] = "# define _GNU_SOURCE 1"
-        # input[++input["length"]] = "# define _XOPEN_SOURCE 1100"
-        # input[++input["length"]] = "# define _XOPEN_SOURCE_EXTENDED 1"
-
-        input[++input["length"]] = "# define CHAR_BIT 8"
-        input[++input["length"]] = "# define CHAR_MIN (-CHAR_MAX - 1)"
-        input[++input["length"]] = "# define CHAR_MAX 0x7F"
-        input[++input["length"]] = "# define UCHAR_MAX 0xFF"
-
-        input[++input["length"]] = "# define SHORT_MIN (-SHORT_MAX - 1)"
-        input[++input["length"]] = "# define SHORT_MAX 0x7FFF"
-        input[++input["length"]] = "# define USHORT_MAX 0xFFFF"
-
-        input[++input["length"]] = "# define INT_MIN (-INT_MAX - 1)"
-        input[++input["length"]] = "# define INT_MAX 0x7FFFFFFF"
-        input[++input["length"]] = "# define UINT_MAX 0xFFFFFFFF"
-
-        input[++input["length"]] = "# define LONG_MIN (-LONG_MAX - 1L)"
-        input[++input["length"]] = "# define LONG_MAX 0x7FFFFFFFFFFFFFFFL"
-        input[++input["length"]] = "# define ULONG_MAX 0xFFFFFFFFFFFFFFFFL"
-
+      # input[++input["length"]] = "# define _XOPEN_SOURCE 1100"
         input[++input["length"]] = "# include <stdint.h>"
+        input[++input["length"]] = "# include <limits.h>"
 
         output["name"] = "gcc"
         gcc_sort_coprocess("-dM -E", input, output)
         gcc_coprocess("-E", input, output)
         C_parse("gcc", output)
+    }
+
+    if (typeof(C_keywords) == "untyped") {
+        C_keywords["struct"]
+        C_keywords["union"]
+        C_keywords["enum"]
+
+        C_keywords["const"]
+        C_keywords["volatile"]
+
+        C_keywords["typedef"]
+        C_keywords["static"]
+        C_keywords["extern"]
+        C_keywords["inline"]
+        C_keywords["register"]
+        C_keywords["auto"]
+
+        C_keywords["restrict"]
+
+        C_keywords["do"]
+        C_keywords["while"]
+        C_keywords["for"]
+        C_keywords["break"]
+        C_keywords["continue"]
+
+        C_keywords["if"]
+        C_keywords["else"]
+        C_keywords["switch"]
+        C_keywords["case"]
+        C_keywords["goto"]
+
+        C_keywords["sizeof"]
+        C_keywords["return"]
+
+        C_keywords["_Noreturn"]
+        C_keywords["_Thread"]
     }
 
     Array_clear(preprocessed)
@@ -85,11 +103,17 @@ while (++z <= file["length"]) {
         hash = ""
         if (comments) { Index_prepend(1, "/*") }
     }
-    while ($NF ~ /\s/)
-        Index_remove(NF)
-    while ($NF == "\\") {
-        Index_remove(NF)
-        if (++z <= file["length"]) Index_append(NF, file[z])
+    while (NF) {
+        if ($NF ~ /\s/) {
+            Index_remove(NF)
+            continue
+        }
+        if ($NF == "\\") {
+            Index_remove(NF)
+            if (++z <= file["length"]) Index_append(NF, file[z])
+            continue
+        }
+        break
     }
     while (++i <= NF) {
 
@@ -126,7 +150,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": hash comment direct break"
             }
 if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": comments "was)
             i = n
-            if (!comments) if (Index_append(i, fix, fix)) ++i
+            if (!comments) if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "\\") {
@@ -149,10 +173,10 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
         }
         if ($i == "#") {
             if ($(i + 1) == "#") {
-                if (Index_prepend(i, fix, fix)) ++i
+                if (i > 1) if (Index_prepend(i, fix, fix)) ++i
                 ++i; was = "##"
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
-                if (Index_append(i, fix, fix)) ++i
+                if (i < NF) if (Index_append(i, fix, fix)) ++i
                 continue
             }
             if (was == "newline") {
@@ -164,37 +188,31 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 }
                 if (n > i) Index_removeRange(i + 1, n)
 # if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
-                if (Index_append(i, fix, fix)) ++i
+                if (i < NF) if (Index_append(i, fix, fix)) ++i
                 continue
             }
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "#"
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i ~ /\s/) {
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             n = i; while (++n <= NF) {
                 if ($n ~ /\s/) continue
                 --n; break
             }
-            # was = "space"
-            if (hash) {
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": space")
-                Index_removeRange(i, n); --i
-                continue
-            }
-            if (Index_prepend(i, fix, fix)) ++i
 if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": space")
             i = n
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "L" && $(i + 1) == "\"") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
         }
         if ($i == "\"") {
-            if ($(i - 1) != "L") if (Index_prepend(i, fix, fix)) ++i
+            if ($(i - 1) != "L") if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "\""
             string = ""
             n = i; while (++n <= NF) {
@@ -207,11 +225,11 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": space")
             }
 if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
             i = n
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "<") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "<"
             if (hash == "# include") {
                 string = ""
@@ -230,14 +248,14 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
             }
             if ($(i + 1) == "<") { ++i; was = was"<" }
             if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "L" && $(i + 1) == "'") {
             if (Index_prepend(i, fix, fix)) ++i
         }
         if ($i == "'") {
-            if ($(i - 1) != "L") if (Index_prepend(i, fix, fix)) ++i
+            if ($(i - 1) != "L") if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "'"
             string = ""
             n = i; while (++n <= NF) {
@@ -249,11 +267,11 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
                 string = string $n
             }
             i = n
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "/") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             if ($(i + 1) == "*") {
                 was = "comment"; ++comments; --i
                 continue
@@ -268,88 +286,88 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
             }
             was = "/"
             if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "*") {
             if ($(i + 1) == "/") { Index_remove(i, i + 1); --i; continue }
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "*"
             if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "=" || $i == "%" || $i == "^" || $i == "!") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
             if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "&" || $i == "|") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
             if ($(i + 1) == $i) { ++i; was = was $i }
             else if ($(i + 1) == "=") { ++i; was = was "=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == ">") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = ">"
             if ($(i + 1) == ">") { ++i; was = was">" }
             if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == ".") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "."
             if ( $(i + 1) == "." && $(i + 2) == "." ) { i += 2; was = "..." }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "(" || $i == "[") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == ")" || $i == "]") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "," || $i == "?" || $i == ":" || $i == "~") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == ";" || $i == "{" || $i == "}") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "+") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             if ($(i + 1) ~ /[0-9]/ && was !~ /[0-9]/) continue
             was = "+"
             if ($(i + 1) == "+") { ++i; was = was"+" }
             else if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "-") {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             if ($(i + 1) ~ /[0-9]/ && was !~ /[0-9]/) continue
             was = "-"
             if ($(i + 1) == ">") { ++i; was = was">" }
             else if ($(i + 1) == "-") { ++i; was = was"-" }
             else if ($(i + 1) == "=") { ++i; was = was"=" }
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i ~ /[0-9]/) {
@@ -364,13 +382,13 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
                     if ($i ~ /[ulUL]/) { zahl = zahl $i; continue }
                     --i; break
                 }
-                if (Index_append(i, fix, fix)) ++i
+                if (i < NF) if (Index_append(i, fix, fix)) ++i
                 if (hash == "#") hash = "# "zahl
                 was = zahl
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 continue
             }
-            if ($(i - 1) !~ /[+-]/) if (Index_prepend(i, fix, fix)) ++i
+            if ($(i - 1) !~ /[+-]/) if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             zahl = $i
             while (++i <= NF) {
                 if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
@@ -381,7 +399,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                     if ($i ~ /[uUlL]/) { zahl = zahl $i; continue }
                     --i; break
                 }
-                if (Index_append(i, fix, fix)) ++i
+                if (i < NF) if (Index_append(i, fix, fix)) ++i
                 if (hash == "#") hash = "# "zahl
                 was = zahl
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
@@ -412,37 +430,30 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 }
                 if ($(i + 1) ~ /[xX]/) { ++i; zahl = zahl $i }
             }
-            if (Index_append(i, fix, fix)) ++i
-            if (hash == "#") hash = "# "zahl
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             was = zahl
+            if (hash == "#") hash = "# "zahl
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
         if ($i ~ /[[:alpha:]_]/) {
-            if (Index_prepend(i, fix, fix)) ++i
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             name = $i
             n = i; while (++n <= NF) {
                 if ($n ~ /[[:alpha:]_0-9]/) { name = name $n; continue }
                 --n; break
             }
             was = name
+            if (hash == "#") hash = "# "name
 if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
             i = n
-            if (hash == "#") hash = "# "name
-            if (Index_append(i, fix, fix)) ++i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         __warning(fileName": Line "z": Unknown Character "$i)
         Index_remove(i--)
     }
 
-#    if (hash) {
-    if ($1 ~ fixFS && $NF ~ fixFS) Index_remove(1, NF)
-    else if ($1 ~ fixFS) Index_remove(1)
-    else if ($NF ~ fixFS) Index_remove(NF)
-#        parsed[fileName][++parsed[fileName]["length"]] = $0
-#        continue
-#    }
     parsed[fileName][++parsed[fileName]["length"]] = $0
 }
     Index_pop()
@@ -450,26 +461,25 @@ if (DEBUG == 2) __debug("A: C_parse File "fileName)
     return 1
 }
 
-function C_preprocess(fileName,   a,b,c,comments,d,e,expression,f,__FILE__Name,g,h,
-                                  i,I,ifExpressions,j,k,l,leereZeilen,level,m,moved,n,name,o,p,q,
-                                  r,rendered,s,t,u,v,var,varType,w,x,y,z,zZ,Z)
+function C_preprocess(fileName, file,   a,b,c,comments,d,e,expression,f,__FILE__Name,g,h,
+                                        i,I,ifExpressions,j,k,l,leereZeilen,level,m,moved,n,name,o,p,q,
+                                        r,rendered,s,t,u,v,var,varType,w,x,y,z,zZ,Z)
 {
-    if ( !(fileName in parsed) && !C_parse(fileName) ) return
+    if (!(fileName in parsed) && !C_parse(fileName)) return
 
     Index_push("", fixFS, fix, "\0", "\n")
 
     Index_push(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_", "\0", "\0")
     __FILE__Name = "__FILE__"Index_pop()
 
-    # if (!preprocessed["length"]) ++preprocessed["length"]
+    # if (!file["length"]) ++file["length"]
 
-    preprocessed["declarations"]["length"]
-    if (!(__FILE__Name in preprocessed["declarations"])) {
-        preprocessed["declarations"][__FILE__Name]["body"] = fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
-    }
+    file["declarations"]["length"]
+    if (!(__FILE__Name in file["declarations"]))
+        file["declarations"][__FILE__Name]["body"] = fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
 
-    # preprocessed[++preprocessed["length"]] = "#"fix 1 fix"\""fileName"\""
-    preprocessed[preprocessed["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
+    file[++file["length"]] = "#"fix 1 fix"\""fileName"\""
+    # file[file["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++file["length"]" */"
 
     defines["__FILE__"]["body"] = __FILE__Name
 
@@ -478,9 +488,8 @@ function C_preprocess(fileName,   a,b,c,comments,d,e,expression,f,__FILE__Name,g
 
         defines["__LINE__"]["body"] = z
 
-        # for (i = 1; i <= NF; ++i) if ($i ~ /^\s+$/) Index_remove(i--)
-
     if ($1 == "#") {
+        #if ($2 ~ /^\s*$/) Index_remove(2)
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n)
@@ -488,7 +497,7 @@ function C_preprocess(fileName,   a,b,c,comments,d,e,expression,f,__FILE__Name,g
                     $n = "defined"fix"("fix $n fix")"; Index_reset(); n += 3
                 }
         }
-        if ($2 == "ifndef") {
+        else if ($2 == "ifndef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n)
                 if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
@@ -497,6 +506,7 @@ function C_preprocess(fileName,   a,b,c,comments,d,e,expression,f,__FILE__Name,g
         }
         if ($2 == "if") {
             Index_remove(1, 2)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
 
             f = Array_add(ifExpressions)
             ifExpressions[f]["if"] = $0
@@ -513,6 +523,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressio
         }
         else if ($2 == "elif") {
             Index_remove(1, 2)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
 
             f = ifExpressions["length"]
             ifExpressions[f]["else if"] = $0
@@ -547,64 +558,69 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
 
             NF = 0
         }
-        if (NF == 0) { ++leereZeilen; continue }
+        if (!NF) { ++leereZeilen; continue }
     }
 
         for (e = 1; e <= ifExpressions["length"]; ++e) {
             if (ifExpressions[e]["do"] == 1) continue
             NF = 0; break
         }
-        if (NF == 0) { ++leereZeilen; continue }
+        if (!NF) { ++leereZeilen; continue }
 
-    if ($1 == "#") { # if ($2 == "include_next")
+    if ($1 == "#") {
         if ($2 == "include") {
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
             if ($3 ~ /^</) {
                 m = substr($3, 2, length($3) - 2)
                 for (n = 1; n <= includeDirs["length"]; ++n) {
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
-                        zZ = preprocessed["length"]
-                        C_preprocess(o)
+                        zZ = file["length"]
+                        C_preprocess(o, file)
                         defines["__FILE__"]["body"] = __FILE__Name
                         defines["__LINE__"]["body"] = z
                         break
                     }
                 }
-                if (n > includeDirs["length"]) __warning(fileName" Line "z": File doesn't exist: <"m">")
+                if (n > includeDirs["length"]) __warning(fileName" Line "z": File not found: <"m">")
             }
             else {
                 m = get_DirectoryName(fileName)
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
-                    zZ = preprocessed["length"]
-                    C_preprocess(m)
+                    zZ = file["length"]
+                    C_preprocess(m, file)
                     defines["__FILE__"]["body"] = __FILE__Name
                     defines["__LINE__"]["body"] = z
                 }
-                else __warning(fileName" Line "z": File doesn't exist: \""m"\"")
+                else __warning(fileName" Line "z": File not found: \""m"\"")
             }
-            if (zZ && zZ < preprocessed["length"]) {
-            # preprocessed[++preprocessed["length"]] = "#"fix (z + 1) fix"\""fileName"\""
-                preprocessed[preprocessed["length"]] = "#"fix (z + 1) fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
+            if (zZ && zZ < file["length"]) {
+                file[++file["length"]] = "#"fix (z + 1) fix"\""fileName"\""
+                # file[file["length"]] = "#"fix (z + 1) fix"\""fileName"\""" /* Zeile "++file["length"]" */"
                 zZ = 0
             }
             NF = 0
         }
-        if ($2 == "define") {
+        else if ($2 == "define") {
+            if ($3 ~ /^\s*$/) Index_remove(3)
             name = $3
             if (name in defines) {
                 __warning(fileName" Line "z": define "name" exists already")
             }
             else {
                 Index_remove(1, 2, 3)
-                # defines[name]["isFunction"] = 0
+                # define name (void) # constant
+                # define name(void)  # expression
                 if ($1 == "(") {
+                    for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
                     for (n = 2; n <= NF; ++n) {
                         if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                            if ($n in types) { __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (typedef)"); break }
-                            if ($n in defines) { __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (define)"); break }
+                            # if ($n in defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (define)")
+                            # else if ($n in types) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (typedef)")
+                            # else if ($n in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (keyword)")
                             continue
                         }
                         if ($n == ",") continue
@@ -612,11 +628,14 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                         if ($n == ")") break
                         break
                     }
-                    if ($n == ")") { # n < NF
+                    if ($n != ")") {
+                        __warning(fileName" Line "z": define "name" without )")
+                    } else {
                         m = ""; for (o = 2; o < n; ++o) {
-                            # if ($o in types) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (typedef)")
                             # if ($o in defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (define)")
-                            m = String_concat(m, fix, $o)
+                            if ($o in types) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (typedef)")
+                            else if ($o in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (keyword)")
+                            m = String_concat(m, " ", $o)
                             if ($o == ",") continue
                             g = ++defines[name]["arguments"]["length"]
                             defines[name]["arguments"][g] = $o
@@ -626,6 +645,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                         Index_removeRange(1, n)
                     }
                 }
+                else { for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) }
 
                 defines[name]["body"] = $0
 
@@ -639,7 +659,8 @@ __debug(fileName" Line "z": define "name"  "rendered)
             }
             NF = 0
         }
-        if ($2 == "undef") {
+        else if ($2 == "undef") {
+            if ($3 ~ /^\s*$/) Index_remove(3)
             name = $3
             if (!(name in defines)) __warning(fileName" Line "z": undef doesn't exist: "name)
             else {
@@ -654,46 +675,50 @@ __debug(fileName" Line "z": undef "name"  "rendered)
             }
             NF = 0
         }
-        if ($2 == "warning") {
+        else if ($2 == "warning") {
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            Index_push($0, fixFS, " ", "\0", "\n")
+            __warning(fileName" Line "z": "$0)
+            Index_pop()
+        #    NF = 0
+        }
+        else if ($2 == "error") {
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            Index_push($0, fixFS, " ", "\0", "\n")
+            __error(fileName" Line "z": "$0)
+            Index_pop()
+        #    NF = 0
+        }
+        else if ($2 == "pragma") {
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
             Index_push($0, fixFS, " ", "\0", "\n")
             __warning(fileName" Line "z": "$0)
             Index_pop()
             NF = 0
         }
-        if ($2 == "error") {
-            Index_push($0, fixFS, " ", "\0", "\n")
-            __error(fileName" Line "z": "$0)
-            Index_pop()
-            NF = 0
+        else if ($2 == "line" || $2 ~ /^[+-]?[0-9]+$/) {
+            # if ($2 == "line") Index_remove(2)
+            NF = 0 # Line Numbers
         }
-        # if ($2 == "pragma")
-
-        if ($2 == "line") Index_remove(2)
-        if ($2 ~ /^[+-]?[0-9]+$/) NF = 0 # Line Numbers
-
-        if (NF > 0) {
+        else {
             Index_push($0, fixFS, " ", "\0", "\n")
             __error(fileName" Line "z": Unknown "$0)
             Index_pop()
-            # $1 = "/*"$1; $NF = $NF"*/"; Index_reset()
             NF = 0
         }
-        if (NF == 0) { ++leereZeilen; continue }
-        preprocessed[++preprocessed["length"]] = $0; continue
+        if (!NF) { ++leereZeilen; continue }
+        file[++file["length"]] = $0; continue
     }
 
-        while (z + 1 <= parsed[fileName]["length"])
-        {
-            # defines["__LINE__"]["body"] = z
-            if (parsed[fileName][z + 1] ~ /^#\s+[0-9]+/)
-                ++z
-            else if (parsed[fileName][z + 1] !~ /^#/)
-                Index_append(NF, parsed[fileName][++z])
-            else break
-        }
-        # cleanup
-        for (i = 1; i <= NF; ++i)
-            if ($i ~ /^\s*$/) { Index_remove(i); --i; continue }
+        #while (z + 1 <= parsed[fileName]["length"]) {
+        #    if (parsed[fileName][z + 1] ~ /^#\s+[0-9]+/)
+        #        ++z
+        #    else if (parsed[fileName][z + 1] !~ /^#/)
+        #        Index_append(NF, parsed[fileName][++z])
+        #    else break
+        #}
+
+        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
 
         parsed[fileName]["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
@@ -717,25 +742,27 @@ __debug(fileName" Line "z": undef "name"  "rendered)
             if ($i ~ /^\/\//) { NF = --i; break }
             if ($i == "\\") { Index_remove(i--); continue }
         }
-        # cleanup 2
-        for (i = 1; i <= NF; ++i)
-            if ($i ~ /^\s*$/) { Index_remove(i); --i; continue }
-        if (NF == 0) { ++leereZeilen; continue }
 
-        #if (leereZeilen <= 5) preprocessed["length"] += leereZeilen
-        #else {
-        #    preprocessed["length"] += 2
-        ## preprocessed[++preprocessed["length"]] = "#"fix z fix"\""fileName"\""
-        ## preprocessed[preprocessed["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "++preprocessed["length"]" */"
-        #}
-        #leereZeilen = 0
-        #preprocessed[++preprocessed["length"]] = $0
+        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
 
-        # Index_prepend(1, "")
-        # Index_append(NF, "\n")
+        if (!NF) { ++leereZeilen; continue }
 
-        ## if (leereZeilen > 5) leereZeilen = 5; for (l = leereZeilen; l; --l) $NF = $NF"\n"
-        ## if (leereZeilen) $NF = $NF"\n"; leereZeilen = 0
+        if (leereZeilen <= 3) file["length"] += leereZeilen
+        else {
+            file["length"] += 2
+            file[++file["length"]] = "#"fix z fix"\""fileName"\""
+            # file[file["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "++file["length"]" */"
+        }
+        leereZeilen = 0
+
+        file[++file["length"]] = $0
+    }
+    # file[++file["length"]] = Index_pop()
+    if (file[file["length"]] == "") --file["length"]
+    return 1
+}
+
+function __unused0() {
 
         level = expression["length"]
         if (!level) level = ++expression["length"]
@@ -775,7 +802,7 @@ if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level" )")
             if ($i == "{") {
                 level = ++expression["length"]
                 expression[level]["length"]
-                preprocessed[++preprocessed["length"]] = Index_removeRange(1, i)
+                file[++file["length"]] = Index_removeRange(1, i)
                 i = 0
                 if (level > 1 && "function" in expression[level - 1]) {
                     expression[level - 1]["expression"]
@@ -795,15 +822,18 @@ if (DEBUG == 5) __debug(fileName" Line "z": ++Level == "level" { "("expression" 
                 # if (!e) ; # you don't need semikolon
                 Array_clear(expression[level])
                 expression[level]["length"]
-                preprocessed[++preprocessed["length"]] = Index_removeRange(1, i)
+                file[++file["length"]] = Index_removeRange(1, i)
                 i = 0
                 continue
             }
             if ($i == "typedef") {
                 # if (level > 1) __error()
                 # if (e > 0) ; # do you need semikolon?
-                if ("isTypedef" in expression[level])
+                if ("isTypedef" in expression[level]) {
 if (DEBUG == 5) __debug(fileName" Line "z": isTypedef is already "expression[level]["isTypedef"]". Missing Semikolon?")
+                    Index_append(--i, ";")
+                    continue
+                }
                 expression[level]["isTypedef"]
                 continue
             }
@@ -812,14 +842,14 @@ if (DEBUG == 5) __debug(fileName" Line "z": isTypedef is already "expression[lev
                 level = --expression["length"]
                 expression[level]["length"]
                 if (i > 1) {
-                    preprocessed[++preprocessed["length"]] = Index_removeRange(1, i - 1)
+                    file[++file["length"]] = Index_removeRange(1, i - 1)
                     i = 1
                 }
 if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level" }")
                 if ("expression" in expression[level]) {
                     Array_clear(expression[level])
                     expression[level]["length"]
-                    preprocessed[++preprocessed["length"]] = Index_removeRange(1, i)
+                    file[++file["length"]] = Index_removeRange(1, i)
                     i = 0
                     continue
                 }
@@ -827,6 +857,11 @@ if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level" }")
             }
             if ($i == "const" || $i == "volatile" || $i in types || $i == "struct" || $i == "union" || $i == "enum")
             {
+                if ("Type" in expression[level] && expression[level]["Type"]) {
+if (DEBUG == 5) __debug(fileName" Line "z": name "name" is already "expression[level]["Type"]". Missing semikolon?")
+                    Index_append(--i, ";")
+                    continue
+                }
                 for (n = i; n <= NF; ++n) {
                     #$n == "extern" || $n == "static" || $n ~ /^_?_?[iI]nline$/
                     if ($n == "const" || $n == "volatile") {
@@ -842,39 +877,34 @@ if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level" }")
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         continue
                     }
-                    if (!name && ($n in types)) {
+                    if (name == "" && ($n in types)) {
                         if ("isLiteral" in types[$n]) s = 1
                         name = $n
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         break
                     }
-                    if (!name && ($n == "struct" || $n == "union" || $n == "enum")) {
+                    if (name == "" && ($n == "struct" || $n == "union" || $n == "enum")) {
                         s = 1; name = $n
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                            __warning(fileName" Line "z": "$i" without name")
-                            break
-                        }
+                        if ($(n + 1) in C_keywords) break
+                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) break
                         name = String_concat(name, " ", $(++n))
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         break
                     }
                     --n; break
                 }
-                if (!name) {
-if (DEBUG == 5) __debug(fileName" Line "z": no name "$i)
+                if (name == "" || name == "struct" || name == "union" || name == "enum") {
                     if (n < i) --i
                     # if (n >= i) Index_remove(i--)
-                    continue
+                    __warning(fileName" Line "z": "$i" without name")
                 }
-                if (level == 1 && !(name == "struct" || name == "union" || name == "enum") && !(name in types) ) {
+                else if (level == 1 && !(name in types) ) {
 if (DEBUG == 5) __debug(fileName" Line "z": "name)
                     if (s) types[name]["isLiteral"]
                     else types[name]["baseType"]
                 }
 
-if ("Type" in expression[level] && expression[level]["Type"])
-if (DEBUG == 5) __debug(fileName" Line "z": name "name" is already "expression[level]["Type"]". Missing semikolon?")
                 expression[level]["Type"] = name
 
                 if ("isTypedef" in expression[level]) {
@@ -883,9 +913,10 @@ if (DEBUG == 5) __debug(fileName" Line "z": isTypedef is already "expression[lev
                     expression[level]["isTypedef"] = $i
                 }
 
+                # if ($(n + 1) == ";" || $(n + 1) in C_keywords) continue
                 if ($(n + 1) == "{") {
                     expression[level]["struct"]
-if (DEBUG == 5) __debug(fileName" Line "z": delay "name" "$n)
+if (DEBUG == 5) __debug(fileName" Line "z": delay "name" "$(n + 1))
                     continue
                 }
             }
@@ -893,6 +924,7 @@ if (DEBUG == 5) __debug(fileName" Line "z": delay "name" "$n)
                 if ($i == "}" || $i == ",") {
                     name = expression[level]["Type"]
 if (DEBUG == 5) __debug(fileName" Line "z": continue "$i" "name)
+                    # if ($(i + 1) == ";" || $(i + 1) in C_keywords) continue
                 }
 
                 var = varType = ""; k = o = p = 0
@@ -926,7 +958,7 @@ if (DEBUG == 5) __debug(fileName" Line "z": continue "$i" "name)
                     }
                     --n; break
                 }
-                if (!var) {
+                if (var == "") {
                     if (n < i) --i
                     if (level == 1 && "isTypedef" in expression[level]) {
 if (DEBUG == 5) __debug(fileName" Line "z": typedef "name"  without var")
@@ -957,24 +989,18 @@ else if (!("isTypedef" in expression[level])) if (DEBUG == 5) __debug(fileName" 
                 continue
             }
 
-if (DEBUG == 5) __debug(fileName" Line "z": unknown: "$i)
+if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (empty)" : ""))
         }
 
-        if (NF > 0) preprocessed[++preprocessed["length"]] = $0
-    }
-    # preprocessed[++preprocessed["length"]] = Index_pop()
-    if ("" == preprocessed[preprocessed["length"]]) --preprocessed["length"]
-    return 1
 }
 
-function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z) {
-
-    List_clear(preprocessed)
+function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z)
+{
     if (!("gcc" in preprocessed)) {
         preprocessed["gcc"]
-        C_preprocess("gcc")
+        C_preprocess("gcc", preprocessed)
     }
-    if ( !C_preprocess(fileName) ) return
+    if ( !C_preprocess(fileName, preprocessed) ) return
 
     # C_precompile is PROTOTYPE
 

@@ -30,7 +30,7 @@ function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u
 
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
-    ERROR = 1
+    ++ERROR
     print message >"/dev/stderr"
 }
 
@@ -160,7 +160,6 @@ function Array_clear(array,    h, i, j, k, l) {
     if (typeof(array) == "untyped") return
     if (typeof(array) != "array") { __error("Array_clear: array is no Array"); return }
     for (i in array) delete array[i]
-    # array["length"]
 }
 
 function List_clear(array,    h, i) {
@@ -619,34 +618,3 @@ function List_copy(file, copy,    h, i) {
     copy["length"] = file["length"]
 }
 
-function File_splitBy(file, sepp, before, after,    h, i, m,n,o,old,x,y,z,Z) {
-    List_copy(file, old)
-    List_clear(file)
-    Index_push("")
-    Z = ++file["length"]
-    for (z = 1; z <= old["length"]; ++z) {
-        $0 = old[z]; Index_reset()
-
-        for (i = 1; i <= NF; ++i) {
-            if ($i ~ before) {
-                if (i > 1) {
-                    file[Z] = String_concat(file[Z], sepp, Index_removeRange(1, i - 1))
-                    Z = ++file["length"]
-                    i = 0; continue
-                }
-                continue
-            }
-            if ($i ~ after) {
-                if (NF > 1 && i < NF) {
-                    file[Z] = String_concat(file[Z], sepp, Index_removeRange(1, i))
-                    Z = ++file["length"]
-                    i = 0; continue
-                }
-                continue
-            }
-        }
-
-        file[Z] = String_concat(file[Z], sepp, $0)
-    }
-    Index_pop()
-}

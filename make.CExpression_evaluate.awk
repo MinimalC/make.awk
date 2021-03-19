@@ -15,7 +15,7 @@ function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e
     name = $i
     # define AWA AWA
     if (typeof(noredefines) == "array" && name in noredefines) {
-        __warning(file["name"]" Line "file["z"]": self-referencing define1 "name" "name)
+        __warning(file["name"]" Line "file["z"]": self-referencing define "name" "name)
         return 1
     }
     # delete noredefines[name]
@@ -28,29 +28,32 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
     if (defines[name]["isFunction"]) {
         l = defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
-        while (++o <= NF) {
-            #if (o > NF) {
-            #    if (typeof(file["I"]) == "number" && file["I"] == Index["length"] &&
-            #        file["z"] + 1 <= file["length"] && file[file["z"] + 1] !~ /^\s*#/)
-            #    {
-            #        Index_append(NF, file[++file["z"]])
-            #        for (j = o; j <= NF; ++j) if ($j ~ /^\s+$/) Index_remove(j--)
-            #        defines["__LINE__"]["body"] = file["z"]
-            #        o -= 2
-            #        continue
-            #    }
-            #    break
-            #}
-            if ($o ~ /^\s*$/) { Index_remove(o--); continue }
+        while (++o) {
+            if (o > NF) {
+                if (typeof(file["I"]) == "number" && file["I"] == Index["length"])
+                {
+                    if (file["z"] + 1 > file["length"]) break
+                    if (file[file["z"] + 1] ~ /^#/) break
+                    Index_append(NF, file[++file["z"]])
+                    for (j = o; j <= NF; ++j) if ($j ~ /^\s*$/) Index_remove(j--)
+                    defines["__LINE__"]["body"] = file["z"]
+                    --o
+                    continue
+                }
+                break
+            }
+            # if ($o ~ /^\s*$/) { Index_remove(o--); continue }
             if (o == i + 1) {
                 if ($o != "(") break
                 continue
             }
             if (!p && ($o == "," || $o == ")")) {
-                a = ++arguments["length"]
-                arguments[a]["value"] = m
-                arguments[a]["length"] = n
-                m = ""; n = 0
+                if (l || n) {
+                    a = ++arguments["length"]
+                    arguments[a]["value"] = m
+                    arguments[a]["length"] = n
+                    m = ""; n = 0
+                }
                 if ($o == ")") break
                 continue
             }
@@ -71,8 +74,9 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
             Index_removeRange(i + 1, o)
         }
 if (DEBUG == 3) {
-__debug("arguments: "defines[name]["arguments"]["text"])
-Array_debug(arguments)
+__debug("arguments: ( "defines[name]["arguments"]["text"]" )")
+rendered = ""; for (a = 1; a <= arguments["length"]; ++a) rendered = rendered ( a > 1 ? " , " : "" ) arguments[a]["value"]
+__debug("applying:  ( "rendered" )")
 }
         if (defines[name]["arguments"][l] != "..." ? arguments["length"] < l : arguments["length"] < l - 1)
             __error(file["name"]" Line "file["z"]": using "name": Not enough arguments") # ("arguments["length"]" insteadof "l") "m)
@@ -227,13 +231,16 @@ function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, 
     Index_push(expression, fixFS, fix)
     Index_reset()
     for (i = 1; i <= NF; ++i) {
-        if ($i ~ /^\s+$/) { Index_remove(i--); continue }
-        if ($i ~ /^\/\*/) { Index_remove(i--); continue }
-        if ($i == "\\") { Index_remove(i--); continue }
+        if ($i ~ /^\s*$/) Index_remove(i--)
+        else if ($i == "\\") Index_remove(i--)
+        else if ($i ~ /^\/\*/) Index_remove(i--)
+        else if ($i ~ /^L?"/) Index_remove(i--)
+    }
+    for (i = 1; i <= NF; ++i) {
         if ($i ~ /^0x/) {
             $i = strtonum($i)
         }
-        if ($i ~ /^L/) {
+        if ($i ~ /^L'/) {
             $i = substr($i, 2)
         }
         if ($i ~ /^'/) {
@@ -331,6 +338,12 @@ if (DEBUG == 4) __debug("NotUsing "name)
                 continue
             }
             n = CDefine_apply(i)
+            for (d = i; d <= NF; ++d) {
+                if ($d ~ /^\s*$/) Index_remove(d--)
+                else if ($d == "\\") Index_remove(d--)
+                else if ($d ~ /^\/\*/) Index_remove(d--)
+                else if ($d ~ /^L?"/) Index_remove(d--)
+            }
 if (DEBUG == 4) __debug("Using "name" "$0)
             --i # i += n - 1
             continue
