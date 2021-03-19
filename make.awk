@@ -43,7 +43,8 @@ function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
                 paramName = substr(paramName, 2)
                 defines[paramName]["body"] = paramWert
             } else
-            if (paramName == "debug") DEBUG = paramWert; else
+            if ((a = "set_"paramName) in FUNCTAB) @a(paramWert); else
+          # if (paramName == "debug") DEBUG = paramWert; else
         __warning("Unknown argument: \""paramName "\" = \""paramWert"\"")
             ARGV[argI] = ""; continue
         }
@@ -100,6 +101,10 @@ if (DEBUG) {
 
     @m()
     exit
+}
+
+function set_debug(wert) {
+    DEBUG = wert
 }
 
 function make_parse(    m,n,o,p) {
