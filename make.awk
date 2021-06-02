@@ -17,6 +17,7 @@ function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
     make = "compile"
     if (ARGV_length() == 0) { __error("Usage: make.awk [parse|precompile|compile] [include] Program.c"); exit 1 }
     for (argI = 1; argI <= ARGV_length(); ++argI) {
+        if (!ARGV[argI]) continue
 
         if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
             make = ARGV[argI]
@@ -43,7 +44,7 @@ function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
                 paramName = substr(paramName, 2)
                 defines[paramName]["body"] = paramWert
             } else
-            if ((a = "set_"paramName) in FUNCTAB) @a(paramWert); else
+            if ((a = "set_make_"paramName) in FUNCTAB) @a(paramWert); else
           # if (paramName == "debug") DEBUG = paramWert; else
         __warning("Unknown argument: \""paramName "\" = \""paramWert"\"")
             ARGV[argI] = ""; continue
@@ -59,7 +60,7 @@ function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
         Array_add(origin, ARGV[argI])
         ARGV[argI] = ""
     }
-    if (!((m = "make_"make) in FUNCTAB)) __error("make.awk: Unknown method "m)
+    if (!((m = "make_"make) in FUNCTAB)) { __error("make.awk: Unknown method "m); exit }
 
     format["h"] = "C"
     format["c"] = "C"
@@ -103,7 +104,7 @@ if (DEBUG) {
     exit
 }
 
-function set_debug(wert) {
+function set_make_debug(wert) {
     DEBUG = wert
 }
 
@@ -128,6 +129,6 @@ function make_compile() {
 
     if (precompiled["length"]) C_compile()
 
-    File_print(compiled, "\0", "\0")
+    File_print(compiled, "\n", "\n", 1)
 }
 

@@ -506,7 +506,7 @@ function C_preprocess(fileName, file,   a,b,c,comments,d,e,expression,f,__FILE__
         }
         if ($2 == "if") {
             Index_remove(1, 2)
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
             f = Array_add(ifExpressions)
             ifExpressions[f]["if"] = $0
@@ -523,7 +523,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressio
         }
         else if ($2 == "elif") {
             Index_remove(1, 2)
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
             f = ifExpressions["length"]
             ifExpressions[f]["else if"] = $0
@@ -569,7 +569,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
 
     if ($1 == "#") {
         if ($2 == "include") {
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             if ($3 ~ /^</) {
                 m = substr($3, 2, length($3) - 2)
                 for (n = 1; n <= includeDirs["length"]; ++n) {
@@ -615,7 +615,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                 # define name (void) # constant
                 # define name(void)  # expression
                 if ($1 == "(") {
-                    for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+                    for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
                     for (n = 2; n <= NF; ++n) {
                         if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
                             # if ($n in defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (define)")
@@ -645,7 +645,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                         Index_removeRange(1, n)
                     }
                 }
-                else { for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) }
+                else { for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) } # clean
 
                 defines[name]["body"] = $0
 
@@ -660,7 +660,7 @@ __debug(fileName" Line "z": define "name"  "rendered)
             NF = 0
         }
         else if ($2 == "undef") {
-            if ($3 ~ /^\s*$/) Index_remove(3)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             name = $3
             if (!(name in defines)) __warning(fileName" Line "z": undef doesn't exist: "name)
             else {
@@ -676,21 +676,21 @@ __debug(fileName" Line "z": undef "name"  "rendered)
             NF = 0
         }
         else if ($2 == "warning") {
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             Index_push($0, fixFS, " ", "\0", "\n")
             __warning(fileName" Line "z": "$0)
             Index_pop()
         #    NF = 0
         }
         else if ($2 == "error") {
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             Index_push($0, fixFS, " ", "\0", "\n")
             __error(fileName" Line "z": "$0)
             Index_pop()
         #    NF = 0
         }
         else if ($2 == "pragma") {
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             Index_push($0, fixFS, " ", "\0", "\n")
             __warning(fileName" Line "z": "$0)
             Index_pop()
@@ -718,7 +718,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         #    else break
         #}
 
-        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
         parsed[fileName]["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
@@ -743,7 +743,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
             if ($i == "\\") { Index_remove(i--); continue }
         }
 
-        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--)
+        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
         if (!NF) { ++leereZeilen; continue }
 
@@ -758,7 +758,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         file[++file["length"]] = $0
     }
     # file[++file["length"]] = Index_pop()
-    if (file[file["length"]] == "") --file["length"]
+    # if (file[file["length"]] == "") --file["length"]
     return 1
 }
 
@@ -1024,7 +1024,7 @@ function C_compile(fileName,    o,p,pprecompiled,x,y,z)
 
     Array_clear(compiled)
     if (gcc_coprocess(" -c -fpreprocessed -fPIC ", pprecompiled, ".make.o")) return
-    File_read(compiled, ".make.o", "\0", "\0")
+    File_read(compiled, ".make.o", "\n", "\n")
     return 1
 }
 
@@ -1078,7 +1078,7 @@ function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i
     return close(command)
 }
 
-function gcc_precompile(    h, i, j, k, l, m, n, o) {
+function __gcc_precompile(    h, i, j, k, l, m, n, o) {
 
     i = ".preprocess.C.gcc.c"
     print "/* Gemeinfrei */" > i

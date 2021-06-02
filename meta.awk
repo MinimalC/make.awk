@@ -15,7 +15,8 @@ BEGIN {
 # ENDFILE { }
 
 END {
-    if (ERROR) exit 1
+    if (ERROR) exit 0
+    else exit 1
 }
 
 function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
@@ -69,7 +70,7 @@ function FUNCTAB_debug() {
 
 
 function File_exists(fileName,    h, i, j, r,x,y,z) {
-    if (!fileName) { print "File_exists: fileName is null">"/dev/stderr"; return }
+    if (!fileName) { __error("File_exists: fileName is null"); return }
     if (!system("test -s '"fileName"'")) return 1
     #r = 0
     #if (-1 < y = (getline j < fileName)) r = 1
@@ -79,13 +80,13 @@ function File_exists(fileName,    h, i, j, r,x,y,z) {
 }
 
 function Directory_exists(dirName) {
-    if (!dirName) { print "Directory_exists: dirName is null">"/dev/stderr"; return }
+    if (!dirName) { __error("Directory_exists: dirName is null"); return }
     if (!system("test -d '"dirName"'")) return 1
 }
 
 function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
-    if (!fileName) { print "File_contains: fileName is null">"/dev/stderr"; return }
-    if (!string) { print "File_contains: string is null">"/dev/stderr"; return }
+    if (!fileName) { __error("File_contains: fileName is null"); return }
+    if (!string) { __error("File_contains: string is null"); return }
     #if (!system("grep -r '"string"' "fileName" >/dev/null")) return 1
     r = 0
     while (0 < y = (getline j < fileName))
@@ -282,10 +283,7 @@ function Array_remove(array, i,    h, j, k, l, m, n) {
 function Array_print(array, level,    h, i, prefix) {
     if (!level) level = 0
     if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
-    if (typeof(array) != "array") {
-        print prefix "Array_print: array is typeof \""typeof(array)"\"">"/dev/stderr"
-        return
-    }
+    if (typeof(array) != "array") { __error(prefix "Array_print: array is typeof \""typeof(array)"\""); return }
     for (i in array)
         if (typeof(array[i]) == "array") {
             print prefix i ": "
@@ -294,21 +292,20 @@ function Array_print(array, level,    h, i, prefix) {
             print prefix i ": " array[i]
 }
 
-function Array_debug(array, level) { if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) { Array_error(array, level) } }
-
 function Array_error(array, level,    h, i, prefix) {
     if (!level) level = 0
     if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
-    if (typeof(array) != "array") {
-        print prefix "Array_error: array is typeof \""typeof(array)"\"">"/dev/stderr"
-        return
-    }
+    if (typeof(array) != "array") { __error(prefix "Array_error: array is typeof \""typeof(array)"\""); return }
     for (i in array)
-        if (typeof(array[i]) == "array"){
-            print prefix i ": " >"/dev/stderr"
+        if (typeof(array[i]) == "array") {
+            __error(prefix i ": " )
             Array_error(array[i], level + 1)
         } else
-            print prefix i ": " array[i] >"/dev/stderr"
+            __error(prefix i ": " array[i] )
+}
+
+function Array_debug(array, level) {
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_error(array, level)
 }
 
 function String_join(sepp, array,    h, i, r) {
@@ -364,33 +361,6 @@ function String_countChar(string, char,    a,b,c,d,e,f,g,h,i,j,k,l,m,n) {
     return c
 }
 
-function Index_pushArray(newArray, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
-    # save old Index
-    i = Array_add(Index)
-    Index[i]["OUTPUTRECORDSEP"] = ORS
-    Index[i]["RECORDSEP"] = RS
-    Index[i]["OUTPUTFIELDSEP"] = OFS
-    Index[i]["FIELDSEP"] = FS
-    Index[i][0] = $0
-
-    if (typeof(ors) != "untyped") ORS = ors
-    if (typeof(rs) != "untyped") RS = rs
-    if (typeof(ofs) != "untyped") OFS = ofs
-    if (typeof(fs) != "untyped") FS = fs
-
-    # new Index
-    if (typeof(newArray) != "untyped") {
-        if (typeof(newArray) != "array") { error = "newArray isn't Array"; nextfile }
-
-        for (n = 1; n <= newArray["length"]; ++n) {
-            if (n == 1) m = newArray[1]
-            else m = m ORS newArray[n]
-        }
-        $0 = m
-    }
-    return Index_reset()
-}
-
 function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
     # save old Index
     i = Array_add(Index)
@@ -413,7 +383,7 @@ function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
 }
 
 
-function Index_push(newIndex, fs, ofs, rs, ors,    h, i) {
+function Index_push(newIndex, fs, ofs, rs, ors,    h,i,j,k,l,m,n) {
     # save old Index
     i = Array_add(Index)
     Index[i]["OUTPUTRECORDSEP"] = ORS
@@ -428,7 +398,14 @@ function Index_push(newIndex, fs, ofs, rs, ors,    h, i) {
     if (typeof(fs) != "untyped") FS = fs
 
     # new Index
-    if (typeof(newIndex) != "untyped") $0 = newIndex
+    if (typeof(newIndex) != "untyped")
+        if (typeof(newIndex) == "array") {
+            for (n = 1; n <= newArray["length"]; ++n)
+                if (n == 1) m = newArray[1]
+                else m = m ORS newArray[n]
+            $0 = m
+        }
+        else $0 = newIndex
     return Index_reset()
 }
 
@@ -455,7 +432,7 @@ function Index_pop(fromFS, fromOFS, fromRS, fromORS,    h, i, p, q, r) {
 }
 
 function Index_insert(i, value, ifNot,    p, q, r) {
-    if (typeof(value) == "untyped") { error = "value is untyped"; nextfile }
+    if (typeof(value) == "untyped") { __error("value is untyped"); return }
     if (typeof(ifNot) == "untyped" || $i != ifNot) {
         ++NF
         for (q = NF; q > i; --q) {
@@ -540,6 +517,7 @@ function Index_clear(    h, i, j, k, l, m, n) {
     }
     NF -= n
 }
+
 function Index_reset(newIndex,    h, i, j, k, l, m, n) {
     if (typeof(newIndex) != "untyped") $0 = newIndex
     Index_clear()
@@ -558,37 +536,36 @@ function File_read(file, fileName, rs, ors,    w, x, y, z) {
         file[z] = $0
     }
     Index_pop()
-    if (y == -1) {
-        __error("File doesn't exist: "fileName)
-        return
-    }
+    if (y == -1) { __error("File doesn't exist: "fileName); return }
     close(fileName)
     return z - x
 }
 
-function File_print(file, rs, ors,    x, y, z) {
+function File_print(file, rs, ors, noLastORS,    x, y, z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
     while (++z <= file["length"]) {
-        # if (z == file["length"]) { printf "%s", file[z]; break }
+        if (noLastORS && z == file["length"]) { printf "%s", file[z]; break }
         print file[z]
     }
     Index_pop()
 }
 
-function File_error(file, rs, ors,    x, y, z) {
+function File_error(file, rs, ors, noLastORS,    x, y, z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
     while (++z <= file["length"]) {
-        # if (z == file["length"]) { printf "%s", file[z] >"/dev/stderr"; break }
-        print file[z] >"/dev/stderr"
+        if (noLastORS && z == file["length"]) { printf "%s", file[z] >"/dev/stderr"; break }
+        __error(file[z])
     }
     Index_pop()
 }
 
-function File_debug(file, rs, ors,    x, y, z) { if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) File_error(file, rs, ors) }
+function File_debug(file, rs, ors, noLastORS,    x, y, z) {
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) File_error(file, rs, ors, noLastORS)
+}
 
 function String_read(file, string, rs,    h,i,s,splits,x,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
@@ -603,7 +580,7 @@ function String_read(file, string, rs,    h,i,s,splits,x,z) {
 
 function File_toString(file, ors,    o,r,s,x,y,z) {
     if (typeof(ors) == "untyped") ors = "\n"
-    r = ""; while (++z <= file["length"]); r = String_concat(r, ors, file[z])
+    while (++z <= file["length"]) r = String_concat(r, ors, file[z])
     return r
 }
 
@@ -614,7 +591,6 @@ function File_clearLines(file, regex,    h, i) {
 
 function List_copy(file, copy,    h, i) {
     for (i = 1; i <= file["length"]; ++i)
-        copy[i] = file[i]
-    copy["length"] = file["length"]
+        copy[++copy["length"]] = file[i]
 }
 
