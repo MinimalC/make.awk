@@ -22,10 +22,10 @@ function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e
 
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
 
-    # define name ( arg1 , arg2 ) body
     defineBody = defines[name]["body"]
     arguments["length"]
     if (defines[name]["isFunction"]) {
+        # define expression( arg1 , arg2 ) body
         l = defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
         while (++o) {
@@ -42,7 +42,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
                 }
                 break
             }
-            # if ($o ~ /^\s*$/) { Index_remove(o--); continue }
+            if ($o ~ /^\s*$/) { Index_remove(o--); continue } # clean
             if (o == i + 1) {
                 if ($o != "(") break
                 continue
@@ -54,8 +54,8 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
                     arguments[a]["length"] = n
                     m = ""; n = 0
                 }
-                if ($o == ")") break
-                continue
+                if ($o == ",") continue
+                break
             }
             if ($o == "(" || $o == "{") ++p
             if (p && ($o == ")" || $o == "}")) --p
@@ -70,9 +70,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
             __error(file["name"]" Line "file["z"]": define "name" expression without )") # i: "i" "$i" o: "o" "$o)
             Index_removeRange(i + 1, o - 1)
         }
-        else {
-            Index_removeRange(i + 1, o)
-        }
+        else Index_removeRange(i + 1, o)
 if (DEBUG == 3) {
 __debug("arguments: ( "defines[name]["arguments"]["text"]" )")
 rendered = ""; for (a = 1; a <= arguments["length"]; ++a) rendered = rendered ( a > 1 ? " , " : "" ) arguments[a]["value"]

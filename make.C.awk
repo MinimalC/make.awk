@@ -98,70 +98,66 @@ if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
 while (++z <= file["length"]) {
     Index_reset(file[z])
     was = "newline"
-    i = 0
-    if (hash) {
-        hash = ""
-        if (comments) { Index_prepend(1, "/*") }
-    }
+    hash = ""
     while (NF) {
         if ($NF ~ /\s/) {
             Index_remove(NF)
             continue
         }
         if ($NF == "\\") {
-            Index_remove(NF)
+            $NF = "\n"
             if (++z <= file["length"]) Index_append(NF, file[z])
             continue
         }
         break
     }
-    while (++i <= NF) {
-
-        if (comments) {
-            n = i - 1; c = 0; while (++n <= NF && ++c) {
-                if (hash && n == NF) {
-                    Index_append(n, "*/"); n += 2; c += 2
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": hash comment break")
-                    break
-                }
-                if ($n == "/" && $(n + 1) == "*") {
-                    if (c > 1) ++comments
-                    if (comments > 1) {
-                        __warning(fileName" Line "z": Comment in Comment /* /*")
-                        $n = "*"
-                    }
-                    ++n; ++c
-                    if (hash && n == NF) {
-                        Index_append(n, "*/"); n += 2; c += 2
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": hash comment direct break")
+    for (i = 1; i <= NF; ++i) {
+        if ($i == "/") {
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
+            if ($(i + 1) == "*") {
+                was = "comment"
+                comments = 0
+                for (n = i; n <= NF; ++n) {
+                    if ($n == "*" && $(n + 1) == "/") {
+                        if (comments > 1) {
+                            --comments
+                             ++n; $n = "*"
+                            continue
+                        }
+                        comments = 0; ++n
                         break
                     }
-                    continue
-                }
-                if ($n == "*" && $(n + 1) == "/") {
-                    if (comments > 1) {
-                        $n = "*"
-                        --comments; ++n; ++c
+                    if (n == NF || n + 1 == NF) {
+                        if (n < NF) ++n
+                        Index_append(NF, "\n")
+                        if (++z <= file["length"]) Index_append(NF, file[z])
                         continue
                     }
-                    --comments; ++n; ++c
-                    break
+                    if ($n == "/" && $(n + 1) == "*") {
+                        ++comments
+                        if (comments > 1) { $n = "*"; __warning(fileName" Line "z": "comments". Comment in Comment /* /*") }
+                        continue
+                    }
                 }
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
+                i = n
+                if (i < NF) if (Index_append(i, fix, fix)) ++i
+                continue
             }
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": comments "was)
-            i = n
-            if (!comments) if (i < NF) if (Index_append(i, fix, fix)) ++i
+            if ($(i + 1) == "/") {
+                was = "comment"
+                $(++i) = "*"
+                Index_append(NF, "*/")
+if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
+                i = NF
+                continue
+            }
+            was = "/"
+            if ($(i + 1) == "=") { ++i; was = was"=" }
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
         if ($i == "\\") {
-            if (i == NF) {
-                if (!hash)__warning(fileName": Line "z": Stray Line Continuation \\"$(i + 1))
-                was = "\\"
-if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
-                Index_remove(i - 1, i); i -= 2
-                if (++z <= file["length"]) Index_append(i, file[z])
-                continue
-            }
             if ($(i + 1) == "n") {
                 __warning(fileName": Line "z": Stray \\n")
                 Index_remove(i, i + 1); --i
@@ -182,7 +178,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if (was == "newline") {
                 was = "#"; hash = "#"
                 if (i > 1) { Index_removeRange(1, i - 1); i = 1 }
-                n = i; while (++n <= NF) {
+                n = 1; while (++n <= NF) {
                     if ($n ~ /\s/) continue
                     --n; break
                 }
@@ -267,25 +263,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
                 string = string $n
             }
             i = n
-            if (i < NF) if (Index_append(i, fix, fix)) ++i
-            continue
-        }
-        if ($i == "/") {
-            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
-            if ($(i + 1) == "*") {
-                was = "comment"; ++comments; --i
-                continue
-            }
-            if ($(i + 1) == "/") {
-                was = "comment"
-                $(++i) = "*"
-                Index_append(NF, "*/")
-if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
-                i = NF
-                continue
-            }
-            was = "/"
-            if ($(i + 1) == "=") { ++i; was = was"=" }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
@@ -718,7 +695,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         #    else break
         #}
 
-        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
+        # for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
         parsed[fileName]["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
@@ -733,17 +710,11 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         delete parsed[fileName]["I"]
 
         for (i = 1; i <= NF; ++i) {
-            if (comments) {
-                if ($i ~ /\*\/$/) { Index_remove(i--); --comments; continue }
-                Index_remove(i--); continue
-            }
-            if ($i ~ /^\/\* \w[^#]\w* \*\/$/) continue
-            if ($i ~ /^\/\*/) { ++comments; --i; continue }
-            if ($i ~ /^\/\//) { NF = --i; break }
-            if ($i == "\\") { Index_remove(i--); continue }
+            if ($i ~ /^\s*$/) { Index_remove(i--); continue } # clean
+            if ($i ~ /^\/\* \w[^#]\w* \*\/$/) continue  # short comments
+            if ($i ~ /^\/\*/) { Index_remove(i--); continue } # comments
+            # if ($i == "\\") { Index_remove(i--); continue }
         }
-
-        for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
         if (!NF) { ++leereZeilen; continue }
 
@@ -996,11 +967,10 @@ if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (e
 
 function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z)
 {
-    if (!("gcc" in preprocessed)) {
-        preprocessed["gcc"]
-        C_preprocess("gcc", preprocessed)
-    }
-    if ( !C_preprocess(fileName, preprocessed) ) return
+    preprocessed["length"]
+    if (!("gcc" in preprocessed))
+         C_preprocess("gcc", preprocessed)
+    if (!C_preprocess(fileName, preprocessed) ) return
 
     # C_precompile is PROTOTYPE
 
@@ -1009,6 +979,8 @@ function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z)
             precompiled[++precompiled["length"]] = preprocessed["declarations"][n]["body"]
     for (z = 1; z <= preprocessed["length"]; ++z)
         precompiled[++precompiled["length"]] = preprocessed[z]
+
+
 
     return 1
 }
