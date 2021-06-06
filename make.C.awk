@@ -39,8 +39,8 @@ function C_prepare(    a,b,c,input, output)
         input[++input["length"]] = "# include <limits.h>"
 
         output["name"] = "gcc"
-        gcc_sort_coprocess("-dM -E", input, output)
-        gcc_coprocess("-E", input, output)
+        gcc_sort_coprocess("-xc -dM -E", input, output)
+        gcc_coprocess("-xc -E", input, output)
         C_parse("gcc", output)
     }
 
@@ -85,7 +85,7 @@ function C_prepare(    a,b,c,input, output)
     Array_clear(precompiled)
 }
 
-function C_parse(fileName, file,    a, b, c, comments, continuation, d, directory, e, f, g, h, hash, i, j, k, l, m,
+function C_parse(fileName, file,    a, b, c, comments, continuation, d, directory, e, f,g, h, hash, i, j, k, l, m,
                                     n, name, o, p, q, r, s, string, t, u, v, w, was, x, y, z, Z, zahl)
 {
 if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
@@ -97,20 +97,12 @@ if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
     Index_push("", "", "", "\0", "\n")
 while (++z <= file["length"]) {
     Index_reset(file[z])
+
     was = "newline"
     hash = ""
-    while (NF) {
-        if ($NF ~ /\s/) {
-            Index_remove(NF)
-            continue
-        }
-        if ($NF == "\\") {
-            $NF = "\n"
-            if (++z <= file["length"]) Index_append(NF, file[z])
-            continue
-        }
-        break
-    }
+
+    # while ($NF ~ /\s/) Index_remove(NF) # clean the end
+
     for (i = 1; i <= NF; ++i) {
         if ($i == "/") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
@@ -118,6 +110,7 @@ while (++z <= file["length"]) {
                 was = "comment"
                 comments = 0
                 for (n = i; n <= NF; ++n) {
+                    if (n == NF) { Index_append(NF, "\n"); if (++z <= file["length"]) Index_append(NF, file[z]) }
                     if ($n == "*" && $(n + 1) == "/") {
                         if (comments > 1) {
                             --comments
@@ -127,12 +120,7 @@ while (++z <= file["length"]) {
                         comments = 0; ++n
                         break
                     }
-                    if (n == NF || n + 1 == NF) {
-                        if (n < NF) ++n
-                        Index_append(NF, "\n")
-                        if (++z <= file["length"]) Index_append(NF, file[z])
-                        continue
-                    }
+                    if (n + 1 == NF) { Index_append(NF, "\n"); if (++z <= file["length"]) Index_append(NF, file[z]) }
                     if ($n == "/" && $(n + 1) == "*") {
                         ++comments
                         if (comments > 1) { $n = "*"; __warning(fileName" Line "z": "comments". Comment in Comment /* /*") }
@@ -158,6 +146,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
             continue
         }
         if ($i == "\\") {
+            if (i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
             if ($(i + 1) == "n") {
                 __warning(fileName": Line "z": Stray \\n")
                 Index_remove(i, i + 1); --i
@@ -199,7 +188,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 if ($n ~ /\s/) continue
                 --n; break
             }
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": space")
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
             i = n
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
@@ -213,11 +202,20 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": space")
             string = ""
             n = i; while (++n <= NF) {
                 if ($n == "\\") {
+                    if (n == NF) { Index_remove(n--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     string = string"\\"$(n + 1)
                     ++n; continue
                 }
                 if ($n == "\"") break
                 string = string $n
+                if (n == NF) {
+                    # $(++NF) = "\\"; $(++NF) = "n"; n += 2
+                    # if (++z <= file["length"]) Index_append(NF, file[z])
+                    # continue
+                    $(++NF) = "\""
+                    __warning(fileName": Line "z": String \" without ending \"")
+                    break
+                }
             }
 if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
             i = n
@@ -231,6 +229,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
                 string = ""
                 n = i; while (++n <= NF) {
                     if ($n == "\\") {
+                        if (n == NF) { Index_remove(n--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                         string = string"\\"$(n++)
                         continue
                     }
@@ -256,6 +255,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
             string = ""
             n = i; while (++n <= NF) {
                 if ($n == "\\") {
+                    if (n == NF) { Index_remove(n--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     string = string"\\"$(n++)
                     continue
                 }
@@ -352,10 +352,12 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
                 i += 2
                 zahl = "0x"
                 while (++i <= NF) {
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     if ($i ~ /[0-9a-fA-F]/) { zahl = zahl $i; continue }
                     --i; break
                 }
                 while (++i <= NF) {
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     if ($i ~ /[ulUL]/) { zahl = zahl $i; continue }
                     --i; break
                 }
@@ -368,11 +370,13 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if ($(i - 1) !~ /[+-]/) if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             zahl = $i
             while (++i <= NF) {
+                if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                 if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                 --i; break
             }
             if ($(i + 1) ~ /[uUlL]/) {
                 while (++i <= NF) {
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     if ($i ~ /[uUlL]/) { zahl = zahl $i; continue }
                     --i; break
                 }
@@ -386,6 +390,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 ++i; zahl = zahl $i
                 # lies das Fragment
                 while (++i <= NF) {
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                     --i; break
                 }
@@ -395,12 +400,14 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 if ($(i + 1) ~ /[+-]/) { ++i; zahl = zahl $i }
                 # lies den Exponent
                 while (++i <= NF) {
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                     --i; break
                 }
             }
             if ($(i + 1) ~ /[fFlLdD]/) {
                 while (++i <= NF) {
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                     if ($i ~ /[fFlLdD]/) { zahl = zahl $i; continue }
                     if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                     --i; break
@@ -417,6 +424,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             name = $i
             n = i; while (++n <= NF) {
+                if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= file["length"]) Index_append(NF, file[z]); continue }
                 if ($n ~ /[[:alpha:]_0-9]/) { name = name $n; continue }
                 --n; break
             }
@@ -498,7 +506,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressio
 }
             NF = 0
         }
-        else if ($2 == "elif") {
+        else if ($2 == "elif" || $2 == "elseif") {
             Index_remove(1, 2)
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
@@ -545,6 +553,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
         if (!NF) { ++leereZeilen; continue }
 
     if ($1 == "#") {
+        # if ($2 == "using")
         if ($2 == "include") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             if ($3 ~ /^</) {
@@ -577,7 +586,8 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
             if (zZ && zZ < file["length"]) {
                 file[++file["length"]] = "#"fix (z + 1) fix"\""fileName"\""
                 # file[file["length"]] = "#"fix (z + 1) fix"\""fileName"\""" /* Zeile "++file["length"]" */"
-                zZ = 0
+                zZ = 0; leereZeilen = 0
+                continue
             }
             NF = 0
         }
@@ -627,7 +637,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                 defines[name]["body"] = $0
 
 if (DEBUG == 3 || DEBUG == 4) {
-Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m ~ fixFS) $m = " "; rendered = Index_pop()
+Index_push(defines[name]["body"], fixFS, " "); rendered = Index_pop()
 if (defines[name]["isFunction"])
 __debug(fileName" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered)
 else
@@ -636,17 +646,17 @@ __debug(fileName" Line "z": define "name"  "rendered)
             }
             NF = 0
         }
-        else if ($2 == "undef") {
+        else if ($2 == "undef" || $2 == "undefine") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             name = $3
-            if (!(name in defines)) __warning(fileName" Line "z": undef doesn't exist: "name)
+            if (!(name in defines)) __warning(fileName" Line "z": undefine doesn't exist: "name)
             else {
 if (DEBUG == 3 || DEBUG == 4) {
-Index_push(defines[name]["body"], "", ""); for (m = 1; m <= NF; ++m) if ($m ~ fixFS) $m = " "; rendered = Index_pop()
+Index_push(defines[name]["body"], fixFS, " "); rendered = Index_pop()
 if (defines[name]["isFunction"])
-__debug(fileName" Line "z": undef "name" ("defines[name]["arguments"]["text"]")  "rendered)
+__debug(fileName" Line "z": undefine "name" ("defines[name]["arguments"]["text"]")  "rendered)
 else
-__debug(fileName" Line "z": undef "name"  "rendered)
+__debug(fileName" Line "z": undefine "name"  "rendered)
 }
                 delete defines[name]
             }
@@ -654,21 +664,21 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         }
         else if ($2 == "warning") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
-            Index_push($0, fixFS, " ", "\0", "\n")
+            Index_push($0, fixFS, " ")
             __warning(fileName" Line "z": "$0)
             Index_pop()
         #    NF = 0
         }
         else if ($2 == "error") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
-            Index_push($0, fixFS, " ", "\0", "\n")
+            Index_push($0, fixFS, " ")
             __error(fileName" Line "z": "$0)
             Index_pop()
         #    NF = 0
         }
         else if ($2 == "pragma") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
-            Index_push($0, fixFS, " ", "\0", "\n")
+            Index_push($0, fixFS, " ")
             __warning(fileName" Line "z": "$0)
             Index_pop()
             NF = 0
@@ -678,7 +688,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
             NF = 0 # Line Numbers
         }
         else {
-            Index_push($0, fixFS, " ", "\0", "\n")
+            Index_push($0, fixFS, " ")
             __error(fileName" Line "z": Unknown "$0)
             Index_pop()
             NF = 0
@@ -687,20 +697,12 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         file[++file["length"]] = $0; continue
     }
 
-        #while (z + 1 <= parsed[fileName]["length"]) {
-        #    if (parsed[fileName][z + 1] ~ /^#\s+[0-9]+/)
-        #        ++z
-        #    else if (parsed[fileName][z + 1] !~ /^#/)
-        #        Index_append(NF, parsed[fileName][++z])
-        #    else break
-        #}
-
         # for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
-        parsed[fileName]["I"] = Index["length"]
+        parsed[fileName]["I"] = INDEX["length"]
         for (i = 1; i <= NF; ++i) {
+            if ($i ~ /^\s*$/) continue # no clean, no use
             if ($i in defines) {
-                name = $i
                 parsed[fileName]["z"] = z
                 n = CDefine_apply(i, parsed[fileName])
                 z = parsed[fileName]["z"]
@@ -710,6 +712,7 @@ __debug(fileName" Line "z": undef "name"  "rendered)
         delete parsed[fileName]["I"]
 
         for (i = 1; i <= NF; ++i) {
+            # if ($i ~ /^\s*$/) if (i == 1 || NF != 1) continue # except SPACES
             if ($i ~ /^\s*$/) { Index_remove(i--); continue } # clean
             if ($i ~ /^\/\* \w[^#]\w* \*\/$/) continue  # short comments
             if ($i ~ /^\/\*/) { Index_remove(i--); continue } # comments
@@ -728,8 +731,6 @@ __debug(fileName" Line "z": undef "name"  "rendered)
 
         file[++file["length"]] = $0
     }
-    # file[++file["length"]] = Index_pop()
-    # if (file[file["length"]] == "") --file["length"]
     return 1
 }
 
@@ -981,13 +982,12 @@ function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z)
         precompiled[++precompiled["length"]] = preprocessed[z]
 
 
-
     return 1
 }
 
-function C_compile(fileName,    o,p,pprecompiled,x,y,z)
+function C_compile(    o,p,pprecompiled,x,y,z)
 {
-    if ( !C_precompile(fileName) ) return
+    # if ( !C_precompile(fileName) ) return
 
     Index_push("", fixFS, " ", "\0", "\n")
     for (z = 1; z <= precompiled["length"]; ++z)
@@ -995,7 +995,7 @@ function C_compile(fileName,    o,p,pprecompiled,x,y,z)
     Index_pop()
 
     Array_clear(compiled)
-    if (gcc_coprocess(" -c -fpreprocessed -fPIC ", pprecompiled, ".make.o")) return
+    if (gcc_coprocess("-xc -c -fpreprocessed -fPIC ", pprecompiled, ".make.o")) return
     File_read(compiled, ".make.o", "\n", "\n")
     return 1
 }
@@ -1004,24 +1004,18 @@ function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,
     if (typeof(input) == "string" && input) options = options" "input
     else options = options" -"
     if (typeof(output) == "string" && output) options = options" -o "output
-    command = "gcc -xc "options
-    if (typeof(input) == "array") {
-        for (i = 1; i <= input["length"]; ++i) {
+    command = "gcc "options
+    if (typeof(input) == "array")
+        for (i = 1; i <= input["length"]; ++i)
             print input[i] |& command
-        }
-    } else print "" |& command
+    else print "" |& command
     close(command, "to")
     Index_push("", "", "", "\n", "\n")
-    while (0 < y = ( command |& getline )) {
-        if (typeof(output) == "array") {
+    while (0 < y = ( command |& getline ))
+        if (typeof(output) == "array")
             output[++output["length"]] = $0
-        }
-    }
     Index_pop()
-    if (y == -1) {
-        __error("Command doesn't exist: "command)
-        return
-    }
+    if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(command)
 }
 
@@ -1030,36 +1024,16 @@ function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i
     else options = options" -"
     if (typeof(output) == "string" && output) options = options" -o "output
     command = "gcc -xc "options" | sort"
-    if (typeof(input) == "array") {
-        for (i = 1; i <= input["length"]; ++i) {
+    if (typeof(input) == "array")
+        for (i = 1; i <= input["length"]; ++i)
             print input[i] |& command
-        }
-    } else print "" |& command
+    else print "" |& command
     close(command, "to")
     Index_push("", "", "", "\n", "\n")
-    while (0 < y = ( command |& getline )) {
-        if (typeof(output) == "array") {
+    while (0 < y = ( command |& getline ))
+        if (typeof(output) == "array")
             output[++output["length"]] = $0
-        }
-    }
     Index_pop()
-    if (y == -1) {
-        __error("Command doesn't exist: "command)
-        return
-    }
+    if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(command)
-}
-
-function __gcc_precompile(    h, i, j, k, l, m, n, o) {
-
-    i = ".preprocess.C.gcc.c"
-    print "/* Gemeinfrei */" > i
-    print "#include <stdint.h>" > i
-    close(i)
-
-    o = ".preprocess.C.gcc...pre.c"
-    system("gcc -std=c11 -E "i"  > "o)
-    system("gcc -std=c11 -dM -E "i" | sort >> "o)
-
-    return o
 }

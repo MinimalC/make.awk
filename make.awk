@@ -6,129 +6,114 @@
 @include "../make.awk/make.C.awk"
 @include "../make.awk/make.CSharp.awk"
 
-BEGIN { BEGIN_make() } # END { }
+function set_make_project(wert) { Project = wert }
 
-function BEGIN_make(    a,argI,b,c,d,e,f,format,g,h,i,input,j,k,l,m,make,n,
-                        o,origin,output,p,paramName,paramWert,q,r,rendered,s,t,u,v,w,x,y,z) {
-    FS="";OFS="";RS="\0";ORS="\n"
+function set_make_debug(wert) { DEBUG = wert }
+
+BEGIN {
     fixFS = @/\x01/ #\s*\x01?/
     fix = "\x01"
 
-    make = "compile"
-    if (ARGV_length() == 0) { __error("Usage: make.awk [parse|precompile|compile] [include] Program.c"); exit 1 }
-    for (argI = 1; argI <= ARGV_length(); ++argI) {
-        if (!ARGV[argI]) continue
+    if (typeof(format) == "untyped") {
+        format["h"] = "C"
+        format["c"] = "C"
+        format["inc"] = "C"
+        format["cs"] = "CSharp"
 
-        if (argI == 1 && "make_"ARGV[argI] in FUNCTAB) {
-            make = ARGV[argI]
-            ARGV[argI] = ""; continue
-        }
-
-        paramName = ""
-        if (ARGV[argI] ~ /^.*=.*$/) {
-            paramWert = index(ARGV[argI], "=")
-            paramName = substr(ARGV[argI], 1, paramWert - 1)
-            paramWert = substr(ARGV[argI], paramWert + 1)
-        } else
-        if (ARGV[argI] ~ /^\+.*$/) {
-            paramName = substr(ARGV[argI], 2)
-            paramWert = 1
-        }
-        if (ARGV[argI] ~ /^-.*$/) {
-            paramName = substr(ARGV[argI], 2)
-            paramWert = 0
-        }
-        if (paramName) {
-            # if (paramName == "Namespace") Namespace = paramWert; else
-            if (paramName ~ /^D/) {
-                paramName = substr(paramName, 2)
-                defines[paramName]["body"] = paramWert
-            } else
-            if ((a = "set_make_"paramName) in FUNCTAB) @a(paramWert); else
-          # if (paramName == "debug") DEBUG = paramWert; else
-        __warning("Unknown argument: \""paramName "\" = \""paramWert"\"")
-            ARGV[argI] = ""; continue
-        }
-        if (Directory_exists(ARGV[argI])) {
-            Array_add(includeDirs, ARGV[argI])
-            ARGV[argI] = ""; continue
-        }
-        if (!File_exists(ARGV[argI])) {
-            __error("File not found: "ARGV[argI])
-            ARGV[argI] = ""; continue
-        }
-        Array_add(origin, ARGV[argI])
-        ARGV[argI] = ""
+        format[1] = "C"
+        format[2] = "CSharp"
+        format[3] = "ASM"
+        format["length"] = 3
     }
-    if (!((m = "make_"make) in FUNCTAB)) { __error("make.awk: Unknown method "m); exit }
 
-    format["h"] = "C"
-    format["c"] = "C"
-    format["inc"] = "C"
-    format["cs"] = "CSharp"
+    ACTION = "compile"
 
-    format[1] = "C"
-    format[2] = "CSharp"
-    format[3] = "ASM"
-    format["length"] = 3
+    __BEGIN()
+}
 
-    C_prepare()
+END {
+    if (DEBUG) {
+        __debug("Defines: ")
+        for (n in defines) {
+            Index_push(defines[n]["body"], fixFS, " "); rendered = Index_pop()
+            if (defines[n]["isFunction"])
+                 __debug("# define "n" ( "defines[n]["arguments"]["text"]" ) "rendered)
+            else __debug("# define "n"  "rendered)
+        }
+        __debug("Types: "); Array_debug(types)
+    }
+}
+
+function make_parse(origin,    a,b,c,d,e,f,m,n) {
 
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
-        if (!(e in format)) { __error("No Format for FileName."e); Array_remove(origin, n--); continue }
+        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
     }
-
     for (f = 1; f <= format["length"]; ++f) {
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
         if (format[e] != format[f]) continue
 
-        c = format[e]"_"make
+        # C_prepare()
+        c = format[e]"_""parse"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("No Format function "c); continue }
     } }
 
-if (DEBUG) {
-    __debug("Defines: ")
-    for (n in defines) {
-        Index_push(defines[n]["body"], "", ""); for (r = 1; r <= NF; ++r) if ($r ~ fixFS) $r = " "; rendered = Index_pop()
-        if (defines[n]["isFunction"])
-             __debug("# define "n" ( "defines[n]["arguments"]["text"]" ) "rendered)
-        else __debug("# define "n"  "rendered)
+    for (n in parsed) File_printTo(parsed[n], "."Project"...c")
+}
+
+function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled,q,r,s,t,u,v,w,x,y,z) {
+
+    if (!Project) { __error("make.awk: Use make.awk precompile project=Name"); return }
+
+    for (n = 1; n <= origin["length"]; ++n) {
+        e = get_FileNameExt(origin[n])
+        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
     }
-    __debug("Types: "); Array_debug(types)
-}
+    for (f = 1; f <= format["length"]; ++f) {
+    for (n = 1; n <= origin["length"]; ++n) {
+        e = get_FileNameExt(origin[n])
+        if (format[e] != format[f]) continue
 
-    @m()
-    exit
-}
+        C_prepare()
+        c = format[e]"_""precompile"
+        if (c in FUNCTAB) @c(origin[n])
+        else { __error("No Format function "c); continue }
+    } }
+    if (!origin["length"]) { __error("make.awk: No Files to precompile."); return }
 
-function set_make_debug(wert) {
-    DEBUG = wert
-}
-
-function make_parse(    m,n,o,p) {
-    for (n in parsed) File_print(parsed[n])
-}
-
-function make_precompile(    h,i,j,k,l,m,n,o,p,pprecompiled,q, x,y,z) {
-
-    Index_push("", "", "", "\0", "\n")
-    for (z = 1; z <= precompiled["length"]; ++z) {
-        Index_reset(precompiled[z])
-if (!DEBUG) { for (i = 1; i <= NF; ++i) if ($i ~ fixFS) $i = " " }
-        pprecompiled[++pprecompiled["length"]] = $0
-    }
+    if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
+    else       Index_push("", fixFS, " ", "\0", "\n")
+    for (z = 1; z <= precompiled["length"]; ++z)
+        pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled[z])
     Index_pop()
 
-    File_print(pprecompiled)
+    File_printTo(pprecompiled, "."Project"...c")
 }
 
-function make_compile() {
+function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
 
-    if (precompiled["length"]) C_compile()
+    if (!Project) { __error("make.awk: Use make.awk compile project=Name"); return }
 
-    File_print(compiled, "\n", "\n", 1)
+    for (n = 1; n <= origin["length"]; ++n) {
+        e = get_FileNameExt(origin[n])
+        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
+    }
+    for (f = 1; f <= format["length"]; ++f) {
+    for (n = 1; n <= origin["length"]; ++n) {
+        e = get_FileNameExt(origin[n])
+        if (format[e] != format[f]) continue
+
+        C_prepare()
+        c = format[e]"_""precompile"
+        if (c in FUNCTAB) @c(origin[n])
+        else { __error("make.awk: No Format function "c); continue }
+    } }
+
+    if (precompiled["length"]) if (!C_compile()) return
+
+    File_printTo(compiled, "."Project"...o", "\n", "\n", 1)
 }
 

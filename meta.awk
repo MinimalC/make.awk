@@ -5,43 +5,51 @@
 #include "../make.awk/meta.awk"
 
 BEGIN {
-    PROCINFO["sorted_in"] = "@ind_num_asc"
     LC_ALL="C"
-#   RS="\0"
+    PROCINFO["sorted_in"] = "@ind_num_asc"
+
+    FS="";OFS="";RS="\0";ORS="\n"
 }
 
-# BEGINFILE { }
-
-# ENDFILE { }
+# BEGINFILE { } # ENDFILE { }
 
 END {
     if (ERROR) exit 0
     else exit 1
 }
 
-function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
-    print message #>"/dev/stdout"
+    print message > to
+}
+
+function __printFTo(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
+    printf format, message > to
+}
+
+function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    __printTo("/dev/stdout", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
 function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
-    print message >"/dev/stderr"
+    __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
     ++ERROR
-    print message >"/dev/stderr"
+    __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
 function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) {
-        message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
-        print message >"/dev/stderr"
-    }
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
+        __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
+function __debugF(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
+        __printFTo("/dev/stderr", format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+}
 
 function ENVIRON_debug() {
     print "ENVIRON" >"/dev/stderr"
@@ -67,7 +75,6 @@ function FUNCTAB_debug() {
     print "FUNCTAB" >"/dev/stderr"
     Array_error(FUNCTAB, 1)
 }
-
 
 function File_exists(fileName,    h, i, j, r,x,y,z) {
     if (!fileName) { __error("File_exists: fileName is null"); return }
@@ -105,6 +112,14 @@ function get_FileNameExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileExt) {
     path["length"] = split(pathName, path, "/")
     file["length"] = split(path[path["length"]], file, ".")
     return fileExt = file[file["length"]]
+}
+
+function get_FileNameNoExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileName) {
+    path["length"] = split(pathName, path, "/")
+    file["length"] = split(path[path["length"]], file, ".")
+    if (file["length"]) Array_remove(file, file["length"])
+    for (i = 1; i <= file["length"]; ++i) fileName = String_concat(fileName, ".", file[i])
+    return fileName
 }
 
 function get_DirectoryName(pathName,    h, i, path, dirName) {
@@ -156,7 +171,6 @@ function ARGV_length() {
     return ARGC - 1
 }
 
-
 function Array_clear(array,    h, i, j, k, l) {
     if (typeof(array) == "untyped") return
     if (typeof(array) != "array") { __error("Array_clear: array is no Array"); return }
@@ -170,6 +184,65 @@ function List_clear(array,    h, i) {
         for (i = 1; i <= array["length"]; ++i) delete array[i]
         array["length"] = 0
     }
+}
+
+function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
+{
+    if (typeof(CONTROLLER) == "untyped") {
+        if (PROCINFO["argv"][1] == "-f") CONTROLLER = get_FileNameNoExt(PROCINFO["argv"][2])
+        if (!CONTROLLER || CONTROLLER == "_")  { __error("Usage: awk -f Project.awk [command] [Directory] File.name"); exit }
+    }
+    if (typeof(ACTION) == "untyped") ACTION = "BEGIN"
+    # if (ARGV_length() == 0) { __error("Usage: "CONTROLLER".awk [command] [Directory] File.name"); exit }
+    for (i = 1; i <= ARGV_length(); ++i) {
+        if (ARGV[i] ~ /^\s*$/) continue
+        if (CONTROLLER"_"ARGV[i] in FUNCTAB) {
+            if (i > 1) {
+                if (!((make = CONTROLLER"_"ACTION) in FUNCTAB)) { __error(CONTROLLER".awk: Unknown method "make); exit }
+                @make(origin); if (origin["length"]) List_clear(origin)
+            }
+            ACTION = ARGV[i]; ARGV[i] = ""
+            continue
+        }
+        paramName = ""
+        if (ARGV[i] ~ /^.*=/) {
+            paramWert = index(ARGV[i], "=")
+            paramName = substr(ARGV[i], 1, paramWert - 1)
+            paramWert = substr(ARGV[i], paramWert + 1)
+        } else
+        if (ARGV[i] ~ /^\+/) {
+            paramName = substr(ARGV[i], 2)
+            paramWert = 1
+        } else
+        if (ARGV[i] ~ /^-/) {
+            paramName = substr(ARGV[i], 2)
+            paramWert = 0
+        }
+        if (paramName) {
+          # if (paramName == "debug") DEBUG = paramWert; else
+            if ((make = "set_"CONTROLLER"_"paramName) in FUNCTAB) @make(paramWert); else
+            if (paramName ~ /^D/) {
+                paramName = substr(paramName, 2)
+                defines[paramName]["body"] = paramWert
+            } else
+            __warning("Unknown argument: \""paramName "\" = \""paramWert"\"")
+            ARGV[i] = ""; continue
+        }
+        if (Directory_exists(ARGV[i])) {
+            includeDirs[++includeDirs["length"]] = ARGV[i]
+            ARGV[i] = ""; continue
+        }
+        if (File_exists(ARGV[i])) {
+            origin[++origin["length"]] = ARGV[i]
+            ARGV[i] = ""; continue
+        }
+        __warning(CONTROLLER".awk: Unknown File, command or parameter not found: "ARGV[i])
+        ARGV[i] = ""
+    }
+    if (!((make = CONTROLLER"_"ACTION) in FUNCTAB)) { __error(CONTROLLER".awk: Unknown method "make); exit }
+    @make(origin)
+
+    exit
 }
 
 function Array_getLength(array) {
@@ -280,32 +353,29 @@ function Array_remove(array, i,    h, j, k, l, m, n) {
     --array["length"]
 }
 
-function Array_print(array, level,    h, i, prefix) {
+function Array_printTo(array, to, level,    h, i, prefix) {
     if (!level) level = 0
     if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
     if (typeof(array) != "array") { __error(prefix "Array_print: array is typeof \""typeof(array)"\""); return }
     for (i in array)
         if (typeof(array[i]) == "array") {
-            print prefix i ": "
-            Array_print(array[i], level + 1)
+            print prefix i ": " > to
+            Array_printTo(array[i], to, level + 1)
         } else
-            print prefix i ": " array[i]
+            print prefix i ": " array[i] > to
+}
+
+function Array_print(array, level,    h, i, prefix) {
+    Array_printTo(array, "/dev/stdout")
 }
 
 function Array_error(array, level,    h, i, prefix) {
-    if (!level) level = 0
-    if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
-    if (typeof(array) != "array") { __error(prefix "Array_error: array is typeof \""typeof(array)"\""); return }
-    for (i in array)
-        if (typeof(array[i]) == "array") {
-            __error(prefix i ": " )
-            Array_error(array[i], level + 1)
-        } else
-            __error(prefix i ": " array[i] )
+    ++ERROR
+    Array_printTo(array, "/dev/stderr")
 }
 
 function Array_debug(array, level) {
-    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_error(array, level)
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr")
 }
 
 function String_join(sepp, array,    h, i, r) {
@@ -362,20 +432,20 @@ function String_countChar(string, char,    a,b,c,d,e,f,g,h,i,j,k,l,m,n) {
 }
 
 function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
-    # save old Index
-    i = Array_add(Index)
-    Index[i]["OUTPUTRECORDSEP"] = ORS
-    Index[i]["RECORDSEP"] = RS
-    Index[i]["OUTPUTFIELDSEP"] = OFS
-    Index[i]["FIELDSEP"] = FS
-    Index[i][0] = $0
+    # save old INDEX
+    i = Array_add(INDEX)
+    INDEX[i]["OUTPUTRECORDSEP"] = ORS
+    INDEX[i]["RECORDSEP"] = RS
+    INDEX[i]["OUTPUTFIELDSEP"] = OFS
+    INDEX[i]["FIELDSEP"] = FS
+    INDEX[i][0] = $0
 
     if (typeof(ors) != "untyped") ORS = ors
     if (typeof(rs) != "untyped") RS = rs
     if (typeof(ofs) != "untyped") OFS = ofs
     if (typeof(fs) != "untyped") FS = fs
 
-    # new Index
+    # new INDEX
     for (i = from; i <= to && i <= NF; ++i)
         m = String_concat(m, OFS, $i)
     $0 = m
@@ -383,21 +453,21 @@ function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
 }
 
 
-function Index_push(newIndex, fs, ofs, rs, ors,    h,i,j,k,l,m,n) {
-    # save old Index
-    i = Array_add(Index)
-    Index[i]["OUTPUTRECORDSEP"] = ORS
-    Index[i]["RECORDSEP"] = RS
-    Index[i]["OUTPUTFIELDSEP"] = OFS
-    Index[i]["FIELDSEP"] = FS
-    Index[i][0] = Index_reset()
+function Index_push(newIndex, fs, ofs, rs, ors,    h,i,m,n) {
+    # save old INDEX
+    i = Array_add(INDEX)
+    INDEX[i]["OUTPUTRECORDSEP"] = ORS
+    INDEX[i]["RECORDSEP"] = RS
+    INDEX[i]["OUTPUTFIELDSEP"] = OFS
+    INDEX[i]["FIELDSEP"] = FS
+    INDEX[i][0] = Index_reset()
 
     if (typeof(ors) != "untyped") ORS = ors
     if (typeof(rs) != "untyped") RS = rs
     if (typeof(ofs) != "untyped") OFS = ofs
     if (typeof(fs) != "untyped") FS = fs
 
-    # new Index
+    # new INDEX
     if (typeof(newIndex) != "untyped")
         if (typeof(newIndex) == "array") {
             for (n = 1; n <= newArray["length"]; ++n)
@@ -409,23 +479,23 @@ function Index_push(newIndex, fs, ofs, rs, ors,    h,i,j,k,l,m,n) {
     return Index_reset()
 }
 
-function Index_pop(fromFS, fromOFS, fromRS, fromORS,    h, i, p, q, r) {
+function Index_pop(fs, ofs, rs, ors,    h,i,q,r) {
 
-    if (typeof(fromORS) != "untyped") ORS = fromORS
-    if (typeof(fromRS) != "untyped")  RS  = fromRS
-    if (typeof(fromOFS) != "untyped") OFS = fromOFS
-    if (typeof(fromFS) != "untyped")  FS  = fromFS
+    if (typeof(ors) != "untyped") ORS = ors
+    if (typeof(rs) != "untyped")  RS  = rs
+    if (typeof(ofs) != "untyped") OFS = ofs
+    if (typeof(fs) != "untyped")  FS  = fs
     r = Index_reset()
 
-    if (i = Array_getLength(Index)) {
+    if (i = INDEX["length"]) {
 
-        ORS = Index[i]["OUTPUTRECORDSEP"]
-        RS  = Index[i]["RECORDSEP"]
-        OFS = Index[i]["OUTPUTFIELDSEP"]
-        FS  = Index[i]["FIELDSEP"]
-        $0  = Index[i][0]
+        ORS = INDEX[i]["OUTPUTRECORDSEP"]
+        RS  = INDEX[i]["RECORDSEP"]
+        OFS = INDEX[i]["OUTPUTFIELDSEP"]
+        FS  = INDEX[i]["FIELDSEP"]
+        $0  = INDEX[i][0]
 
-        Array_remove(Index, i)
+        Array_remove(INDEX, i)
     }
     Index_reset()
     return r
@@ -441,8 +511,7 @@ function Index_insert(i, value, ifNot,    p, q, r) {
         $i = value
         r = 1
     }
-    Index_reset()
-    return r
+    return Index_reset()
 }
 
 function Index_prepend(i, value, ifNot,    p, q, r) {
@@ -458,39 +527,39 @@ function Index_append(i, value, ifNot,    p,q,r) {
 }
 
 function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,    removed) {
-    if (typeof(a) == "number") { removed = String_concat(removed, OFS, $a); $a = "\a\b" }
-    if (typeof(b) == "number") { removed = String_concat(removed, OFS, $b); $b = "\a\b" }
-    if (typeof(c) == "number") { removed = String_concat(removed, OFS, $c); $c = "\a\b" }
-    if (typeof(d) == "number") { removed = String_concat(removed, OFS, $d); $d = "\a\b" }
-    if (typeof(e) == "number") { removed = String_concat(removed, OFS, $e); $e = "\a\b" }
-    if (typeof(f) == "number") { removed = String_concat(removed, OFS, $f); $f = "\a\b" }
-    if (typeof(g) == "number") { removed = String_concat(removed, OFS, $g); $g = "\a\b" }
-    if (typeof(h) == "number") { removed = String_concat(removed, OFS, $h); $h = "\a\b" }
-    if (typeof(i) == "number") { removed = String_concat(removed, OFS, $i); $i = "\a\b" }
-    if (typeof(j) == "number") { removed = String_concat(removed, OFS, $j); $j = "\a\b" }
-    if (typeof(k) == "number") { removed = String_concat(removed, OFS, $k); $k = "\a\b" }
-    if (typeof(l) == "number") { removed = String_concat(removed, OFS, $l); $l = "\a\b" }
-    if (typeof(m) == "number") { removed = String_concat(removed, OFS, $m); $m = "\a\b" }
-    if (typeof(n) == "number") { removed = String_concat(removed, OFS, $n); $n = "\a\b" }
-    if (typeof(o) == "number") { removed = String_concat(removed, OFS, $o); $o = "\a\b" }
-    if (typeof(p) == "number") { removed = String_concat(removed, OFS, $p); $p = "\a\b" }
-    if (typeof(q) == "number") { removed = String_concat(removed, OFS, $q); $q = "\a\b" }
-    if (typeof(r) == "number") { removed = String_concat(removed, OFS, $r); $r = "\a\b" }
-    if (typeof(s) == "number") { removed = String_concat(removed, OFS, $s); $s = "\a\b" }
-    if (typeof(t) == "number") { removed = String_concat(removed, OFS, $t); $t = "\a\b" }
-    if (typeof(u) == "number") { removed = String_concat(removed, OFS, $u); $u = "\a\b" }
-    if (typeof(v) == "number") { removed = String_concat(removed, OFS, $v); $v = "\a\b" }
-    if (typeof(w) == "number") { removed = String_concat(removed, OFS, $w); $w = "\a\b" }
-    if (typeof(x) == "number") { removed = String_concat(removed, OFS, $x); $x = "\a\b" }
-    if (typeof(y) == "number") { removed = String_concat(removed, OFS, $y); $y = "\a\b" }
-    if (typeof(z) == "number") { removed = String_concat(removed, OFS, $z); $z = "\a\b" }
+    if (typeof(a) == "number") { removed = String_concat(removed, OFS, $a); $a = "CLE\a\r" }
+    if (typeof(b) == "number") { removed = String_concat(removed, OFS, $b); $b = "CLE\a\r" }
+    if (typeof(c) == "number") { removed = String_concat(removed, OFS, $c); $c = "CLE\a\r" }
+    if (typeof(d) == "number") { removed = String_concat(removed, OFS, $d); $d = "CLE\a\r" }
+    if (typeof(e) == "number") { removed = String_concat(removed, OFS, $e); $e = "CLE\a\r" }
+    if (typeof(f) == "number") { removed = String_concat(removed, OFS, $f); $f = "CLE\a\r" }
+    if (typeof(g) == "number") { removed = String_concat(removed, OFS, $g); $g = "CLE\a\r" }
+    if (typeof(h) == "number") { removed = String_concat(removed, OFS, $h); $h = "CLE\a\r" }
+    if (typeof(i) == "number") { removed = String_concat(removed, OFS, $i); $i = "CLE\a\r" }
+    if (typeof(j) == "number") { removed = String_concat(removed, OFS, $j); $j = "CLE\a\r" }
+    if (typeof(k) == "number") { removed = String_concat(removed, OFS, $k); $k = "CLE\a\r" }
+    if (typeof(l) == "number") { removed = String_concat(removed, OFS, $l); $l = "CLE\a\r" }
+    if (typeof(m) == "number") { removed = String_concat(removed, OFS, $m); $m = "CLE\a\r" }
+    if (typeof(n) == "number") { removed = String_concat(removed, OFS, $n); $n = "CLE\a\r" }
+    if (typeof(o) == "number") { removed = String_concat(removed, OFS, $o); $o = "CLE\a\r" }
+    if (typeof(p) == "number") { removed = String_concat(removed, OFS, $p); $p = "CLE\a\r" }
+    if (typeof(q) == "number") { removed = String_concat(removed, OFS, $q); $q = "CLE\a\r" }
+    if (typeof(r) == "number") { removed = String_concat(removed, OFS, $r); $r = "CLE\a\r" }
+    if (typeof(s) == "number") { removed = String_concat(removed, OFS, $s); $s = "CLE\a\r" }
+    if (typeof(t) == "number") { removed = String_concat(removed, OFS, $t); $t = "CLE\a\r" }
+    if (typeof(u) == "number") { removed = String_concat(removed, OFS, $u); $u = "CLE\a\r" }
+    if (typeof(v) == "number") { removed = String_concat(removed, OFS, $v); $v = "CLE\a\r" }
+    if (typeof(w) == "number") { removed = String_concat(removed, OFS, $w); $w = "CLE\a\r" }
+    if (typeof(x) == "number") { removed = String_concat(removed, OFS, $x); $x = "CLE\a\r" }
+    if (typeof(y) == "number") { removed = String_concat(removed, OFS, $y); $y = "CLE\a\r" }
+    if (typeof(z) == "number") { removed = String_concat(removed, OFS, $z); $z = "CLE\a\r" }
     Index_reset()
     return removed
 }
 
 function Index_removeRange(from0, to0,    h, i, removed) {
     if (typeof(to0) == "untyped") to0 = NF
-    for (i = from0; i <= to0; ++i) { removed = String_concat(removed, OFS, $i); $i = "\a\b" }
+    for (i = from0; i <= to0; ++i) { removed = String_concat(removed, OFS, $i); $i = "CLE\a\r" }
     Index_reset()
     return removed
 }
@@ -512,7 +581,7 @@ function Index_getRange(from0, to0,    h, i, text) {
 
 function Index_clear(    h, i, j, k, l, m, n) {
     for (i = 1; i <= NF; ++i) {
-        if ($i == "\a\b") { ++n; continue }
+        if ($i == "CLE\a\r") { ++n; continue }
         $(i - n) = $i
     }
     NF -= n
@@ -541,30 +610,38 @@ function File_read(file, fileName, rs, ors,    w, x, y, z) {
     return z - x
 }
 
-function File_print(file, rs, ors, noLastORS,    x, y, z) {
+function File_printTo(file, to, rs, ors, noLastORS,    x, y, z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
     while (++z <= file["length"]) {
-        if (noLastORS && z == file["length"]) { printf "%s", file[z]; break }
-        print file[z]
+        if (noLastORS && z == file["length"]) { printf "%s", file[z] > to; break }
+        print file[z] > to
     }
     Index_pop()
+}
+function File_printFTo(file, to, format, rs, ors, noLastORS,    x, y, z) {
+    if (typeof(rs) == "untyped") rs = @/\r?\n/
+    if (typeof(ors) == "untyped") ors = "\n"
+    Index_push("", "", "", rs, ors)
+    while (++z <= file["length"]) {
+        if (noLastORS && z == file["length"]) { printf format, file[z] > to; break }
+        printf format, file[z] > to
+    }
+    Index_pop()
+}
+
+function File_print(file, rs, ors, noLastORS,    x, y, z) {
+    File_printTo(file, "/dev/stdout", rs, ors, noLastORS)
 }
 
 function File_error(file, rs, ors, noLastORS,    x, y, z) {
-    if (typeof(rs) == "untyped") rs = @/\r?\n/
-    if (typeof(ors) == "untyped") ors = "\n"
-    Index_push("", "", "", rs, ors)
-    while (++z <= file["length"]) {
-        if (noLastORS && z == file["length"]) { printf "%s", file[z] >"/dev/stderr"; break }
-        __error(file[z])
-    }
-    Index_pop()
+    ++ERROR
+    File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 
 function File_debug(file, rs, ors, noLastORS,    x, y, z) {
-    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) File_error(file, rs, ors, noLastORS)
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 
 function String_read(file, string, rs,    h,i,s,splits,x,z) {

@@ -5,8 +5,8 @@
 #include "../make.awk/meta.awk"
 #include "../make.awk/make.C.awk"
 
-function CDefine_apply(i,    file,    a, arguments, b, c, code, d, defineBody, e, f, g, h, inputType, j, k, l, m,
-                                         n, name, notapplied, o, p, q, r, rendered, s, t, u, v, w, x, y, z)
+function CDefine_apply(i, file,    a,arguments,b,c,code,d,defineBody,e,f,g,h,j,k,l,m,
+                                   n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
 {
     if (!($i in defines)) return 1
     if (typeof(defines[$i]) != "array") return 1
@@ -30,7 +30,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
         o = i; m = ""; n = 0; p = 0
         while (++o) {
             if (o > NF) {
-                if (typeof(file["I"]) == "number" && file["I"] == Index["length"])
+                if (typeof(file["I"]) == "number" && file["I"] == INDEX["length"])
                 {
                     if (file["z"] + 1 > file["length"]) break
                     if (file[file["z"] + 1] ~ /^#/) break
@@ -214,7 +214,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
     Index_reset()
 
 if (DEBUG == 3) {
-Index_push(defineBody, "", ""); for (m = 1; m <= NF; ++m) if ($m == fix) $m = " "; rendered = Index_pop()
+Index_push(defineBody, fixFS, " "); rendered = Index_pop()
 if (defines[name]["isFunction"]) {
 __debug(file["name"]" Line "file["z"]": using "name" ("defines[name]["arguments"]["text"]")  "rendered)
 # Array_debug(arguments)
