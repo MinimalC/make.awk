@@ -26,12 +26,10 @@ BEGIN {
         format["length"] = 3
     }
 
-    ACTION = "compile"
+    ACTION = "compile"; ++NOEXIT
 
     __BEGIN()
-}
 
-END {
     if (DEBUG) {
         __debug("Defines: ")
         for (n in defines) {
@@ -42,7 +40,11 @@ END {
         }
         __debug("Types: "); Array_debug(types)
     }
+
+    exit
 }
+
+# END { }
 
 function make_parse(origin,    a,b,c,d,e,f,m,n) {
 

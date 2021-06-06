@@ -13,10 +13,7 @@ BEGIN {
 
 # BEGINFILE { } # ENDFILE { }
 
-END {
-    if (ERROR) exit 0
-    else exit 1
-}
+# END { if (ERROR) exit 0; else exit 1 }
 
 function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -37,7 +34,8 @@ function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u
 }
 
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    ++ERROR
+    if (typeof(ERROR) == "untyped" || typeof(ERROR) == "number") ++ERROR
+    else __warning("Array_error: ERROR should be number")
     __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
@@ -53,27 +51,27 @@ function __debugF(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q,
 
 function ENVIRON_debug() {
     print "ENVIRON" >"/dev/stderr"
-    Array_error(ENVIRON, 1)
+    Array_printTo("/dev/stderr", ENVIRON, 1)
 }
 
 function PROCINFO_debug() {
     print "PROCINFO" >"/dev/stderr"
-    Array_error(PROCINFO, 1)
+    Array_printTo("/dev/stderr", PROCINFO, 1)
 }
 
 function ARGV_debug() {
     print "ARGV" >"/dev/stderr"
-    Array_error(ARGV, 1)
+    Array_printTo("/dev/stderr", ARGV, 1)
 }
 
 function SYMTAB_debug() {
     print "SYMTAB" >"/dev/stderr"
-    Array_error(SYMTAB, 1)
+    Array_printTo("/dev/stderr", SYMTAB, 1)
 }
 
 function FUNCTAB_debug() {
     print "FUNCTAB" >"/dev/stderr"
-    Array_error(FUNCTAB, 1)
+    Array_printTo("/dev/stderr", FUNCTAB, 1)
 }
 
 function File_exists(fileName,    h, i, j, r,x,y,z) {
@@ -95,7 +93,6 @@ function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
     if (!fileName) { __error("File_contains: fileName is null"); return }
     if (!string) { __error("File_contains: string is null"); return }
     #if (!system("grep -r '"string"' "fileName" >/dev/null")) return 1
-    r = 0
     while (0 < y = (getline j < fileName))
         if (index(j, string)) { r = 1; break }
     if (y == -1) return 0
@@ -188,12 +185,17 @@ function List_clear(array,    h, i) {
 
 function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
 {
+    if (typeof(USAGE) == "untyped") USAGE = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
+
     if (typeof(CONTROLLER) == "untyped") {
         if (PROCINFO["argv"][1] == "-f") CONTROLLER = get_FileNameNoExt(PROCINFO["argv"][2])
-        if (!CONTROLLER || CONTROLLER == "_")  { __error("Usage: awk -f Project.awk [command] [Directory] File.name"); exit }
+        if (!CONTROLLER || CONTROLLER == "_") {
+            __error("meta.awk: Use awk -f Project.awk [command] [Directory] File.name")
+            exit
+        }
     }
     if (typeof(ACTION) == "untyped") ACTION = "BEGIN"
-    # if (ARGV_length() == 0) { __error("Usage: "CONTROLLER".awk [command] [Directory] File.name"); exit }
+
     for (i = 1; i <= ARGV_length(); ++i) {
         if (ARGV[i] ~ /^\s*$/) continue
         if (CONTROLLER"_"ARGV[i] in FUNCTAB) {
@@ -220,12 +222,13 @@ function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,param
         }
         if (paramName) {
           # if (paramName == "debug") DEBUG = paramWert; else
+            if (paramName in SYMTAB) SYMTAB[paramName] = paramWert; else
             if ((make = "set_"CONTROLLER"_"paramName) in FUNCTAB) @make(paramWert); else
             if (paramName ~ /^D/) {
                 paramName = substr(paramName, 2)
                 defines[paramName]["body"] = paramWert
             } else
-            __warning("Unknown argument: \""paramName "\" = \""paramWert"\"")
+                __warning(CONTROLLER".awk: Unknown argument: \""paramName "\" = \""paramWert"\"")
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {
@@ -242,7 +245,7 @@ function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,param
     if (!((make = CONTROLLER"_"ACTION) in FUNCTAB)) { __error(CONTROLLER".awk: Unknown method "make); exit }
     @make(origin)
 
-    exit
+    if (!("NOEXIT" in SYMTAB) || !SYMTAB["NOEXIT"]) exit
 }
 
 function Array_getLength(array) {
@@ -354,9 +357,10 @@ function Array_remove(array, i,    h, j, k, l, m, n) {
 }
 
 function Array_printTo(array, to, level,    h, i, prefix) {
-    if (!level) level = 0
     if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
     if (typeof(array) != "array") { __error(prefix "Array_print: array is typeof \""typeof(array)"\""); return }
+    if (typeof(level) == "untyped") ++level
+    if (typeof(to) == "untyped") to = "/dev/stdout"
     for (i in array)
         if (typeof(array[i]) == "array") {
             print prefix i ": " > to
@@ -365,12 +369,13 @@ function Array_printTo(array, to, level,    h, i, prefix) {
             print prefix i ": " array[i] > to
 }
 
-function Array_print(array, level,    h, i, prefix) {
+function Array_print(array,    h, i, prefix) {
     Array_printTo(array, "/dev/stdout")
 }
 
-function Array_error(array, level,    h, i, prefix) {
-    ++ERROR
+function Array_error(array,    h, i, prefix) {
+    if (typeof(ERROR) == "untyped" || typeof(ERROR) == "number") ++ERROR
+    else __warning("Array_error: ERROR should be number")
     Array_printTo(array, "/dev/stderr")
 }
 
@@ -636,7 +641,8 @@ function File_print(file, rs, ors, noLastORS,    x, y, z) {
 }
 
 function File_error(file, rs, ors, noLastORS,    x, y, z) {
-    ++ERROR
+    if (typeof(ERROR) == "untyped" || typeof(ERROR) == "number") ++ERROR
+    else __warning("Array_error: ERROR should be number")
     File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 
