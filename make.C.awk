@@ -767,12 +767,11 @@ function __unused0() {
             name = ""; s = 0
 
             if ($i == "__attribute__") {
-                if ($(i + 1) == "(") {
+                if ($(i + 1) == "(")
                     while (++i <= NF) {
                         if ($i == "(") ++k
                         if ($i == ")" && --k == 0) break
                     }
-                }
                 continue # Ignore
             }
             if ($i == "(") {

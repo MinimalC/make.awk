@@ -28,7 +28,7 @@ BEGIN {
 
     USAGE = "make.awk: Use make.awk [parse|precompile|compile] project=Program Program.c"
 
-    ACTION = "compile" # ++NOEXIT
+    ACTION = "compile"
 
     __BEGIN()
 }
@@ -74,6 +74,7 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
     if (!origin["length"] && !precompiled["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin[1])
 
+    if (!precompiled["length"]) {
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
         if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
@@ -87,8 +88,7 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
         c = format[e]"_""precompile"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("No Format function "c); continue }
-    } }
-
+    } } }
     if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }
 
     if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
@@ -105,6 +105,7 @@ function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
     if (!origin["length"] && !precompiled["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin[1])
 
+    if (!precompiled["length"]) {
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
         if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
@@ -118,12 +119,11 @@ function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
         c = format[e]"_""precompile"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("make.awk: No Format function "c); continue }
-    } }
-
+    } } }
     if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }
 
-    if (!C_compile()) { __error("make.awk: Nothing compiled"); return }
+    if (!compiled["length"]) if (!C_compile()) { __error("make.awk: Nothing compiled"); return }
 
-    File_printTo(compiled, "."Project"...o", "\n", "\n", 1)
+    File_printTo(compiled, "."Project (++ProjectID == 1 ? "" : ProjectID)"...o", "\n", "\n", 1)
 }
 

@@ -13,7 +13,7 @@ BEGIN {
 
 # BEGINFILE { } # ENDFILE { }
 
-# END { if (ERRORS) exit 0; else exit 1 }
+# END { # if (ERRORS) exit 0; else exit 1 }
 
 function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -183,27 +183,31 @@ function List_clear(array,    h, i) {
     }
 }
 
-function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
+function __BEGIN(action, controller, usage,    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
 {
-    if (typeof(USAGE) == "untyped") USAGE = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
-
-    if (typeof(CONTROLLER) == "untyped") {
-        if (PROCINFO["argv"][1] == "-f") CONTROLLER = get_FileNameNoExt(PROCINFO["argv"][2])
-        if (!CONTROLLER || CONTROLLER == "_") {
-            __error("meta.awk: Use awk -f Project.awk [command] [Directory] File.name")
-            exit
+    if (typeof(usage) == "untyped") {
+        if (typeof(USAGE) != "untyped") usage = USAGE
+        else usage = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
+    }
+    if (typeof(controller) == "untyped") {
+        if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
+        else {
+            if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
+            if (!controller || controller == "_") { __error(usage); exit }
         }
     }
-    if (typeof(ACTION) == "untyped") ACTION = "BEGIN"
-
+    if (typeof(action) == "untyped") {
+        if (typeof(ACTION) != "untyped") action = ACTION
+        else action = "BEGIN"
+    }
     for (i = 1; i <= ARGV_length(); ++i) {
         if (ARGV[i] ~ /^\s*$/) continue
-        if (CONTROLLER"_"ARGV[i] in FUNCTAB) {
+        if (controller"_"ARGV[i] in FUNCTAB) {
             if (i > 1) {
-                if (!((make = CONTROLLER"_"ACTION) in FUNCTAB)) { __error(CONTROLLER".awk: Unknown method "make); exit }
+                if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
                 @make(origin); if (origin["length"]) Array_clear(origin)
             }
-            ACTION = ARGV[i]; ARGV[i] = ""
+            action = ARGV[i]; ARGV[i] = ""
             continue
         }
         paramName = ""
@@ -223,12 +227,12 @@ function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,param
         if (paramName) {
           # if (paramName == "debug") DEBUG = paramWert; else
             if (paramName in SYMTAB) SYMTAB[paramName] = paramWert; else
-            if ((make = "set_"CONTROLLER"_"paramName) in FUNCTAB) @make(paramWert); else
+            if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert); else
             if (paramName ~ /^D/) {
                 paramName = substr(paramName, 2)
                 defines[paramName]["body"] = paramWert
             } else
-                __warning(CONTROLLER".awk: Unknown argument: \""paramName "\" = \""paramWert"\"")
+                __warning(controller".awk: Unknown argument: \""paramName "\" = \""paramWert"\"")
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {
@@ -239,13 +243,12 @@ function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,param
             origin[++origin["length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
-        __warning(CONTROLLER".awk: Unknown File, command or parameter not found: "ARGV[i])
+        __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
         ARGV[i] = ""
     }
-    if (!((make = CONTROLLER"_"ACTION) in FUNCTAB)) { __error(CONTROLLER".awk: Unknown method "make); exit }
+    if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
     @make(origin)
 
-    # if (!("NOEXIT" in SYMTAB) || !SYMTAB["NOEXIT"])
     if (typeof(ERRORS) == "number" && ERRORS) exit
     exit 1
 }
@@ -608,10 +611,8 @@ function File_read(file, fileName, rs, ors,    w, x, y, z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    while (0 < y = ( getline < fileName )) {
-        z = ++file["length"]
-        file[z] = $0
-    }
+    while (0 < y = ( getline < fileName ))
+        file[z = ++file["length"]] = $0
     Index_pop()
     if (y == -1) { __error("File doesn't exist: "fileName); return }
     close(fileName)
