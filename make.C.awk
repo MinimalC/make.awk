@@ -5,13 +5,33 @@
 #include "../make.awk/meta.awk"
 @include "../make.awk/make.CExpression_evaluate.awk"
 
-function C_prepare(    a,b,c,input, output)
+function C_prepare(    a,b,c,input,output)
 {
-    Array_add(includeDirs, "/usr/include/")
-    Array_add(includeDirs, "/usr/include/x86_64-linux-gnu/")
-    Array_add(includeDirs, "/usr/lib/gcc/x86_64-linux-gnu/7/include/")
+    if (typeof(parsed) == "untyped" || !("gcc" in parsed)) {
+        input["name"] = "gcc"
+        input[++input["length"]] = "# define _GNU_SOURCE 1"
+      # input[++input["length"]] = "# define _XOPEN_SOURCE 1100"
+        input[++input["length"]] = "# include <stdint.h>"
+        input[++input["length"]] = "# include <limits.h>"
+
+        output["name"] = "gcc"
+        gcc_sort_coprocess("-xc -dM -E", input, output)
+        gcc_coprocess("-xc -E", input, output)
+        C_parse("gcc", output)
+    }
+
+    Array_clear(preprocessed)
 
     Array_clear(defines)
+
+    if (typeof(includeDirs) == "untyped") {
+        # includeDirs["length"]
+        Array_add(includeDirs, "/usr/include/")
+        Array_add(includeDirs, "/usr/include/x86_64-linux-gnu/")
+        Array_add(includeDirs, "/usr/lib/gcc/x86_64-linux-gnu/7/include/")
+    }
+
+    Array_clear(precompiled)
 
     Array_clear(types)
     types["void"]["isLiteral"]
@@ -30,19 +50,6 @@ function C_prepare(    a,b,c,input, output)
     types["_Float64x"]["isLiteral"]
     types["_Float128"]["isLiteral"]
     types["__builtin_va_list"]["isLiteral"]
-
-    if (!("gcc" in parsed)) {
-        input["name"] = "gcc"
-        input[++input["length"]] = "# define _GNU_SOURCE 1"
-      # input[++input["length"]] = "# define _XOPEN_SOURCE 1100"
-        input[++input["length"]] = "# include <stdint.h>"
-        input[++input["length"]] = "# include <limits.h>"
-
-        output["name"] = "gcc"
-        gcc_sort_coprocess("-xc -dM -E", input, output)
-        gcc_coprocess("-xc -E", input, output)
-        C_parse("gcc", output)
-    }
 
     if (typeof(C_keywords) == "untyped") {
         C_keywords["struct"]
@@ -76,17 +83,15 @@ function C_prepare(    a,b,c,input, output)
         C_keywords["sizeof"]
         C_keywords["return"]
 
+        C_keywords["inline"]
         C_keywords["_Noreturn"]
+
         C_keywords["_Thread"]
     }
-
-    Array_clear(preprocessed)
-
-    Array_clear(precompiled)
 }
 
-function C_parse(fileName, file,    a, b, c, comments, continuation, d, directory, e, f,g, h, hash, i, j, k, l, m,
-                                    n, name, o, p, q, r, s, string, t, u, v, w, was, x, y, z, Z, zahl)
+function C_parse(fileName, file,
+    a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
 {
 if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
 
@@ -101,17 +106,14 @@ while (++z <= file["length"]) {
     was = "newline"
     hash = ""
 
-    # while ($NF ~ /\s/) Index_remove(NF) # clean the end
-
     for (i = 1; i <= NF; ++i) {
         if ($i == "/") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             if ($(i + 1) == "*") {
-                was = "comment"
-                comments = 0
+                was = "comment"; comments = 0; ++i
                 for (n = i; n <= NF; ++n) {
                     if (n == NF) { Index_append(NF, "\n"); if (++z <= file["length"]) Index_append(NF, file[z]) }
-                    if ($n == "*" && $(n + 1) == "/") {
+                    if (n != i && $n == "*" && $(n + 1) == "/") {
                         if (comments > 1) {
                             --comments
                              ++n; $n = "*"
@@ -135,6 +137,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
             if ($(i + 1) == "/") {
                 was = "comment"
                 $(++i) = "*"
+                while ($NF == "\\") { Index_remove(NF); if (++z <= file["length"]) Index_append(NF, file[z]) }
                 Index_append(NF, "*/")
 if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
                 i = NF
@@ -195,6 +198,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
         }
         if ($i == "L" && $(i + 1) == "\"") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
+            ++i
         }
         if ($i == "\"") {
             if ($(i - 1) != "L") if (i > 1) if (Index_prepend(i, fix, fix)) ++i
@@ -248,6 +252,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
         }
         if ($i == "L" && $(i + 1) == "'") {
             if (Index_prepend(i, fix, fix)) ++i
+            ++i
         }
         if ($i == "'") {
             if ($(i - 1) != "L") if (i > 1) if (Index_prepend(i, fix, fix)) ++i
@@ -267,7 +272,11 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
             continue
         }
         if ($i == "*") {
-            if ($(i + 1) == "/") { Index_remove(i, i + 1); --i; continue }
+            if ($(i + 1) == "/") {
+                __warning(fileName": Line "z": Comment Ending */")
+                Index_remove(i, i + 1); --i
+                continue
+            }
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "*"
             if ($(i + 1) == "=") { ++i; was = was"=" }
@@ -285,7 +294,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
             if ($(i + 1) == $i) { ++i; was = was $i }
-            else if ($(i + 1) == "=") { ++i; was = was "=" }
+            else if ($(i + 1) == "=") { ++i; was = was"=" }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
@@ -301,6 +310,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = "."
             if ( $(i + 1) == "." && $(i + 2) == "." ) { i += 2; was = "..." }
+            # if ( $(i + 1) == "." ) { ++i; was = ".." }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
@@ -316,9 +326,15 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
-        if ($i == "," || $i == "?" || $i == ":" || $i == "~") {
+        if ($i == "," || $i == "?" || $i == "~") {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             was = $i
+            if (i < NF) if (Index_append(i, fix, fix)) ++i
+            continue
+        }
+        if ($i == ":") {
+            if (i > 1) if (Index_prepend(i, fix, fix)) ++i
+            if ($(i + 1) == ":") { ++i; was = was":" }
             if (i < NF) if (Index_append(i, fix, fix)) ++i
             continue
         }
@@ -446,9 +462,9 @@ if (DEBUG == 2) __debug("A: C_parse File "fileName)
     return 1
 }
 
-function C_preprocess(fileName, file,   a,b,c,comments,d,e,expression,f,__FILE__Name,g,h,
-                                        i,I,ifExpressions,j,k,l,leereZeilen,level,m,moved,n,name,o,p,q,
-                                        r,rendered,s,t,u,v,var,varType,w,x,y,z,zZ,Z)
+function C_preprocess(fileName, file,
+    a,b,c,comments,d,e,expression,f,__FILE__Name,g,h,i,I,ifExpressions,j,k,
+    l,leereZeilen,level,m,moved,n,name,o,p,q,r,rendered,s,t,u,v,var,varType,w,x,y,z,zZ)
 {
     if (!(fileName in parsed) && !C_parse(fileName)) return
 
@@ -461,7 +477,7 @@ function C_preprocess(fileName, file,   a,b,c,comments,d,e,expression,f,__FILE__
 
     file["declarations"]["length"]
     if (!(__FILE__Name in file["declarations"]))
-        file["declarations"][__FILE__Name]["body"] = fix"static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"fix
+        file["declarations"][__FILE__Name]["body"] = "static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"
 
     file[++file["length"]] = "#"fix 1 fix"\""fileName"\""
     # file[file["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++file["length"]" */"
@@ -688,6 +704,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             NF = 0 # Line Numbers
         }
         else {
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             Index_push($0, fixFS, " ")
             __error(fileName" Line "z": Unknown "$0)
             Index_pop()
@@ -714,7 +731,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         for (i = 1; i <= NF; ++i) {
             # if ($i ~ /^\s*$/) if (i == 1 || NF != 1) continue # except SPACES
             if ($i ~ /^\s*$/) { Index_remove(i--); continue } # clean
-            if ($i ~ /^\/\* \w[^#]\w* \*\/$/) continue  # short comments
+            if ($i ~ /^\/\* ?\w[^#]\w* ?\*\/$/) continue # short comments
             if ($i ~ /^\/\*/) { Index_remove(i--); continue } # comments
             # if ($i == "\\") { Index_remove(i--); continue }
         }
@@ -978,9 +995,9 @@ function C_precompile(fileName,   h,i,j,k,l,m,n,x,y,z)
     for (n in preprocessed["declarations"])
         if (typeof(preprocessed["declarations"][n]) == "array")
             precompiled[++precompiled["length"]] = preprocessed["declarations"][n]["body"]
+
     for (z = 1; z <= preprocessed["length"]; ++z)
         precompiled[++precompiled["length"]] = preprocessed[z]
-
 
     return 1
 }

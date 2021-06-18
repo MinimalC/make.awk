@@ -13,7 +13,7 @@ BEGIN {
 
 # BEGINFILE { } # ENDFILE { }
 
-# END { if (ERROR) exit 0; else exit 1 }
+# END { if (ERRORS) exit 0; else exit 1 }
 
 function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -34,8 +34,8 @@ function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u
 }
 
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
-    if (typeof(ERROR) == "untyped" || typeof(ERROR) == "number") ++ERROR
-    else __warning("Array_error: ERROR should be number")
+    if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
+    else __warning("Array_error: ERRORS should be number")
     __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
@@ -201,7 +201,7 @@ function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,param
         if (CONTROLLER"_"ARGV[i] in FUNCTAB) {
             if (i > 1) {
                 if (!((make = CONTROLLER"_"ACTION) in FUNCTAB)) { __error(CONTROLLER".awk: Unknown method "make); exit }
-                @make(origin); if (origin["length"]) List_clear(origin)
+                @make(origin); if (origin["length"]) Array_clear(origin)
             }
             ACTION = ARGV[i]; ARGV[i] = ""
             continue
@@ -245,7 +245,9 @@ function __BEGIN(    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,param
     if (!((make = CONTROLLER"_"ACTION) in FUNCTAB)) { __error(CONTROLLER".awk: Unknown method "make); exit }
     @make(origin)
 
-    if (!("NOEXIT" in SYMTAB) || !SYMTAB["NOEXIT"]) exit
+    # if (!("NOEXIT" in SYMTAB) || !SYMTAB["NOEXIT"])
+    if (typeof(ERRORS) == "number" && ERRORS) exit
+    exit 1
 }
 
 function Array_getLength(array) {
@@ -374,8 +376,8 @@ function Array_print(array,    h, i, prefix) {
 }
 
 function Array_error(array,    h, i, prefix) {
-    if (typeof(ERROR) == "untyped" || typeof(ERROR) == "number") ++ERROR
-    else __warning("Array_error: ERROR should be number")
+    if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
+    else __warning("Array_error: ERRORS should be number")
     Array_printTo(array, "/dev/stderr")
 }
 
@@ -383,12 +385,13 @@ function Array_debug(array, level) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr")
 }
 
-function String_join(sepp, array,    h, i, r) {
-    if (array["length"] == 0) return ""
-    for (i = 1; i <= array["length"]; ++i) {
+function String_join(array, ofs,    h,i,r) {
+    if (typeof(ofs) == "untyped") ofs = OFS
+    if (typeof(array) != "array") { __error("array is no Array"); return }
+    if (!array["length"]) return ""
+    for (i = 1; i <= array["length"]; ++i)
         if (i == 1) r = array[1]
-        else r = r sepp array[i]
-    }
+        else r = r ofs array[i]
     return r
 }
 
@@ -641,8 +644,8 @@ function File_print(file, rs, ors, noLastORS,    x, y, z) {
 }
 
 function File_error(file, rs, ors, noLastORS,    x, y, z) {
-    if (typeof(ERROR) == "untyped" || typeof(ERROR) == "number") ++ERROR
-    else __warning("Array_error: ERROR should be number")
+    if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
+    else __warning("Array_error: ERRORS should be number")
     File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 
