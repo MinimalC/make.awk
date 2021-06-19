@@ -17,7 +17,7 @@ BEGIN {
     if (typeof(format) == "untyped") {
         format["h"] = "C"
         format["c"] = "C"
-        format["inc"] = "C"
+        # format["inc"] = "C"
         format["cs"] = "CSharp"
 
         format[1] = "C"
@@ -60,7 +60,7 @@ function make_parse(origin,    a,b,c,d,e,f,m,n) {
         e = get_FileNameExt(origin[n])
         if (format[e] != format[f]) continue
 
-        # C_prepare()
+        C_prepare()
         c = format[e]"_""parse"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("No Format function "c); continue }
@@ -74,7 +74,6 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
     if (!origin["length"] && !precompiled["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin[1])
 
-    if (!precompiled["length"]) {
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
         if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
@@ -88,7 +87,7 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
         c = format[e]"_""precompile"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("No Format function "c); continue }
-    } } }
+    } }
     if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }
 
     if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
@@ -97,7 +96,7 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
         pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled[z])
     Index_pop()
 
-    File_printTo(pprecompiled, "."Project"...c")
+    File_printTo(pprecompiled, "."Project (++precompiled_count == 1 ? "" : precompiled_count)"...c")
 }
 
 function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
@@ -122,8 +121,8 @@ function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
     } } }
     if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }
 
-    if (!compiled["length"]) if (!C_compile()) { __error("make.awk: Nothing compiled"); return }
+    Array_clear(compiled); if (!C_compile()) { __error("make.awk: Nothing compiled"); return }
 
-    File_printTo(compiled, "."Project (++ProjectID == 1 ? "" : ProjectID)"...o", "\n", "\n", 1)
+    File_printTo(compiled, "."Project (++compiled_count == 1 ? "" : compiled_count)"...o", "\n", "\n", 1)
 }
 

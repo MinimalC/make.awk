@@ -5,7 +5,7 @@
 #include "../make.awk/meta.awk"
 @include "../make.awk/make.CExpression_evaluate.awk"
 
-function C_prepare(    a,b,c,input,output)
+function C_prepare(    a,b,c,d,input,output)
 {
     if (typeof(parsed) == "untyped" || !("gcc" in parsed)) {
         input["name"] = "gcc"
@@ -23,6 +23,14 @@ function C_prepare(    a,b,c,input,output)
     Array_clear(preprocessed)
 
     Array_clear(defines)
+    for (d in CONFIG) {
+        if (d == "length") continue
+        if (d == "0" || d + 0) continue
+        if (d ~ /^D.*/) {
+            c = substr(d, 2)
+            defines[c] = CONFIG[d]
+        }
+    }
 
     if (typeof(includeDirs) == "untyped") {
         # includeDirs["length"]

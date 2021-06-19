@@ -183,7 +183,8 @@ function List_clear(array,    h, i) {
     }
 }
 
-function __BEGIN(action, controller, usage,    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
+function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, ERRORS, CONFIG
+    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
 {
     if (typeof(usage) == "untyped") {
         if (typeof(USAGE) != "untyped") usage = USAGE
@@ -226,13 +227,9 @@ function __BEGIN(action, controller, usage,    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,
         }
         if (paramName) {
           # if (paramName == "debug") DEBUG = paramWert; else
-            if (paramName in SYMTAB) SYMTAB[paramName] = paramWert; else
-            if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert); else
-            if (paramName ~ /^D/) {
-                paramName = substr(paramName, 2)
-                defines[paramName]["body"] = paramWert
-            } else
-                __warning(controller".awk: Unknown argument: \""paramName "\" = \""paramWert"\"")
+            if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
+            else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
+            else CONFIG[paramName] = paramWert
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {
