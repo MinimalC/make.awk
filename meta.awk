@@ -183,7 +183,7 @@ function List_clear(array,    h, i) {
     }
 }
 
-function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, ERRORS, CONFIG
+function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
     a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
 {
     if (typeof(usage) == "untyped") {
@@ -206,10 +206,10 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
         if (controller"_"ARGV[i] in FUNCTAB) {
             if (i > 1) {
                 if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-                @make(origin); if (origin["length"]) Array_clear(origin)
+                @make(origin); Array_clear(origin)
             }
-            action = ARGV[i]; ARGV[i] = ""
-            continue
+            action = ARGV[i]
+            ARGV[i] = ""; continue
         }
         paramName = ""
         if (ARGV[i] ~ /^.*=/) {
@@ -229,7 +229,7 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
           # if (paramName == "debug") DEBUG = paramWert; else
             if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
             else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
-            else CONFIG[paramName] = paramWert
+            else origin[paramName] = paramWert
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {

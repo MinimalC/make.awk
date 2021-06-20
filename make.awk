@@ -46,10 +46,16 @@ END {
     }
 }
 
+function make_prepare(origin) {
+    C_prepare(origin)
+    ++prepared
+}
+
 function make_parse(origin,    a,b,c,d,e,f,m,n) {
 
     if (!origin["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin[1])
+    if (!prepared) make_prepare(origin)
 
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
@@ -60,7 +66,6 @@ function make_parse(origin,    a,b,c,d,e,f,m,n) {
         e = get_FileNameExt(origin[n])
         if (format[e] != format[f]) continue
 
-        C_prepare()
         c = format[e]"_""parse"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("No Format function "c); continue }
@@ -73,6 +78,7 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
 
     if (!origin["length"] && !precompiled["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin[1])
+    if (!prepared) make_prepare(origin)
 
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
@@ -83,7 +89,6 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
         e = get_FileNameExt(origin[n])
         if (format[e] != format[f]) continue
 
-        C_prepare()
         c = format[e]"_""precompile"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("No Format function "c); continue }
@@ -103,8 +108,8 @@ function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
 
     if (!origin["length"] && !precompiled["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin[1])
+    if (!prepared) make_prepare(origin)
 
-    if (!precompiled["length"]) {
     for (n = 1; n <= origin["length"]; ++n) {
         e = get_FileNameExt(origin[n])
         if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
@@ -114,11 +119,10 @@ function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
         e = get_FileNameExt(origin[n])
         if (format[e] != format[f]) continue
 
-        C_prepare()
         c = format[e]"_""precompile"
         if (c in FUNCTAB) @c(origin[n])
         else { __error("make.awk: No Format function "c); continue }
-    } } }
+    } }
     if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }
 
     Array_clear(compiled); if (!C_compile()) { __error("make.awk: Nothing compiled"); return }
