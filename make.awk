@@ -10,6 +10,8 @@ function set_make_project(wert) { Project = wert }
 
 function set_make_debug(wert) { DEBUG = wert }
 
+function set_make_compiler(wert) { Compiler = wert }
+
 BEGIN {
     fixFS = @/\x01/ #\s*\x01?/
     fix = "\x01"
@@ -25,6 +27,8 @@ BEGIN {
         format[3] = "ASM"
         format["length"] = 3
     }
+
+    Compiler = "gcc"
 
     USAGE = "make.awk: Use make.awk [parse|precompile|compile] project=Program Program.c"
 
@@ -44,10 +48,6 @@ END {
         }
         __debug("Types: "); Array_debug(types)
     }
-}
-
-function make_prepare(origin) {
-    C_prepare(origin); ++prepared
 }
 
 function make_parse(origin,    a,b,c,d,e,f,m,n) {
@@ -73,6 +73,36 @@ function make_parse(origin,    a,b,c,d,e,f,m,n) {
     for (n in parsed) File_printTo(parsed[n], "."Project"...c")
 }
 
+function make_preprocess(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,ppreprocessed,q,r,s,t,u,v,w,x,y,z) {
+
+    if (!origin["length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(origin[1])
+    if (!prepared) { C_prepare(origin); ++prepared }
+
+    for (n = 1; n <= origin["length"]; ++n) {
+        e = get_FileNameExt(origin[n])
+        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
+    }
+    for (f = 1; f <= format["length"]; ++f) {
+    for (n = 1; n <= origin["length"]; ++n) {
+        e = get_FileNameExt(origin[n])
+        if (format[e] != format[f]) continue
+
+        c = format[e]"_""preprocess"
+        if (c in FUNCTAB) @c(origin[n], preprocessed)
+        else { __error("No Format function "c); continue }
+    } }
+    if (!preprocessed["length"]) { __error("make.awk: Nothing preprocessed"); return }
+
+    if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
+    else       Index_push("", fixFS, " ", "\0", "\n")
+    for (z = 1; z <= preprocessed["length"]; ++z)
+        ppreprocessed[++ppreprocessed["length"]] = Index_reset(preprocessed[z])
+    Index_pop()
+
+    File_printTo(ppreprocessed, "."Project (++preprocessed_count == 1 ? "" : preprocessed_count)"...c")
+}
+
 function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled,q,r,s,t,u,v,w,x,y,z) {
 
     if (!origin["length"]) { __error(USAGE); return }
@@ -89,7 +119,7 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
         if (format[e] != format[f]) continue
 
         c = format[e]"_""precompile"
-        if (c in FUNCTAB) @c(origin[n])
+        if (c in FUNCTAB) @c(origin[n], precompiled)
         else { __error("No Format function "c); continue }
     } }
     if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }

@@ -5,19 +5,34 @@
 #include "../make.awk/meta.awk"
 @include "../make.awk/make.CExpression_evaluate.awk"
 
-function C_prepare(config,    a,b,c,d,input,output)
+function C_prepare(config,    a,b,c,d,input,m,output)
 {
-    if (typeof(parsed) == "untyped" || !("gcc" in parsed)) {
-        input["name"] = "gcc"
+    if (typeof(includeDirs) == "untyped") {
+        # includeDirs["length"]
+        Array_add(includeDirs, "/usr/include/")
+        m = uname_machine()
+        if (Compiler == "gcc") {
+            Array_add(includeDirs, "/usr/include/"m"-linux-gnu/")
+            Array_add(includeDirs, "/usr/lib/gcc/"m"-linux-gnu/"gcc_version()"/include/")
+        }
+        else if (Compiler == "tcc")
+            Array_add(includeDirs, "/usr/lib/"m"-linux-gnu/tcc/include/")
+        else __warning("make.awk: Unsupported compiler")
+    }
+
+    if (typeof(parsed) == "untyped") {
+        input["name"] = Compiler
         input[++input["length"]] = "# define _GNU_SOURCE 1"
-      # input[++input["length"]] = "# define _XOPEN_SOURCE 1100"
+        input[++input["length"]] = "# include <stddef.h>"
         input[++input["length"]] = "# include <stdint.h>"
         input[++input["length"]] = "# include <limits.h>"
 
-        output["name"] = "gcc"
-        gcc_sort_coprocess("-xc -dM -E", input, output)
-        gcc_coprocess("-xc -E", input, output)
-        C_parse("gcc", output)
+        output["name"] = Compiler
+        CCompiler_coprocess("-xc -dM -E", input, output)
+      # List_sort(output)
+        CCompiler_coprocess("-xc -E", input, output)
+
+        C_parse(Compiler, output)
     }
 
     Array_clear(preprocessed)
@@ -29,13 +44,6 @@ function C_prepare(config,    a,b,c,d,input,output)
             c = substr(d, 2)
             defines[c] = config[d]
         }
-    }
-
-    if (typeof(includeDirs) == "untyped") {
-        # includeDirs["length"]
-        Array_add(includeDirs, "/usr/include/")
-        Array_add(includeDirs, "/usr/include/x86_64-linux-gnu/")
-        Array_add(includeDirs, "/usr/lib/gcc/x86_64-linux-gnu/7/include/")
     }
 
     Array_clear(precompiled)
@@ -248,6 +256,14 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
 if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
                 i = n
                 if (Index_append(i, fix, fix)) ++i
+                continue
+            }
+            if (Compiler == "tcc" && $(i + 1) == "c" && $(i + 2) == "d" && $(i + 3) == ">") {
+                was = "##"
+if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+                Index_remove(i + 2, i + 3)
+                $i = "#"; $(++i) = "#"
+                if (i < NF) if (Index_append(i, fix, fix)) ++i
                 continue
             }
             if ($(i + 1) == "<") { ++i; was = was"<" }
@@ -616,6 +632,9 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
             name = $3
             if (name in defines) {
                 __warning(fileName" Line "z": define "name" exists already")
+            }
+            else if (name !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                __error(fileName" Line "z": define "name" isn't a name")
             }
             else {
                 Index_remove(1, 2, 3)
@@ -986,11 +1005,11 @@ if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (e
 
 }
 
-function C_precompile(fileName,    h,i,input,m,n,z)
+function C_precompile(fileName, output,   h,i,input,m,n,z)
 {
     input["length"]
-    if (!("gcc" in input))
-         C_preprocess("gcc", input)
+    if (!(Compiler in input))
+         C_preprocess(Compiler, input)
     if (!C_preprocess(fileName, input)) return
 
     # C_precompile is PROTOTYPE
@@ -999,50 +1018,54 @@ function C_precompile(fileName,    h,i,input,m,n,z)
     for (n in input["fields"]) {
         if (n == "length" || n ~ /^[0-9]+$/) continue
         if (typeof(input["fields"][n]) == "array")
-            precompiled[++precompiled["length"]] = input["fields"][n]["body"]
+            output[++output["length"]] = input["fields"][n]["body"]
     }
 
     for (z = 1; z <= input["length"]; ++z)
-        precompiled[++precompiled["length"]] = input[z]
+        output[++output["length"]] = input[z]
 
     return 1
 }
 
-function C_compile(    o,p,pprecompiled,x,y,z)
+function C_compile(    a,b,c,compiler,n,o,options,p,pprecompiled,x,y,z)
 {
-    # if ( !C_precompile(fileName) ) return
-
     Index_push("", fixFS, " ", "\0", "\n")
     for (z = 1; z <= precompiled["length"]; ++z)
         pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled[z])
     Index_pop()
 
     Array_clear(compiled)
-    if (gcc_coprocess("-xc -c -fpreprocessed -fPIC ", pprecompiled, ".make.o")) return
+
+    options = ""
+    options = options" -c -fPIC"
+    if (Compiler == "gcc") options = options" -xc -fpreprocessed"
+
+    if (CCompiler_coprocess(options, pprecompiled, ".make.o")) return
+
     File_read(compiled, ".make.o", "\n", "\n")
     return 1
 }
 
-function gcc_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function gcc_version(    m,n,o,output) {
+    output["length"]
+    __pipe("gcc", "-dumpversion", output)
+    return output[1]
+}
+
+function uname_machine(    m,n,o,output) {
+    output["length"]
+    __pipe("uname", "-m", output)
+    return output[1]
+}
+
+function CCompiler_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if (typeof(input) == "string" && input) options = options" "input
     else options = options" -"
     if (typeof(output) == "string" && output) options = options" -o "output
-    command = "gcc "options
-    if (typeof(input) == "array")
-        for (i = 1; i <= input["length"]; ++i)
-            print input[i] |& command
-    else print "" |& command
-    close(command, "to")
-    Index_push("", "", "", "\n", "\n")
-    while (0 < y = ( command |& getline ))
-        if (typeof(output) == "array")
-            output[++output["length"]] = $0
-    Index_pop()
-    if (y == -1) { __error("Command doesn't exist: "command); return }
-    return close(command)
+    return __coprocess(Compiler, options, input, output)
 }
 
-function gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function __gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if (typeof(input) == "string" && input) options = options" "input
     else options = options" -"
     if (typeof(output) == "string" && output) options = options" -o "output

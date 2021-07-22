@@ -169,18 +169,16 @@ function ARGV_length() {
 }
 
 function Array_clear(array,    h, i, j, k, l) {
-    if (typeof(array) == "untyped") return
+    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
     if (typeof(array) != "array") { __error("Array_clear: array is no Array"); return }
     for (i in array) delete array[i]
 }
 
 function List_clear(array,    h, i) {
-    if (typeof(array) == "untyped") return
+    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
     if (typeof(array) != "array") { __error("List_clear: array is no Array"); return }
-    if ("length" in array) {
-        for (i = 1; i <= array["length"]; ++i) delete array[i]
-        array["length"] = 0
-    }
+    for (i = 1; i <= array["length"]; ++i) delete array[i]
+    array["length"] = 0
 }
 
 function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
@@ -678,3 +676,39 @@ function List_copy(file, copy,    h, i) {
         copy[++copy["length"]] = file[i]
 }
 
+function List_sort(source,    a,b,c,copy,h,i) {
+    for (i = 1; i <= source["length"]; ++i)
+        copy[i] = source[i]
+
+    asort(copy)
+
+    for (i = 1; i <= source["length"]; ++i)
+        source[i] = copy[i]
+}
+
+function __pipe(command, options, output,    a,b,c,cmd,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    cmd = command" "options
+    Index_push("", "", "", "\n", "\n")
+    while (0 < y = ( cmd | getline ))
+        if (typeof(output) == "array")
+            output[++output["length"]] = $0
+    Index_pop()
+    if (y == -1) { __error("Command doesn't exist: "command); return }
+    return close(cmd)
+}
+
+function __coprocess(command, options, input, output,    a,b,c,cmd,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    cmd = command" "options
+    if (typeof(input) == "array")
+        for (i = 1; i <= input["length"]; ++i)
+            print input[i] |& cmd
+    else print "" |& cmd
+    close(cmd, "to")
+    Index_push("", "", "", "\n", "\n")
+    while (0 < y = ( cmd |& getline ))
+        if (typeof(output) == "array")
+            output[++output["length"]] = $0
+    Index_pop()
+    if (y == -1) { __error("Command doesn't exist: "command); return }
+    return close(cmd)
+}
