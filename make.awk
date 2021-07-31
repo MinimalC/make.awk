@@ -52,21 +52,21 @@ END {
 
 function make_parse(origin,    a,b,c,d,e,f,m,n) {
 
-    if (!origin["length"]) { __error(USAGE); return }
-    if (!Project) Project = get_FileNameNoExt(origin[1])
+    if (!origin["files"]["length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(origin["files"][1])
     if (!prepared) { C_prepare(origin); ++prepared }
 
-    for (n = 1; n <= origin["length"]; ++n) {
-        e = get_FileNameExt(origin[n])
-        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
+    for (n = 1; n <= origin["files"]["length"]; ++n) {
+        e = get_FileNameExt(origin["files"][n])
+        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin["files"], n--); continue }
     }
     for (f = 1; f <= format["length"]; ++f) {
-    for (n = 1; n <= origin["length"]; ++n) {
-        e = get_FileNameExt(origin[n])
+    for (n = 1; n <= origin["files"]["length"]; ++n) {
+        e = get_FileNameExt(origin["files"][n])
         if (format[e] != format[f]) continue
 
         c = format[e]"_""parse"
-        if (c in FUNCTAB) @c(origin[n])
+        if (c in FUNCTAB) @c(origin["files"][n])
         else { __error("No Format function "c); continue }
     } }
 
@@ -75,21 +75,21 @@ function make_parse(origin,    a,b,c,d,e,f,m,n) {
 
 function make_preprocess(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,ppreprocessed,q,r,s,t,u,v,w,x,y,z) {
 
-    if (!origin["length"]) { __error(USAGE); return }
-    if (!Project) Project = get_FileNameNoExt(origin[1])
+    if (!origin["files"]["length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(origin["files"][1])
     if (!prepared) { C_prepare(origin); ++prepared }
 
-    for (n = 1; n <= origin["length"]; ++n) {
-        e = get_FileNameExt(origin[n])
-        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
+    for (n = 1; n <= origin["files"]["length"]; ++n) {
+        e = get_FileNameExt(origin["files"][n])
+        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin["files"], n--); continue }
     }
     for (f = 1; f <= format["length"]; ++f) {
-    for (n = 1; n <= origin["length"]; ++n) {
-        e = get_FileNameExt(origin[n])
+    for (n = 1; n <= origin["files"]["length"]; ++n) {
+        e = get_FileNameExt(origin["files"][n])
         if (format[e] != format[f]) continue
 
         c = format[e]"_""preprocess"
-        if (c in FUNCTAB) @c(origin[n], preprocessed[format[f]])
+        if (c in FUNCTAB) @c(origin["files"][n], preprocessed[format[f]])
         else { __error("No Format function "c); continue }
     } }
 
@@ -108,22 +108,22 @@ else       Index_push("", fixFS, " ", "\0", "\n")
 
 function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled,q,r,s,t,u,v,w,x,y,z) {
 
-    if (!origin["length"]) { __error(USAGE); return }
-    if (!Project) Project = get_FileNameNoExt(origin[1])
+    if (!origin["files"]["length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(origin["files"][1])
     if (!prepared) { C_prepare(origin); ++prepared }
 
-    for (n = 1; n <= origin["length"]; ++n) {
-        e = get_FileNameExt(origin[n])
-        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin, n--); continue }
+    for (n = 1; n <= origin["files"]["length"]; ++n) {
+        e = get_FileNameExt(origin["files"][n])
+        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin["files"], n--); continue }
     }
     for (f = 1; f <= format["length"]; ++f) {
-    for (n = 1; n <= origin["length"]; ++n) {
-        e = get_FileNameExt(origin[n])
+    for (n = 1; n <= origin["files"]["length"]; ++n) {
+        e = get_FileNameExt(origin["files"][n])
         if (format[e] != format[f]) continue
 
         c = format[e]"_""precompile"
         precompiled[format[f]]["length"]
-        if (c in FUNCTAB) @c(origin[n], precompiled[format[f]])
+        if (c in FUNCTAB) @c(origin["files"][n], precompiled[format[f]])
         else { __error("No Format function "c); continue }
     } }
 

@@ -18,6 +18,8 @@ function C_prepare(config,    a,b,c,d,input,m,output)
         else if (Compiler == "tcc")
             Array_add(includeDirs, "/usr/lib/"m"-linux-gnu/tcc/include/")
         else __warning("make.awk: Unsupported compiler")
+        for (d = 1; d <= config["directories"]["length"]; ++d)
+            Array_add(includeDirs, config["directories"][d])
     }
 
     if (typeof(parsed) == "untyped") {
@@ -38,11 +40,12 @@ function C_prepare(config,    a,b,c,d,input,m,output)
     Array_clear(preprocessed)
 
     Array_clear(defines)
-    for (d in config) {
+    config["parameters"]["length"]
+    for (d in config["parameters"]) {
         if (d == "length" || d ~ /^[0-9]+$/) continue
         if (d ~ /^D.*/) {
             c = substr(d, 2)
-            defines[c] = config[d]
+            defines[c] = config["parameters"][d]
         }
     }
 

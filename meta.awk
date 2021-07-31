@@ -231,15 +231,15 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
           # if (paramName == "debug") DEBUG = paramWert; else
             if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
             else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
-            else origin[paramName] = paramWert
+            else origin["parameters"][paramName] = paramWert
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {
-            includeDirs[++includeDirs["length"]] = ARGV[i]
+            origin["directories"][++origin["directories"]["length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
         if (File_exists(ARGV[i])) {
-            origin[++origin["length"]] = ARGV[i]
+            origin["files"][++origin["files"]["length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
         __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
@@ -252,19 +252,20 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
     exit 1
 }
 
-function Array_getLength(array) {
-    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return 0
-    if (typeof(array) != "array") __error("Array_getLength: array is no Array")
+function Array_length(array,   s,t) {
+    t = typeof(array)
+    if (t == "untyped" || t == "unassigned") return
+    if (t != "array") __error("Array_length: array isn't Array but '"t"'")
     return "length" in array ? array["length"] : 0
 }
 
 function Array_first(array) {
-    if (!Array_getLength(array)) return
+    if (!Array_length(array)) return
     return array[1]
 }
 
 function Array_last(array,    h, i, j, k, l) {
-    if (!(l = Array_getLength(array))) return
+    if (!(l = Array_length(array))) return
     return array[l]
 }
 
@@ -304,6 +305,43 @@ function Array_copyTo(array0, array1,    h, i, j, k, l, m, n) {
         }
         array1[i] = array0[i]
     }
+}
+
+function Array_remove(array, i,    h, j, k, l, m, n) {
+    if (typeof(i) == "untyped") { __error("i is untyped"); return }
+    if (typeof(i) != "number") { delete array[i]; return }
+    l = array["length"]
+    for (n = i; n < l; ++n)
+        array[n] = array[n + 1]
+    delete array[l]
+    --array["length"]
+}
+
+function Array_printTo(array, to, level,    h, i, prefix) {
+    if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
+    if (typeof(array) != "array") { __error(prefix "Array_print: array is typeof \""typeof(array)"\""); return }
+    if (typeof(level) == "untyped") ++level
+    if (typeof(to) == "untyped") to = "/dev/stdout"
+    for (i in array)
+        if (typeof(array[i]) == "array") {
+            print prefix i ": " > to
+            Array_printTo(array[i], to, level + 1)
+        } else
+            print prefix i ": " array[i] > to
+}
+
+function Array_print(array,    h, i, prefix) {
+    Array_printTo(array, "/dev/stdout")
+}
+
+function Array_error(array,    h, i, prefix) {
+    if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
+    else __warning("Array_error: ERRORS should be number")
+    Array_printTo(array, "/dev/stderr")
+}
+
+function Array_debug(array, level) {
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr")
 }
 
 function List_add(array, string) {
@@ -348,43 +386,6 @@ function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n
         Array_remove(array, n1)
         Array_insert(array, n0 + 1, string1)
     }
-}
-
-function Array_remove(array, i,    h, j, k, l, m, n) {
-    if (typeof(i) == "untyped") { __error("i is untyped"); return }
-    if (typeof(i) != "number") { delete array[i]; return }
-    l = array["length"]
-    for (n = i; n < l; ++n)
-        array[n] = array[n + 1]
-    delete array[l]
-    --array["length"]
-}
-
-function Array_printTo(array, to, level,    h, i, prefix) {
-    if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
-    if (typeof(array) != "array") { __error(prefix "Array_print: array is typeof \""typeof(array)"\""); return }
-    if (typeof(level) == "untyped") ++level
-    if (typeof(to) == "untyped") to = "/dev/stdout"
-    for (i in array)
-        if (typeof(array[i]) == "array") {
-            print prefix i ": " > to
-            Array_printTo(array[i], to, level + 1)
-        } else
-            print prefix i ": " array[i] > to
-}
-
-function Array_print(array,    h, i, prefix) {
-    Array_printTo(array, "/dev/stdout")
-}
-
-function Array_error(array,    h, i, prefix) {
-    if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
-    else __warning("Array_error: ERRORS should be number")
-    Array_printTo(array, "/dev/stderr")
-}
-
-function Array_debug(array, level) {
-    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr")
 }
 
 function String_join(array, ofs,    h,i,r) {
