@@ -51,27 +51,27 @@ function __debugF(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q,
 
 function ENVIRON_debug() {
     print "ENVIRON" >"/dev/stderr"
-    Array_printTo("/dev/stderr", ENVIRON, 1)
+    Array_printTo(ENVIRON, "/dev/stderr", 1)
 }
 
 function PROCINFO_debug() {
     print "PROCINFO" >"/dev/stderr"
-    Array_printTo("/dev/stderr", PROCINFO, 1)
+    Array_printTo(PROCINFO, "/dev/stderr", 1)
 }
 
 function ARGV_debug() {
     print "ARGV" >"/dev/stderr"
-    Array_printTo("/dev/stderr", ARGV, 1)
+    Array_printTo(ARGV, "/dev/stderr", 1)
 }
 
 function SYMTAB_debug() {
     print "SYMTAB" >"/dev/stderr"
-    Array_printTo("/dev/stderr", SYMTAB, 1)
+    Array_printTo(SYMTAB, "/dev/stderr", 1)
 }
 
 function FUNCTAB_debug() {
     print "FUNCTAB" >"/dev/stderr"
-    Array_printTo("/dev/stderr", FUNCTAB, 1)
+    Array_printTo(FUNCTAB, "/dev/stderr", 1)
 }
 
 function File_exists(fileName,    h, i, j, r,x,y,z) {
@@ -100,6 +100,12 @@ function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
     return r
 }
 
+function File_remove(fileName, force) {
+    if (!fileName) { __error("File_remove: fileName is null"); return }
+    if (!system("rm"(force ? " -f" : "")" '"fileName"'")) return 1
+    return 0
+}
+
 function get_FileName(pathName,    a,b,c,d,e,f,h, i, path, fileName) {
     path["length"] = split(pathName, path, "/")
     return fileName = path[path["length"]]
@@ -121,9 +127,8 @@ function get_FileNameNoExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileName) {
 
 function get_DirectoryName(pathName,    h, i, path, dirName) {
     path["length"] = split(pathName, path, "/")
-    for (i = 1; i < path["length"]; ++i) {
+    for (i = 1; i < path["length"]; ++i)
         dirName = dirName path[i] "/"
-    }
     return dirName
 }
 
@@ -141,12 +146,11 @@ function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, pa
 }
 
 function chartonum(char,    a, b, c, h, i, j, k, l, m, n) {
-    if (typeof(ALLCHARS) == "untyped") {
+    if (typeof(ALLCHARS) == "untyped")
         for (n = 1; n <= 32767; ++n) {
             c = sprintf("%c", n)
             ALLCHARS = ALLCHARS c
         }
-    }
     return index(ALLCHARS, char)
 }
 
@@ -476,9 +480,9 @@ function Index_push(newIndex, fs, ofs, rs, ors,    h,i,m,n) {
     # new INDEX
     if (typeof(newIndex) != "untyped")
         if (typeof(newIndex) == "array") {
-            for (n = 1; n <= newArray["length"]; ++n)
-                if (n == 1) m = newArray[1]
-                else m = m ORS newArray[n]
+            for (n = 1; n <= newIndex["length"]; ++n)
+                if (n == 1) m = newIndex[1]
+                else m = m ORS newIndex[n]
             $0 = m
         }
         else $0 = newIndex
@@ -677,21 +681,17 @@ function List_copy(file, copy,    h, i) {
 }
 
 function List_sort(source,    a,b,c,copy,h,i) {
-    for (i = 1; i <= source["length"]; ++i)
-        copy[i] = source[i]
-
+    for (i = 1; i <= source["length"]; ++i) copy[i] = source[i]
     asort(copy)
-
-    for (i = 1; i <= source["length"]; ++i)
-        source[i] = copy[i]
+    for (i = 1; i <= source["length"]; ++i) source[i] = copy[i]
 }
 
 function __pipe(command, options, output,    a,b,c,cmd,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     cmd = command" "options
     Index_push("", "", "", "\n", "\n")
+    o = typeof(output) == "array"
     while (0 < y = ( cmd | getline ))
-        if (typeof(output) == "array")
-            output[++output["length"]] = $0
+        if (o) output[++output["length"]] = $0
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(cmd)
@@ -705,9 +705,9 @@ function __coprocess(command, options, input, output,    a,b,c,cmd,d,e,f,g,h,i,j
     else print "" |& cmd
     close(cmd, "to")
     Index_push("", "", "", "\n", "\n")
+    o = typeof(output) == "array"
     while (0 < y = ( cmd |& getline ))
-        if (typeof(output) == "array")
-            output[++output["length"]] = $0
+        if (o) output[++output["length"]] = $0
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(cmd)

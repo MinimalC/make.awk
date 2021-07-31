@@ -22,8 +22,8 @@ BEGIN {
         # format["inc"] = "C"
         format["cs"] = "CSharp"
 
-        format[1] = "C"
-        format[2] = "CSharp"
+        format[1] = "CSharp"
+        format[2] = "C"
         format[3] = "ASM"
         format["length"] = 3
     }
@@ -89,18 +89,21 @@ function make_preprocess(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,ppreprocesse
         if (format[e] != format[f]) continue
 
         c = format[e]"_""preprocess"
-        if (c in FUNCTAB) @c(origin[n], preprocessed)
+        if (c in FUNCTAB) @c(origin[n], preprocessed[format[f]])
         else { __error("No Format function "c); continue }
     } }
-    if (!preprocessed["length"]) { __error("make.awk: Nothing preprocessed"); return }
 
-    if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
-    else       Index_push("", fixFS, " ", "\0", "\n")
-    for (z = 1; z <= preprocessed["length"]; ++z)
-        ppreprocessed[++ppreprocessed["length"]] = Index_reset(preprocessed[z])
-    Index_pop()
-
-    File_printTo(ppreprocessed, "."Project (++preprocessed_count == 1 ? "" : preprocessed_count)"...c")
+    for (f = 1; f <= format["length"]; ++f) {
+        if (!preprocessed[format[f]]["length"]) continue; ++o
+if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
+else       Index_push("", fixFS, " ", "\0", "\n")
+        Array_clear(ppreprocessed)
+        for (z = 1; z <= preprocessed[format[f]]["length"]; ++z)
+            ppreprocessed[++ppreprocessed["length"]] = Index_reset(preprocessed[format[f]][z])
+        Index_pop()
+        File_printTo(ppreprocessed, "."Project (++preprocessed_count == 1 ? "" : preprocessed_count)"...c")
+    }
+    if (!o) { __error("make.awk: Nothing preprocessed"); return }
 }
 
 function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled,q,r,s,t,u,v,w,x,y,z) {
@@ -119,28 +122,36 @@ function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled
         if (format[e] != format[f]) continue
 
         c = format[e]"_""precompile"
-        if (c in FUNCTAB) @c(origin[n], precompiled)
+        precompiled[format[f]]["length"]
+        if (c in FUNCTAB) @c(origin[n], precompiled[format[f]])
         else { __error("No Format function "c); continue }
     } }
-    if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }
 
-    if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
-    else       Index_push("", fixFS, " ", "\0", "\n")
-    for (z = 1; z <= precompiled["length"]; ++z)
-        pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled[z])
-    Index_pop()
-
-    File_printTo(pprecompiled, "."Project (++precompiled_count == 1 ? "" : precompiled_count)"...c")
+    for (f = 1; f <= format["length"]; ++f) {
+        if (!precompiled[format[f]]["length"]) continue; ++o
+if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
+else       Index_push("", fixFS, " ", "\0", "\n")
+        # Array_clear(precompiled[format[f]])
+        for (z = 1; z <= precompiled[format[f]]["length"]; ++z)
+            pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled[format[f]][z])
+        Index_pop()
+        File_printTo(pprecompiled, "."Project (++precompiled_count == 1 ? "" : precompiled_count)"...c")
+    }
+    if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
 
 function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 
-    if (!precompiled["length"]) { __error("make.awk: Nothing precompiled"); return }
-
-    Array_clear(compiled); if (!C_compile()) { __error("make.awk: Nothing compiled"); return }
-
-    File_printTo(compiled, "."Project (++compiled_count == 1 ? "" : compiled_count)"...o", "\n", "\n", 1)
+    for (f = 1; f <= format["length"]; ++f) {
+        if (!((c = format[f]"_""compile") in FUNCTAB)) { "make.awk: No function "format[f]"_compile"; continue }
+        # Array_clear(compiled[format[f]])
+        compiled[format[f]]["length"]
+        @c(compiled[format[f]])
+        if (!compiled[format[f]]["length"]) continue; ++o
+        File_printTo(compiled[format[f]], "."Project (++compiled_count == 1 ? "" : compiled_count)"...o", "\n", "\n", 1)
+    }
+    if (!o) { __error("make.awk: Nothing compiled"); return }
 }
 

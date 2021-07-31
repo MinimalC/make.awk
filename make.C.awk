@@ -1027,14 +1027,12 @@ function C_precompile(fileName, output,   h,i,input,m,n,z)
     return 1
 }
 
-function C_compile(    a,b,c,compiler,n,o,options,p,pprecompiled,x,y,z)
+function C_compile(output,    a,b,c,n,o,options,p,pprecompiled,x,y,z)
 {
     Index_push("", fixFS, " ", "\0", "\n")
-    for (z = 1; z <= precompiled["length"]; ++z)
-        pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled[z])
+    for (z = 1; z <= precompiled["C"]["length"]; ++z)
+        pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled["C"][z])
     Index_pop()
-
-    Array_clear(compiled)
 
     options = ""
     options = options" -c -fPIC"
@@ -1042,7 +1040,8 @@ function C_compile(    a,b,c,compiler,n,o,options,p,pprecompiled,x,y,z)
 
     if (CCompiler_coprocess(options, pprecompiled, ".make.o")) return
 
-    File_read(compiled, ".make.o", "\n", "\n")
+    File_read(output, ".make.o", "\n", "\n")
+    File_remove(".make.o", 1)
     return 1
 }
 
@@ -1055,6 +1054,12 @@ function gcc_version(    m,n,o,output) {
 function uname_machine(    m,n,o,output) {
     output["length"]
     __pipe("uname", "-m", output)
+    return output[1]
+}
+
+function configure_sh(    m,n,o,output) {
+    output["length"]
+    __pipe("./configure", "", output)
     return output[1]
 }
 
