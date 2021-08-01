@@ -7,6 +7,7 @@
 
 function CSharp_prepare(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 {
+
 }
 
 function CSharp_parse(fileName, file) {
@@ -17,16 +18,20 @@ function CSharp_preprocess(fileName, output) {
     return C_preprocess(fileName, output)
 }
 
-function CSharp_precompile(output,   a,b,c,d,e,f,g,h,i,I,j,k,l,m,n,o,p,pre,q,r,s,t,u,v,w,x,y,z)
+function CSharp_precompile(output,   a,b,c,d,e,expressions,f,g,h,i,I,j,k,l,level,m,n,o,p,pre,q,r,s,t,u,v,w,x,y,z)
 {
     for (z = 1; z <= preprocessed["CSharp"]["length"]; ++z)
         pre = pre fix preprocessed["CSharp"][z]
 
-    Index_push(pre, fixFS, fix, "\0", "\n")
-    for (i = I + 1; i <= NF; ++i) {
+Index_push(pre, fixFS, fix, "\0", "\n")
+for (i = I + 1; i <= NF; ++i) {
+
+    if ($i == "using") {
 
     }
-    Index_pop()
+
+}
+Index_pop()
     return 1
 }
 

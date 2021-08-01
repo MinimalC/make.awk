@@ -50,24 +50,28 @@ END {
     }
 }
 
+function make_prepare(origin) {
+
+    # ASM_prepare(origin)
+    C_prepare(origin)
+    CSharp_prepare(origin)
+
+    ++prepared
+}
+
 function make_parse(origin,    a,b,c,d,e,f,m,n) {
 
     if (!origin["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin["files"][1])
-    if (!prepared) { C_prepare(origin); ++prepared }
+    if (!prepared) make_prepare(origin)
 
     for (n = 1; n <= origin["files"]["length"]; ++n) {
-        e = get_FileNameExt(origin["files"][n])
-        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin["files"], n--); continue }
-    }
-    for (f = 1; f <= format["length"]; ++f) {
-    for (n = 1; n <= origin["files"]["length"]; ++n) {
-        e = get_FileNameExt(origin["files"][n])
-        if (format[e] != format[f]) continue
-        if (!((c = format[e]"_""parse") in FUNCTAB)) { __error("No function "c); continue }
+        f = get_FileNameExt(origin["files"][n])
+        if (!(f in format)) { __error("make.awk: No Format for FileName."f); Array_remove(origin["files"], n--); continue }
+        if (!((c = format[f]"_""parse") in FUNCTAB)) { __error("No function "c); continue }
 
         @c(origin["files"][n])
-    } }
+    }
 
     for (n in parsed) File_printTo(parsed[n], "."Project"...c")
 }
@@ -76,25 +80,16 @@ function make_preprocess(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,ppreprocesse
 
     if (!origin["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin["files"][1])
-    if (!prepared) {
-        for (f = 1; f <= format["length"]; ++f)
-            if ((c = format[f]"_""prepare") in FUNCTAB) @c(origin)
-        ++prepared
-    }
+    if (!prepared) make_prepare(origin)
 
     for (n = 1; n <= origin["files"]["length"]; ++n) {
-        e = get_FileNameExt(origin["files"][n])
-        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin["files"], n--); continue }
-    }
-    for (f = 1; f <= format["length"]; ++f) {
-    for (n = 1; n <= origin["files"]["length"]; ++n) {
-        e = get_FileNameExt(origin["files"][n])
-        if (format[e] != format[f]) continue
-        if (!((c = format[e]"_""preprocess") in FUNCTAB)) { __error("No function "c); continue }
+        f = get_FileNameExt(origin["files"][n])
+        if (!(f in format)) { __error("make.awk: No Format for FileName."f); Array_remove(origin["files"], n--); continue }
+        if (!((c = format[f]"_""preprocess") in FUNCTAB)) { __error("No function "c); continue }
 
         preprocessed[format[f]]["length"]
         @c(origin["files"][n], preprocessed[format[f]])
-    } }
+    }
 
     for (f = 1; f <= format["length"]; ++f) {
         if (!preprocessed[format[f]]["length"]) continue; ++o
