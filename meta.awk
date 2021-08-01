@@ -463,8 +463,12 @@ function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
     return Index_reset()
 }
 
+function Index_pull(new, fs, ofs, rs, ors) {
+    Index_push(new, fs, ofs, rs, ors);
+    return Index_pop()
+}
 
-function Index_push(newIndex, fs, ofs, rs, ors,    h,i,m,n) {
+function Index_push(new, fs, ofs, rs, ors,    h,i,m,n) {
     # save old INDEX
     i = Array_add(INDEX)
     INDEX[i]["OUTPUTRECORDSEP"] = ORS
@@ -479,14 +483,14 @@ function Index_push(newIndex, fs, ofs, rs, ors,    h,i,m,n) {
     if (typeof(fs) != "untyped") FS = fs
 
     # new INDEX
-    if (typeof(newIndex) != "untyped")
-        if (typeof(newIndex) == "array") {
-            for (n = 1; n <= newIndex["length"]; ++n)
-                if (n == 1) m = newIndex[1]
-                else m = m ORS newIndex[n]
+    if (typeof(new) != "untyped")
+        if (typeof(new) == "array") {
+            for (n = 1; n <= new["length"]; ++n)
+                if (n == 1) m = new[1]
+                else m = m ORS new[n]
             $0 = m
         }
-        else $0 = newIndex
+        else $0 = new
     return Index_reset()
 }
 
@@ -598,8 +602,8 @@ function Index_clear(    h, i, j, k, l, m, n) {
     NF -= n
 }
 
-function Index_reset(newIndex,    h, i, j, k, l, m, n) {
-    if (typeof(newIndex) != "untyped") $0 = newIndex
+function Index_reset(new,    h, i, j, k, l, m, n) {
+    if (typeof(new) != "untyped") $0 = new
     Index_clear()
     return $0 = $0
 }
@@ -614,8 +618,8 @@ function File_read(file, fileName, rs, ors,    w, x, y, z) {
     while (0 < y = ( getline < fileName ))
         file[z = ++file["length"]] = $0
     Index_pop()
+    if (fileName != "/dev/stdin") close(fileName)
     if (y == -1) { __error("File doesn't exist: "fileName); return }
-    close(fileName)
     return z - x
 }
 
@@ -627,6 +631,7 @@ function File_printTo(file, to, rs, ors, noLastORS,    x, y, z) {
         if (noLastORS && z == file["length"]) { printf "%s", file[z] > to; break }
         print file[z] > to
     }
+    if (to != "/dev/stdout" && to != "/dev/stderr") close(to)
     Index_pop()
 }
 function File_printFTo(file, to, format, rs, ors, noLastORS,    x, y, z) {

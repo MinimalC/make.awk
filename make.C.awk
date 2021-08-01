@@ -37,8 +37,6 @@ function C_prepare(config,    a,b,c,d,input,m,output)
         C_parse(Compiler, output)
     }
 
-    Array_clear(preprocessed)
-
     Array_clear(defines)
     config["parameters"]["length"]
     for (d in config["parameters"]) {
@@ -49,7 +47,12 @@ function C_prepare(config,    a,b,c,d,input,m,output)
         }
     }
 
-    Array_clear(precompiled)
+    preprocessed["C"]["length"]
+    Array_clear(preprocessed["C"])
+    C_preprocess(Compiler, preprocessed["C"])
+
+    precompiled["C"]["length"]
+    Array_clear(precompiled["C"])
 
     Array_clear(types)
     types["void"]["isLiteral"]
@@ -1008,24 +1011,23 @@ if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (e
 
 }
 
-function C_precompile(fileName, output,   h,i,input,m,n,z)
+function C_precompile(output,   h,i,input,m,n,z)
 {
-    input["length"]
-    if (!(Compiler in input))
-         C_preprocess(Compiler, input)
-    if (!C_preprocess(fileName, input)) return
+#    input["length"]
+#    if (!(Compiler in input))
+#         C_preprocess(Compiler, input)
+#    if (!C_preprocess(fileName, input)) return
 
     # C_precompile is PROTOTYPE
 
-    # input["fields"]["length"]
-    for (n in input["fields"]) {
-        if (n == "length" || n ~ /^[0-9]+$/) continue
-        if (typeof(input["fields"][n]) == "array")
-            output[++output["length"]] = input["fields"][n]["body"]
+    preprocessed["C"]["fields"]["length"]
+    for (n in preprocessed["C"]["fields"]) {
+        if (typeof(preprocessed["C"]["fields"][n]) == "array")
+            output[++output["length"]] = preprocessed["C"]["fields"][n]["body"]
     }
 
-    for (z = 1; z <= input["length"]; ++z)
-        output[++output["length"]] = input[z]
+    for (z = 1; z <= preprocessed["C"]["length"]; ++z)
+        output[++output["length"]] = preprocessed["C"][z]
 
     return 1
 }

@@ -30,7 +30,7 @@ BEGIN {
 
     Compiler = "gcc"
 
-    USAGE = "make.awk: Use make.awk [parse|precompile|compile] project=Program Program.c"
+    USAGE = "make.awk: Use make.awk [parse|preprocess|precompile|compile] project=Program Program.c"
 
     ACTION = "compile"
 
@@ -64,10 +64,9 @@ function make_parse(origin,    a,b,c,d,e,f,m,n) {
     for (n = 1; n <= origin["files"]["length"]; ++n) {
         e = get_FileNameExt(origin["files"][n])
         if (format[e] != format[f]) continue
+        if (!((c = format[e]"_""parse") in FUNCTAB)) { __error("No function "c); continue }
 
-        c = format[e]"_""parse"
-        if (c in FUNCTAB) @c(origin["files"][n])
-        else { __error("No Format function "c); continue }
+        @c(origin["files"][n])
     } }
 
     for (n in parsed) File_printTo(parsed[n], "."Project"...c")
@@ -77,7 +76,11 @@ function make_preprocess(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,ppreprocesse
 
     if (!origin["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin["files"][1])
-    if (!prepared) { C_prepare(origin); ++prepared }
+    if (!prepared) {
+        for (f = 1; f <= format["length"]; ++f)
+            if ((c = format[f]"_""prepare") in FUNCTAB) @c(origin)
+        ++prepared
+    }
 
     for (n = 1; n <= origin["files"]["length"]; ++n) {
         e = get_FileNameExt(origin["files"][n])
@@ -87,10 +90,10 @@ function make_preprocess(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,ppreprocesse
     for (n = 1; n <= origin["files"]["length"]; ++n) {
         e = get_FileNameExt(origin["files"][n])
         if (format[e] != format[f]) continue
+        if (!((c = format[e]"_""preprocess") in FUNCTAB)) { __error("No function "c); continue }
 
-        c = format[e]"_""preprocess"
-        if (c in FUNCTAB) @c(origin["files"][n], preprocessed[format[f]])
-        else { __error("No Format function "c); continue }
+        preprocessed[format[f]]["length"]
+        @c(origin["files"][n], preprocessed[format[f]])
     } }
 
     for (f = 1; f <= format["length"]; ++f) {
@@ -108,30 +111,18 @@ else       Index_push("", fixFS, " ", "\0", "\n")
 
 function make_precompile(origin,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,pprecompiled,q,r,s,t,u,v,w,x,y,z) {
 
-    if (!origin["files"]["length"]) { __error(USAGE); return }
-    if (!Project) Project = get_FileNameNoExt(origin["files"][1])
-    if (!prepared) { C_prepare(origin); ++prepared }
+    # if (!origin["files"]["length"]) { __error(USAGE); return }
+    # if (!Project) Project = get_FileNameNoExt(origin["files"][1])
+    # if (!prepared) { C_prepare(origin); ++prepared }
 
-    for (n = 1; n <= origin["files"]["length"]; ++n) {
-        e = get_FileNameExt(origin["files"][n])
-        if (!(e in format)) { __error("make.awk: No Format for FileName."e); Array_remove(origin["files"], n--); continue }
-    }
     for (f = 1; f <= format["length"]; ++f) {
-    for (n = 1; n <= origin["files"]["length"]; ++n) {
-        e = get_FileNameExt(origin["files"][n])
-        if (format[e] != format[f]) continue
-
-        c = format[e]"_""precompile"
+        if (!((c = format[f]"_""precompile") in FUNCTAB)) { "make.awk: No function "c; continue }
         precompiled[format[f]]["length"]
-        if (c in FUNCTAB) @c(origin["files"][n], precompiled[format[f]])
-        else { __error("No Format function "c); continue }
-    } }
-
-    for (f = 1; f <= format["length"]; ++f) {
+        @c(precompiled[format[f]])
         if (!precompiled[format[f]]["length"]) continue; ++o
 if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
 else       Index_push("", fixFS, " ", "\0", "\n")
-        # Array_clear(precompiled[format[f]])
+        Array_clear(pprecompiled)
         for (z = 1; z <= precompiled[format[f]]["length"]; ++z)
             pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled[format[f]][z])
         Index_pop()
@@ -140,12 +131,12 @@ else       Index_push("", fixFS, " ", "\0", "\n")
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
 
-function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n) {
+function make_compile(origin,    a,b,c,d,e,f,g,h,i,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 
     for (f = 1; f <= format["length"]; ++f) {
-        if (!((c = format[f]"_""compile") in FUNCTAB)) { "make.awk: No function "format[f]"_compile"; continue }
+        if (!((c = format[f]"_""compile") in FUNCTAB)) { "make.awk: No function "c; continue }
         # Array_clear(compiled[format[f]])
         compiled[format[f]]["length"]
         @c(compiled[format[f]])
