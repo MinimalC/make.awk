@@ -3,26 +3,36 @@
 # 2020 Hans Riehm
 
 #include "../make.awk/meta.awk"
-@include "../make.awk/make.CExpression_evaluate.awk"
+@include "../make.awk/make.CDefine_eval.awk"
 
 function C_prepare(config,    a,b,c,d,input,m,output)
 {
     if (typeof(includeDirs) == "untyped") {
         # includeDirs["length"]
         Array_add(includeDirs, "/usr/include/")
-        m = uname_machine()
+        v = uname_machine()
         if (Compiler == "gcc") {
-            Array_add(includeDirs, "/usr/include/"m"-linux-gnu/")
-            Array_add(includeDirs, "/usr/lib/gcc/"m"-linux-gnu/"gcc_version()"/include/")
+            Array_add(includeDirs, "/usr/include/"v"-linux-gnu/")
+            Array_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"gcc_version()"/include/")
         }
         else if (Compiler == "tcc")
-            Array_add(includeDirs, "/usr/lib/"m"-linux-gnu/tcc/include/")
+            Array_add(includeDirs, "/usr/lib/"v"-linux-gnu/tcc/include/")
         else __warning("make.awk: Unsupported compiler")
         for (d = 1; d <= config["directories"]["length"]; ++d)
             Array_add(includeDirs, config["directories"][d])
     }
 
-    if (typeof(parsed) == "untyped") {
+    Array_clear(C_defines)
+    config["parameters"]["length"]
+    for (d in config["parameters"]) {
+        if (d == "length" || d ~ /^[0-9]+$/) continue
+        if (d ~ /^D.*/) {
+            c = substr(d, 2)
+            C_defines[c] = config["parameters"][d]
+        }
+    }
+
+    if (!(Compiler in parsed)) {
         input["name"] = Compiler
         input[++input["length"]] = "# define _GNU_SOURCE 1"
         input[++input["length"]] = "# include <stddef.h>"
@@ -37,16 +47,6 @@ function C_prepare(config,    a,b,c,d,input,m,output)
         C_parse(Compiler, output)
     }
 
-    Array_clear(defines)
-    config["parameters"]["length"]
-    for (d in config["parameters"]) {
-        if (d == "length" || d ~ /^[0-9]+$/) continue
-        if (d ~ /^D.*/) {
-            c = substr(d, 2)
-            defines[c] = config["parameters"][d]
-        }
-    }
-
     preprocessed["C"]["length"]
     Array_clear(preprocessed["C"])
     C_preprocess(Compiler, preprocessed["C"])
@@ -54,23 +54,23 @@ function C_prepare(config,    a,b,c,d,input,m,output)
     precompiled["C"]["length"]
     Array_clear(precompiled["C"])
 
-    Array_clear(types)
-    types["void"]["isLiteral"]
-    types["unsigned"]["isLiteral"]
-    types["signed"]["isLiteral"]
-    types["_Bool"]["isLiteral"]
-    types["char"]["isLiteral"]
-    types["short"]["isLiteral"]
-    types["int"]["isLiteral"]
-    types["long"]["isLiteral"]
-    types["double"]["isLiteral"]
-    types["float"]["isLiteral"]
-    types["_Float32"]["isLiteral"]
-    types["_Float32x"]["isLiteral"]
-    types["_Float64"]["isLiteral"]
-    types["_Float64x"]["isLiteral"]
-    types["_Float128"]["isLiteral"]
-    types["__builtin_va_list"]["isLiteral"]
+    Array_clear(C_types)
+    C_types["void"]["isLiteral"]
+    C_types["unsigned"]["isLiteral"]
+    C_types["signed"]["isLiteral"]
+    C_types["_Bool"]["isLiteral"]
+    C_types["char"]["isLiteral"]
+    C_types["short"]["isLiteral"]
+    C_types["int"]["isLiteral"]
+    C_types["long"]["isLiteral"]
+    C_types["double"]["isLiteral"]
+    C_types["float"]["isLiteral"]
+    C_types["_Float32"]["isLiteral"]
+    C_types["_Float32x"]["isLiteral"]
+    C_types["_Float64"]["isLiteral"]
+    C_types["_Float64x"]["isLiteral"]
+    C_types["_Float128"]["isLiteral"]
+    C_types["__builtin_va_list"]["isLiteral"]
 
     if (typeof(C_keywords) == "untyped") {
         C_keywords["struct"]
@@ -508,12 +508,12 @@ function C_preprocess(fileName, output, # public parsed
     output[++output["length"]] = "#"fix 1 fix"\""fileName"\""
     # output[output["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++output["length"]" */"
 
-    defines["__FILE__"]["body"] = __FILE__Name
+    C_defines["__FILE__"]["body"] = __FILE__Name
 
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
         Index_reset(parsed[fileName][z])
 
-        defines["__LINE__"]["body"] = z
+        C_defines["__LINE__"]["body"] = z
 
     if ($1 == "#") {
         #if ($2 ~ /^\s*$/) Index_remove(2)
@@ -538,7 +538,7 @@ function C_preprocess(fileName, output, # public parsed
             f = Array_add(ifExpressions)
             ifExpressions[f]["if"] = $0
 
-            w = CExpression_evaluate($0)
+            w = CDefine_eval($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
             if (x) ifExpressions[f]["do"] = 1
 
@@ -555,7 +555,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressio
             f = ifExpressions["length"]
             ifExpressions[f]["else if"] = $0
 
-            w = CExpression_evaluate($0)
+            w = CDefine_eval($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             else if (!ifExpressions[f]["do"] && x) ifExpressions[f]["do"] = 1
@@ -606,8 +606,8 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
                         zZ = output["length"]
                         C_preprocess(o, output)
-                        defines["__FILE__"]["body"] = __FILE__Name
-                        defines["__LINE__"]["body"] = z
+                        C_defines["__FILE__"]["body"] = __FILE__Name
+                        C_defines["__LINE__"]["body"] = z
                         break
                     }
                 }
@@ -620,8 +620,8 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                     zZ = output["length"]
                     C_preprocess(m, output)
-                    defines["__FILE__"]["body"] = __FILE__Name
-                    defines["__LINE__"]["body"] = z
+                    C_defines["__FILE__"]["body"] = __FILE__Name
+                    C_defines["__LINE__"]["body"] = z
                 }
                 else __warning(fileName" Line "z": File not found: \""m"\"")
             }
@@ -636,7 +636,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
         else if ($2 == "define") {
             if ($3 ~ /^\s*$/) Index_remove(3)
             name = $3
-            if (name in defines) {
+            if (name in C_defines) {
                 __warning(fileName" Line "z": define "name" exists already")
             }
             else if (name !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
@@ -650,8 +650,8 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                     for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
                     for (n = 2; n <= NF; ++n) {
                         if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
-                            # if ($n in defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (define)")
-                            # else if ($n in types) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (typedef)")
+                            # if ($n in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (define)")
+                            # else if ($n in C_types) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (typedef)")
                             # else if ($n in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (keyword)")
                             continue
                         }
@@ -664,27 +664,27 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                         __warning(fileName" Line "z": define "name" without )")
                     } else {
                         m = ""; for (o = 2; o < n; ++o) {
-                            # if ($o in defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (define)")
-                            if ($o in types) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (typedef)")
+                            # if ($o in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (define)")
+                            if ($o in C_types) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (typedef)")
                             else if ($o in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (keyword)")
                             m = String_concat(m, " ", $o)
                             if ($o == ",") continue
-                            g = ++defines[name]["arguments"]["length"]
-                            defines[name]["arguments"][g] = $o
+                            g = ++C_defines[name]["arguments"]["length"]
+                            C_defines[name]["arguments"][g] = $o
                         }
-                        defines[name]["arguments"]["text"] = m
-                        defines[name]["isFunction"] = 1
+                        C_defines[name]["arguments"]["text"] = m
+                        C_defines[name]["isFunction"] = 1
                         Index_removeRange(1, n)
                     }
                 }
                 else { for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) } # clean
 
-                defines[name]["body"] = $0
+                C_defines[name]["body"] = $0
 
 if (DEBUG == 3 || DEBUG == 4) {
-Index_push(defines[name]["body"], fixFS, " "); rendered = Index_pop()
-if (defines[name]["isFunction"])
-__debug(fileName" Line "z": define "name" ("defines[name]["arguments"]["text"]")  "rendered)
+Index_push(C_defines[name]["body"], fixFS, " "); rendered = Index_pop()
+if (C_defines[name]["isFunction"])
+__debug(fileName" Line "z": define "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 else
 __debug(fileName" Line "z": define "name"  "rendered)
 }
@@ -694,16 +694,16 @@ __debug(fileName" Line "z": define "name"  "rendered)
         else if ($2 == "undef" || $2 == "undefine") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             name = $3
-            if (!(name in defines)) __warning(fileName" Line "z": undefine doesn't exist: "name)
+            if (!(name in C_defines)) __warning(fileName" Line "z": undefine doesn't exist: "name)
             else {
 if (DEBUG == 3 || DEBUG == 4) {
-Index_push(defines[name]["body"], fixFS, " "); rendered = Index_pop()
-if (defines[name]["isFunction"])
-__debug(fileName" Line "z": undefine "name" ("defines[name]["arguments"]["text"]")  "rendered)
+Index_push(C_defines[name]["body"], fixFS, " "); rendered = Index_pop()
+if (C_defines[name]["isFunction"])
+__debug(fileName" Line "z": undefine "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 else
 __debug(fileName" Line "z": undefine "name"  "rendered)
 }
-                delete defines[name]
+                delete C_defines[name]
             }
             NF = 0
         }
@@ -748,7 +748,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         parsed[fileName]["I"] = INDEX["length"]
         for (i = 1; i <= NF; ++i) {
             if ($i ~ /^\s*$/) continue # no clean, no use
-            if ($i in defines) {
+            if ($i in C_defines) {
                 parsed[fileName]["z"] = z
                 n = CDefine_apply(i, parsed[fileName])
                 z = parsed[fileName]["z"]
@@ -872,7 +872,7 @@ if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level" }")
                 }
                 if (!("struct" in expression[level])) continue
             }
-            if ($i == "const" || $i == "volatile" || $i in types || $i == "struct" || $i == "union" || $i == "enum")
+            if ($i == "const" || $i == "volatile" || $i in C_types || $i == "struct" || $i == "union" || $i == "enum")
             {
                 if ("Type" in expression[level] && expression[level]["Type"]) {
 if (DEBUG == 5) __debug(fileName" Line "z": name "name" is already "expression[level]["Type"]". Missing semikolon?")
@@ -889,13 +889,13 @@ if (DEBUG == 5) __debug(fileName" Line "z": name "name" is already "expression[l
                 }
                 if (n >= i) ++i
                 for (n = i; n <= NF; ++n) {
-                    if ($n in types && "isLiteral" in types[$n]) {
+                    if ($n in C_types && "isLiteral" in C_types[$n]) {
                         s = 1; name = String_concat(name, " ", $n)
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         continue
                     }
-                    if (name == "" && ($n in types)) {
-                        if ("isLiteral" in types[$n]) s = 1
+                    if (name == "" && ($n in C_types)) {
+                        if ("isLiteral" in C_types[$n]) s = 1
                         name = $n
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         break
@@ -916,10 +916,10 @@ if (DEBUG == 5) __debug(fileName" Line "z": name "name" is already "expression[l
                     # if (n >= i) Index_remove(i--)
                     __warning(fileName" Line "z": "$i" without name")
                 }
-                else if (level == 1 && !(name in types) ) {
+                else if (level == 1 && !(name in C_types) ) {
 if (DEBUG == 5) __debug(fileName" Line "z": "name)
-                    if (s) types[name]["isLiteral"]
-                    else types[name]["baseType"]
+                    if (s) C_types[name]["isLiteral"]
+                    else C_types[name]["baseType"]
                 }
 
                 expression[level]["Type"] = name
@@ -987,10 +987,10 @@ else if (DEBUG == 5) __debug(fileName" Line "z": "name"  without var")
                 if (level == 1 && "isTypedef" in expression[level]) {
                     name = expression[level]["isTypedef"]
 
-                    if (!(var in types)) {
-                        types[var]["baseType"] = String_concat(name, " ", varType)
-                        if (name in types && "isLiteral" in types[name] && !p)
-                            types[var]["isLiteral"]
+                    if (!(var in C_types)) {
+                        C_types[var]["baseType"] = String_concat(name, " ", varType)
+                        if (name in C_types && "isLiteral" in C_types[name] && !p)
+                            C_types[var]["isLiteral"]
 if (DEBUG == 5) __debug(fileName" Line "z": typedef "var": "name"  "varType)
                     }
 else if (DEBUG == 5) __debug(fileName" Line "z": typedef "var": "name" override, with  "varType)

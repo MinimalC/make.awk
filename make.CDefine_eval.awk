@@ -8,25 +8,24 @@
 function CDefine_apply(i, file,    a,arguments,b,c,code,d,defineBody,e,f,g,h,j,k,l,m,
                                    n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
 {
-    if (!($i in defines)) return 1
-    if (typeof(defines[$i]) != "array") return 1
+    if (!($i in C_defines)) return 1
+    if (typeof(C_defines[$i]) != "array") return 1
 
     # Evaluate AWA
     name = $i
     # define AWA AWA
-    if (typeof(noredefines) == "array" && name in noredefines) {
+    if (typeof(C_noredefines) == "array" && name in C_noredefines) {
         __warning(file["name"]" Line "file["z"]": self-referencing define "name" "name)
         return 1
     }
-    # delete noredefines[name]
 
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
 
-    defineBody = defines[name]["body"]
+    defineBody = C_defines[name]["body"]
     arguments["length"]
-    if (defines[name]["isFunction"]) {
+    if (C_defines[name]["isFunction"]) {
         # define expression( arg1 , arg2 ) body
-        l = defines[name]["arguments"]["length"]
+        l = C_defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
         while (++o) {
             if (o > NF) {
@@ -36,7 +35,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
                     if (file[file["z"] + 1] ~ /^#/) break
                     Index_append(NF, file[++file["z"]])
                     for (j = o; j <= NF; ++j) if ($j ~ /^\s*$/) Index_remove(j--)
-                    defines["__LINE__"]["body"] = file["z"]
+                    C_defines["__LINE__"]["body"] = file["z"]
                     --o
                     continue
                 }
@@ -72,19 +71,19 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
         }
         else Index_removeRange(i + 1, o)
 if (DEBUG == 3) {
-__debug("arguments: ( "defines[name]["arguments"]["text"]" )")
+__debug("arguments: ( "C_defines[name]["arguments"]["text"]" )")
 rendered = ""; for (a = 1; a <= arguments["length"]; ++a) rendered = rendered ( a > 1 ? " , " : "" ) arguments[a]["value"]
 __debug("applying:  ( "rendered" )")
 }
-        if (defines[name]["arguments"][l] != "..." ? arguments["length"] < l : arguments["length"] < l - 1)
+        if (C_defines[name]["arguments"][l] != "..." ? arguments["length"] < l : arguments["length"] < l - 1)
             __error(file["name"]" Line "file["z"]": using "name": Not enough arguments") # ("arguments["length"]" insteadof "l") "m)
-        else if (arguments["length"] > l && defines[name]["arguments"][l] != "...")
+        else if (arguments["length"] > l && C_defines[name]["arguments"][l] != "...")
             __error(file["name"]" Line "file["z"]": using "name": Too many arguments")
         for (n = 1; n <= arguments["length"]; ++n) {
             Index_push(arguments[n]["value"], fixFS, fix)
             for (j = 1; j <= NF; ++j) {
-                if ($j in defines) {
-                    if (defines[$j]["isFunction"] && $(j + 1) != "(") {
+                if ($j in C_defines) {
+                    if (C_defines[$j]["isFunction"] && $(j + 1) != "(") {
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                         continue
                     }
@@ -99,8 +98,8 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
         Index_push(defineBody, fixFS, fix)
         for (o = 1; o <= NF; ++o) {
             for (n = 1; n <= l; ++n) {
-                if (n == l && defines[name]["arguments"][l] == "...") break
-                if ($o == defines[name]["arguments"][n]) { # && !($(o - 1) == "." || $(o - 1) == "->")) {
+                if (n == l && C_defines[name]["arguments"][l] == "...") break
+                if ($o == C_defines[name]["arguments"][n]) { # && !($(o - 1) == "." || $(o - 1) == "->")) {
                     if (o > 1 && $(o - 1) == "#") {
                         Index_push(arguments[n]["value"], "", "")
                         for (s = 1; s <= NF; ++s) {
@@ -118,7 +117,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                 }
             }
         }
-        if (defines[name]["arguments"][l] == "...") {
+        if (C_defines[name]["arguments"][l] == "...") {
             for (o = 1; o <= NF; ++o) {
                 if ($o == "__VA_ARGS__") {
                     code = ""; a = 0
@@ -188,15 +187,15 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without bod
         return 0
     }
     Index_push(defineBody, fixFS, fix)
-    ++noredefines[name]
+    ++C_noredefines[name]
     notapplied = 0
     for (j = 1; j <= NF; ++j) {
         #if ($j == name) {
         #    __warning(file["name"]" Line "file["z"]": self-referencing define0 "name" "name)
         #    continue
         #}
-        if ($j in defines) {
-            if (defines[$j]["isFunction"] && $(j + 1) != "(") {
+        if ($j in C_defines) {
+            if (C_defines[$j]["isFunction"] && $(j + 1) != "(") {
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
                 ++notapplied
                 continue
@@ -206,7 +205,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
             j += n-1
         }
     }
-    --noredefines[name]; if (!noredefines[name]) delete noredefines[name]
+    --C_noredefines[name]; if (!C_noredefines[name]) delete C_noredefines[name]
     Index_reset()
     n = NF
     defineBody = Index_pop()
@@ -215,15 +214,15 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
 
 if (DEBUG == 3) {
 Index_push(defineBody, fixFS, " "); rendered = Index_pop()
-if (defines[name]["isFunction"]) {
-__debug(file["name"]" Line "file["z"]": using "name" ("defines[name]["arguments"]["text"]")  "rendered)
+if (C_defines[name]["isFunction"]) {
+__debug(file["name"]" Line "file["z"]": using "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 # Array_debug(arguments)
 } else __debug(file["name"]" Line "file["z"]": using "name"  "rendered)
 }
     return n - notapplied
 }
 
-function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, e, f, g,
+function CDefine_eval(expression,    a, arguments, b, c, d, defineBody, e, f, g,
                              h, i, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     Index_push(expression, fixFS, fix)
@@ -272,7 +271,7 @@ function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, 
                 m = String_concat(m, fix, $o)
             }
             Index_removeRange(i + 1, o)
-            x = CExpression_evaluate(m)
+            x = CDefine_eval(m)
             # Index_push(x, fixFS, fix); n = NF; Index_pop()
             $i = x
             --i # i += n - 1
@@ -296,7 +295,7 @@ function CExpression_evaluate(expression,    a, arguments, b, c, d, defineBody, 
                 f = String_concat(f, fix, $p)
             }
 if (DEBUG == 4) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
-            x = CExpression_evaluate(q)
+            x = CDefine_eval(q)
             NF = 1
             if (x) {
                 #Index_push(t, fixFS, fix); n = NF; Index_pop()
@@ -314,7 +313,7 @@ if (DEBUG == 4) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
             if ($(i + 1) != "(") Index_append(i, "(")
             n = $(i + 2)
             if ($(i + 3) != ")") Index_append(i + 2, ")")
-            x = 0; if (n in defines) x = 1
+            x = 0; if (n in C_defines) x = 1
             Index_remove(i + 1, i + 2, i + 3)
             if (i > 1 && $(i - 1) == "!") {
                 x = !x
@@ -330,7 +329,7 @@ else __debug("NotDefined "n)
         # Evaluate AWA ( a , b ) or AWA
         if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
             name = $i
-            if (!(name in defines)) {
+            if (!(name in C_defines)) {
 if (DEBUG == 4) __debug("NotUsing "name)
                 $i = "0"
                 continue

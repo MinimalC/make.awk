@@ -9,6 +9,8 @@ BEGIN {
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
     FS="";OFS="";RS="\0";ORS="\n"
+
+    MAX_NUMBER = 2147483648
 }
 
 # BEGINFILE { } # ENDFILE { }
@@ -283,12 +285,14 @@ function Array_insert(array, i, value,    h, j, k, l) {
     if (typeof(value) != "untyped") array[i] = value
 }
 
-function Array_contains(array, item,    h, i, j, k, l, m, n, n0) {
-    l = array["length"]
-    n0 = 0
-    for (n = 1; n <= l; ++n)
-        if (array[n] == item) { n0 = n; break }
-    return n0
+function List_contains(array, item,    m,n,r) {
+    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
+    if (typeof(array) != "array") { __error("List_contains: no array but "typeof(array)); return }
+    for (n = 1; n <= array["length"]; ++n) {
+        if (typeof(item) == "regex") { if (array[n] ~ item) { r = n; break } }
+        else { if (array[n] == item) { r = n; break } }
+    }
+    return r
 }
 
 function Array_copyTo(array0, array1,    h, i, j, k, l, m, n) {
@@ -317,24 +321,25 @@ function Array_remove(array, i,    h, j, k, l, m, n) {
     --array["length"]
 }
 
-function Array_printTo(array, to, level,    h, i, prefix) {
-    if (!prefix) prefix = ""; for (i = 0; i < level; i++) prefix = prefix "\t"
-    if (typeof(array) != "array") { __error(prefix "Array_print: array is typeof \""typeof(array)"\""); return }
+function Array_printTo(array, to, level,    h,i,t) {
+    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
+    t = String_repeat("\t", level)
+    if (typeof(array) != "array") { __error(t"Array_print: array is typeof \""typeof(array)"\""); return }
     if (typeof(level) == "untyped") ++level
     if (typeof(to) == "untyped") to = "/dev/stdout"
     for (i in array)
         if (typeof(array[i]) == "array") {
-            print prefix i ": " > to
+            print t i ": " > to
             Array_printTo(array[i], to, level + 1)
         } else
-            print prefix i ": " array[i] > to
+            print t i ": " array[i] > to
 }
 
-function Array_print(array,    h, i, prefix) {
+function Array_print(array) {
     Array_printTo(array, "/dev/stdout")
 }
 
-function Array_error(array,    h, i, prefix) {
+function Array_error(array) {
     if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
     else __warning("Array_error: ERRORS should be number")
     Array_printTo(array, "/dev/stderr")
@@ -345,7 +350,7 @@ function Array_debug(array, level) {
 }
 
 function List_add(array, string) {
-    if (!Array_contains(array, string)) Array_add(array, string)
+    if (!List_contains(array, string)) Array_add(array, string)
 }
 
 function List_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
@@ -395,6 +400,11 @@ function String_join(array, ofs,    h,i,r) {
     for (i = 1; i <= array["length"]; ++i)
         if (i == 1) r = array[1]
         else r = r ofs array[i]
+    return r
+}
+
+function String_repeat(string, times,   o,p,q,r) {
+    for (p = 0; p < times; ++p) r = r string
     return r
 }
 
