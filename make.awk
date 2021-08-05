@@ -69,7 +69,7 @@ function make_parse(origin,    a,b,c,d,e,f,m,n) {
 
     for (n = 1; n <= origin["files"]["length"]; ++n) {
         f = get_FileNameExt(origin["files"][n])
-        if (!(f in format)) { __error("make.awk: No Format for FileName."f); Array_remove(origin["files"], n--); continue }
+        if (!(f in format)) { __error("make.awk: No Format for FileName."f); List_remove(origin["files"], n--); continue }
         if (!((c = format[f]"_""parse") in FUNCTAB)) { __error("No function "c); continue }
 
         @c(origin["files"][n])

@@ -37,7 +37,7 @@ function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u
 
 function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
-    else __warning("Array_error: ERRORS should be number")
+    else __warning("__error: ERRORS should be number")
     __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
@@ -122,7 +122,7 @@ function get_FileNameExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileExt) {
 function get_FileNameNoExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileName) {
     path["length"] = split(pathName, path, "/")
     file["length"] = split(path[path["length"]], file, ".")
-    if (file["length"]) Array_remove(file, file["length"])
+    if (file["length"]) List_remove(file, file["length"])
     for (i = 1; i <= file["length"]; ++i) fileName = String_concat(fileName, ".", file[i])
     return fileName
 }
@@ -141,7 +141,7 @@ function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, pa
     for (p = 1; p <= path1["length"]; ++p)
         path0[++path0["length"]] = path1[p]
     for (p = 1; p <= path0["length"]; ++p)
-        if (path0[p + 1] == "..") { Array_remove(path0, p + 1); Array_remove(path0, p); p -= 2; continue }
+        if (path0[p + 1] == "..") { List_remove(path0, p + 1); List_remove(path0, p); p -= 2; continue }
     for (p = 1; p <= path0["length"]; ++p)
         r = r path0[p] (p < path0["length"] ? "/" : "")
     return r
@@ -265,30 +265,30 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
     exit 1
 }
 
-function Array_length(array,   s,t) {
+function List_length(array,   s,t) {
     t = typeof(array)
     if (t == "untyped" || t == "unassigned") return
-    if (t != "array") __error("Array_length: array isn't Array but '"t"'")
+    if (t != "array") __error("List_length: array isn't Array but '"t"'")
     return "length" in array ? array["length"] : 0
 }
 
-function Array_first(array) {
-    if (!Array_length(array)) return
+function List_first(array) {
+    if (!List_length(array)) return
     return array[1]
 }
 
-function Array_last(array,    h, i, j, k, l) {
-    if (!(l = Array_length(array))) return
+function List_last(array,    h, i, k, l) {
+    if (!(l = List_length(array))) return
     return array[l]
 }
 
-function Array_add(array, value,    h, i, j, k, l) {
+function List_add(array, value,    h, i, k, l) {
     l = ++array["length"]
     if (typeof(value) != "untyped") array[l] = value
     return l
 }
 
-function Array_insert(array, i, value,    h, j, k, l) {
+function List_insert(array, i, value,    h, k, l) {
     l = ++array["length"]
     # move all above including i
     for (h = l; h >= i; --h)
@@ -306,23 +306,31 @@ function List_contains(array, item,    m,n,r) {
     return r
 }
 
-function Array_copyTo(array0, array1,    h, i, j, k, l, m, n) {
-    if (typeof(array0) != "array") { __error("Array_copyTo: array0 is not array, but "typeof(array0)); return }
-    if (typeof(array1) != "array") { __error("Array_copyTo: array1 is not array, but "typeof(array1)); return }
+function List_copyTo(array0, array1,    h, i, j, k, l, m, n) {
+    if (typeof(array0) != "array") { __error("List_copyTo: array0 is not array, but "typeof(array0)); return }
+    if (typeof(array1) != "array") { __error("List_copyTo: array1 is not array, but "typeof(array1)); return }
+    for (i = 1; i <= array0["length"]; ++i)
+        array1[++array1["length"]] = array0[i]
+}
+
+function Dictionary_copyTo(array0, array1,    h, i, j, k, l, m, n) {
+    if (typeof(array0) != "array") { __error("Dictionary_copyTo: array0 is not array, but "typeof(array0)); return }
+    if (typeof(array1) != "array") { __error("Dictionary_copyTo: array1 is not array, but "typeof(array1)); return }
     for (i in array0) {
+        if (i == "length" || i ~ /^[1-9][0-9]*$/) continue
         if (typeof(array0[i]) == "unassigned") {
             array1[i]
             continue
         }
         if (typeof(array0[i]) == "array") {
-            Array_copyTo(array0[i], array1[i])
+            Dictionary_copyTo(array0[i], array1[i])
             continue
         }
         array1[i] = array0[i]
     }
 }
 
-function Array_remove(array, i,    h, j, k, l, m, n) {
+function List_remove(array, i,    h, j, k, l, m, n) {
     if (typeof(i) == "untyped") { __error("i is untyped"); return }
     if (typeof(i) != "number") { delete array[i]; return }
     l = array["length"]
@@ -360,10 +368,6 @@ function Array_debug(array, level) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr")
 }
 
-function List_add(array, string) {
-    if (!List_contains(array, string)) Array_add(array, string)
-}
-
 function List_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
@@ -372,15 +376,15 @@ function List_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, 
         if (n0 && n1) break
     }
     if (!n0) {
-        Array_insert(array, 1, string0)
-        Array_insert(array, 1, string1)
+        List_insert(array, 1, string0)
+        List_insert(array, 1, string1)
     }
     else if (!n1) {
-        Array_insert(array, n0, string1)
+        List_insert(array, n0, string1)
     }
     else if (n1 > n0) {
-        Array_remove(array, n1)
-        Array_insert(array, n0, string1)
+        List_remove(array, n1)
+        List_insert(array, n0, string1)
     }
 }
 
@@ -392,15 +396,15 @@ function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n
         if (n0 && n1) break
     }
     if (!n0) {
-        Array_insert(array, l, string1)
-        Array_insert(array, l, string0)
+        List_insert(array, l, string1)
+        List_insert(array, l, string0)
     }
     else if (!n1) {
-        Array_insert(array, n0 + 1, string1)
+        List_insert(array, n0 + 1, string1)
     }
     else if (n1 < n0) {
-        Array_remove(array, n1)
-        Array_insert(array, n0 + 1, string1)
+        List_remove(array, n1)
+        List_insert(array, n0 + 1, string1)
     }
 }
 
@@ -469,7 +473,7 @@ function String_countChar(string, char,    a,b,c,d,e,f,g,h,i,j,k,l,m,n) {
 
 function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
     # save old INDEX
-    i = Array_add(INDEX)
+    i = List_add(INDEX)
     INDEX[i]["OUTPUTRECORDSEP"] = ORS
     INDEX[i]["RECORDSEP"] = RS
     INDEX[i]["OUTPUTFIELDSEP"] = OFS
@@ -495,7 +499,7 @@ function Index_pull(new, fs, ofs, rs, ors) {
 
 function Index_push(new, fs, ofs, rs, ors,    h,i,m,n) {
     # save old INDEX
-    i = Array_add(INDEX)
+    i = List_add(INDEX)
     INDEX[i]["OUTPUTRECORDSEP"] = ORS
     INDEX[i]["RECORDSEP"] = RS
     INDEX[i]["OUTPUTFIELDSEP"] = OFS
@@ -535,7 +539,7 @@ function Index_pop(fs, ofs, rs, ors,    h,i,q,r) {
         FS  = INDEX[i]["FIELDSEP"]
         $0  = INDEX[i][0]
 
-        Array_remove(INDEX, i)
+        List_remove(INDEX, i)
     }
     Index_reset()
     return r
@@ -676,7 +680,7 @@ function File_print(file, rs, ors, noLastORS,    x, y, z) {
 
 function File_error(file, rs, ors, noLastORS,    x, y, z) {
     if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
-    else __warning("Array_error: ERRORS should be number")
+    else __warning("File_error: ERRORS should be number")
     File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 

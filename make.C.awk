@@ -47,17 +47,17 @@ function C_prepare_preprocess(config,    a,b,c,d,input,m,output) {
 
     if (typeof(includeDirs) == "untyped") {
         # includeDirs["length"]
-        Array_add(includeDirs, "/usr/include/")
+        List_add(includeDirs, "/usr/include/")
         v = uname_machine()
         if (Compiler == "gcc") {
-            Array_add(includeDirs, "/usr/include/"v"-linux-gnu/")
-            Array_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"gcc_version()"/include/")
+            List_add(includeDirs, "/usr/include/"v"-linux-gnu/")
+            List_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"gcc_version()"/include/")
         }
         else if (Compiler == "tcc")
-            Array_add(includeDirs, "/usr/lib/"v"-linux-gnu/tcc/include/")
+            List_add(includeDirs, "/usr/lib/"v"-linux-gnu/tcc/include/")
         else __warning("make.awk: Unsupported compiler")
         for (d = 1; d <= config["directories"]["length"]; ++d)
-            Array_add(includeDirs, config["directories"][d])
+            List_add(includeDirs, config["directories"][d])
     }
 
     Array_clear(C_defines)
@@ -542,7 +542,7 @@ function C_preprocess(fileName, output, # public parsed
             Index_remove(1, 2)
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
-            f = Array_add(ifExpressions)
+            f = List_add(ifExpressions)
             ifExpressions[f]["if"] = $0
 
             w = CDefine_eval($0)
@@ -588,7 +588,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
         }
         else if ($2 == "endif") {
             f = ifExpressions["length"]
-            Array_remove(ifExpressions, f)
+            List_remove(ifExpressions, f)
 
             NF = 0
         }
