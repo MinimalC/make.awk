@@ -125,14 +125,14 @@ function C_preprocess(fileName, output, # public parsed
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n)
-                if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                if ($n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
                     $n = "defined"fix"("fix $n fix")"; Index_reset(); n += 3
                 }
         }
         else if ($2 == "ifndef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n)
-                if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                if ($n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
                     $n = "!"fix"defined"fix"("fix $n fix")"; Index_reset(); n += 4
                 }
         }
@@ -244,7 +244,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
             if (name in C_defines) {
                 __warning(fileName" Line "z": define "name" exists already")
             }
-            else if (name !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+            else if (name !~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
                 __error(fileName" Line "z": define "name" isn't a name")
             }
             else {
@@ -254,7 +254,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                 if ($1 == "(") {
                     for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
                     for (n = 2; n <= NF; ++n) {
-                        if ($n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                        if ($n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
                             # if ($n in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (define)")
                             # else if ($n in C_types) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (typedef)")
                             # else if ($n in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument "$n" (keyword)")
@@ -365,8 +365,8 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         for (i = 1; i <= NF; ++i) {
             # if ($i ~ /^\s*$/) if (i == 1 || NF != 1) continue # except SPACES
             if ($i ~ /^\s*$/) { Index_remove(i--); continue } # clean
-            if ($i ~ /^\/\* ?\w[^#]\w* ?\*\/$/) continue # short comments
-            if ($i ~ /^\/\*/) { Index_remove(i--); continue } # comments
+            if ($i ~ /^\/\* ?[^#][a-zA-Z_][a-zA-Z_0-9]* ?\*\/$/) continue # short comments
+            if ($i ~ /^\/\*/ || $i ~ /\*\/$/) { Index_remove(i--); continue } # comments
             # if ($i == "\\") { Index_remove(i--); continue }
         }
 

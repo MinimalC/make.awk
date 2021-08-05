@@ -357,12 +357,12 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
-        if ($i ~ /[[:alpha:]_]/) {
+        if ($i ~ /[a-zA-Z_]/) {
             if (i > 1) if (Index_prepend(i, fix, fix)) ++i
             name = $i
             n = i; while (++n <= NF) {
                 if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
-                if ($n ~ /[[:alpha:]_0-9]/) { name = name $n; continue }
+                if ($n ~ /[a-zA-Z_0-9]/) { name = name $n; continue }
                 --n; break
             }
             was = name

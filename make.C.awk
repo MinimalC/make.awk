@@ -158,7 +158,7 @@ if (DEBUG == 5) __debug(fileName" Line "z": name "name" is already "expression[l
                         s = 1; name = $n
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         if ($(n + 1) in C_keywords) break
-                        if ($(n + 1) !~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) break
+                        if ($(n + 1) !~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) break
                         name = String_concat(name, " ", $(++n))
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         break
@@ -215,7 +215,7 @@ if (DEBUG == 5) __debug(fileName" Line "z": continue "$i" "name)
                             if (n + 1 > i) { $i = String_concat($i, " ", $(n + 1)); Index_remove(n + 1) }
                         continue
                     }
-                    if (var == "" && !o && $n ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+                    if (var == "" && !o && $n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
                         var = $n
                         if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
                         if (!k) break

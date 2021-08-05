@@ -156,11 +156,11 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
         # if ($o == "\\") { Index_remove(o--); continue }
         if ($o == "##") {
             s = ""
-            if ($(o - 1) ~ /^[[:alpha:]_0-9]+$/) {
+            if ($(o - 1) ~ /^[a-zA-Z_0-9]+$/) {
                 s = $(o - 1)
                 Index_remove(--o)
             }
-            if ($(o + 1) ~ /^[[:alpha:]_0-9]+$/) {
+            if ($(o + 1) ~ /^[a-zA-Z_0-9]+$/) {
                 s = s $(o + 1)
                 Index_remove(o + 1)
             }
@@ -170,7 +170,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
         }
         if ($o == "#") {
             s = ""
-            if ($(o + 1) ~ /^[[:alpha:]_0-9]+$/) {
+            if ($(o + 1) ~ /^[a-zA-Z_0-9]+$/) {
                 s = "\""$(o + 1)"\""
                 Index_remove(o + 1)
             }
@@ -327,7 +327,7 @@ else __debug("NotDefined "n)
             continue
         }
         # Evaluate AWA ( a , b ) or AWA
-        if ($i ~ /^[[:alpha:]_][[:alpha:]_0-9]*$/) {
+        if ($i ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
             name = $i
             if (!(name in C_defines)) {
 if (DEBUG == 4) __debug("NotUsing "name)
