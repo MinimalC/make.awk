@@ -473,7 +473,7 @@ function String_countChar(string, char,    a,b,c,d,e,f,g,h,i,j,k,l,m,n) {
 
 function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
     # save old INDEX
-    i = List_add(INDEX)
+    i = ++INDEX["length"]
     INDEX[i]["OUTPUTRECORDSEP"] = ORS
     INDEX[i]["RECORDSEP"] = RS
     INDEX[i]["OUTPUTFIELDSEP"] = OFS
@@ -499,7 +499,7 @@ function Index_pull(new, fs, ofs, rs, ors) {
 
 function Index_push(new, fs, ofs, rs, ors,    h,i,m,n) {
     # save old INDEX
-    i = List_add(INDEX)
+    i = ++INDEX["length"]
     INDEX[i]["OUTPUTRECORDSEP"] = ORS
     INDEX[i]["RECORDSEP"] = RS
     INDEX[i]["OUTPUTFIELDSEP"] = OFS
@@ -539,7 +539,7 @@ function Index_pop(fs, ofs, rs, ors,    h,i,q,r) {
         FS  = INDEX[i]["FIELDSEP"]
         $0  = INDEX[i][0]
 
-        List_remove(INDEX, i)
+        delete INDEX[INDEX["length"]--]
     }
     Index_reset()
     return r
