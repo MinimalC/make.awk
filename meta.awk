@@ -210,7 +210,7 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
         if (controller"_"ARGV[i] in FUNCTAB) {
             if (i > 1) {
                 if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-                @make(origin); Array_clear(origin)
+                @make(origin); if ("next" in origin) delete origin["next"]; else Array_clear(origin)
             }
             action = ARGV[i]
             ARGV[i] = ""; continue
@@ -391,6 +391,10 @@ function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n
         Array_remove(array, n1)
         Array_insert(array, n0 + 1, string1)
     }
+}
+
+function String_split(array, string, sepp) {
+    array["length"] = split(string, array, sepp)
 }
 
 function String_join(array, ofs,    h,i,r) {

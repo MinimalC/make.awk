@@ -5,8 +5,46 @@
 #include "../make.awk/meta.awk"
 @include "../make.awk/make.CDefine_eval.awk"
 
-function C_prepare(config,    a,b,c,d,input,m,output)
-{
+function C_prepare_preprocess(config,    a,b,c,d,input,m,output) {
+
+    if (typeof(C_keywords) == "untyped") {
+        C_keywords["struct"]
+        C_keywords["union"]
+        C_keywords["enum"]
+
+        C_keywords["const"]
+        C_keywords["volatile"]
+
+        C_keywords["typedef"]
+        C_keywords["static"]
+        C_keywords["extern"]
+        C_keywords["inline"]
+        C_keywords["register"]
+        C_keywords["auto"]
+
+        C_keywords["restrict"]
+
+        C_keywords["do"]
+        C_keywords["while"]
+        C_keywords["for"]
+        C_keywords["break"]
+        C_keywords["continue"]
+
+        C_keywords["if"]
+        C_keywords["else"]
+        C_keywords["switch"]
+        C_keywords["case"]
+        C_keywords["goto"]
+
+        C_keywords["sizeof"]
+        C_keywords["return"]
+
+        C_keywords["inline"]
+        C_keywords["_Noreturn"]
+
+        C_keywords["_Thread"]
+    }
+
     if (typeof(includeDirs) == "untyped") {
         # includeDirs["length"]
         Array_add(includeDirs, "/usr/include/")
@@ -49,10 +87,13 @@ function C_prepare(config,    a,b,c,d,input,m,output)
 
     preprocessed["C"]["length"]
     Array_clear(preprocessed["C"])
-    C_preprocess(Compiler, preprocessed["C"])
+    if (!(Compiler in preprocessed["C"])) {
+        preprocessed["C"][Compiler]["length"]
+        C_preprocess(Compiler, preprocessed["C"][Compiler])
+    }
+}
 
-    precompiled["C"]["length"]
-    Array_clear(precompiled["C"])
+function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
     Array_clear(C_types)
     C_types["void"]["isLiteral"]
@@ -72,43 +113,9 @@ function C_prepare(config,    a,b,c,d,input,m,output)
     C_types["_Float128"]["isLiteral"]
     C_types["__builtin_va_list"]["isLiteral"]
 
-    if (typeof(C_keywords) == "untyped") {
-        C_keywords["struct"]
-        C_keywords["union"]
-        C_keywords["enum"]
-
-        C_keywords["const"]
-        C_keywords["volatile"]
-
-        C_keywords["typedef"]
-        C_keywords["static"]
-        C_keywords["extern"]
-        C_keywords["inline"]
-        C_keywords["register"]
-        C_keywords["auto"]
-
-        C_keywords["restrict"]
-
-        C_keywords["do"]
-        C_keywords["while"]
-        C_keywords["for"]
-        C_keywords["break"]
-        C_keywords["continue"]
-
-        C_keywords["if"]
-        C_keywords["else"]
-        C_keywords["switch"]
-        C_keywords["case"]
-        C_keywords["goto"]
-
-        C_keywords["sizeof"]
-        C_keywords["return"]
-
-        C_keywords["inline"]
-        C_keywords["_Noreturn"]
-
-        C_keywords["_Thread"]
-    }
+    precompiled["C"]["length"]
+    Array_clear(precompiled["C"])
+    C_precompile(Compiler, precompiled["C"])
 }
 
 function C_parse(fileName, input,
@@ -712,7 +719,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             Index_push($0, fixFS, " ")
             __warning(fileName" Line "z": "$0)
             Index_pop()
-        #    NF = 0
+            NF = 0
         }
         else if ($2 == "error") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
@@ -1011,23 +1018,20 @@ if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (e
 
 }
 
-function C_precompile(output,   h,i,input,m,n,z)
+function C_precompile(fileName, output,   h,i,input,m,n,z)
 {
-#    input["length"]
-#    if (!(Compiler in input))
-#         C_preprocess(Compiler, input)
 #    if (!C_preprocess(fileName, input)) return
 
     # C_precompile is PROTOTYPE
 
-    preprocessed["C"]["fields"]["length"]
-    for (n in preprocessed["C"]["fields"]) {
-        if (typeof(preprocessed["C"]["fields"][n]) == "array")
-            output[++output["length"]] = preprocessed["C"]["fields"][n]["body"]
+    preprocessed["C"][fileName]["fields"]["length"]
+    for (n in preprocessed["C"][fileName]["fields"]) {
+        if (typeof(preprocessed["C"][fileName]["fields"][n]) == "array")
+            output[++output["length"]] = preprocessed["C"][fileName]["fields"][n]["body"]
     }
 
-    for (z = 1; z <= preprocessed["C"]["length"]; ++z)
-        output[++output["length"]] = preprocessed["C"][z]
+    for (z = 1; z <= preprocessed["C"][fileName]["length"]; ++z)
+        output[++output["length"]] = preprocessed["C"][fileName][z]
 
     return 1
 }
