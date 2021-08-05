@@ -13,7 +13,7 @@ function set_make_debug(wert) { DEBUG = wert }
 function set_make_compiler(wert) { Compiler = wert }
 
 BEGIN {
-    fixFS = @/\xA0/ #\s*\xA0?/
+    fixFS = @/\xA0/
     fix = "\xA0"
 
     if (typeof(format) == "untyped") {
@@ -48,24 +48,11 @@ END {
     }
 }
 
-function make_prepare(origin,    a,b,c,d,e,f) {
-
-    for (f = format["length"]; f; --f) {
-        if (!((c = format[f]"_""prepare") in FUNCTAB)) continue
-        @c(origin)
-    }
-    # ASM_prepare(origin)
-    #C_prepare(origin)
-    #CSharp_prepare(origin)
-
-    ++prepared
-}
-
 function make_parse(origin,    a,b,c,d,e,f,m,n) {
 
     if (!origin["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin["files"][1])
-    if (!prepared) make_prepare(origin)
+    #if (!prepared) make_prepare(origin)
 
     for (n = 1; n <= origin["files"]["length"]; ++n) {
         f = get_FileNameExt(origin["files"][n])
@@ -83,7 +70,7 @@ function make_preprocess(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,
     if (!origin["files"]["length"]) { __error(USAGE); return }
     origin["next"]
     if (!Project) Project = get_FileNameNoExt(origin["files"][1])
-    # if (!prepared) make_prepare(origin)
+    #if (!prepared) make_prepare(origin)
 
     for (f = 1; f <= format["length"]; ++f) {
         F = format[f]
@@ -133,7 +120,7 @@ else       Index_push("", fixFS, " ", "\0", "\n")
         for (z = 1; z <= precompiled[F]["length"]; ++z)
             pre[++pre["length"]] = Index_reset(precompiled[F][z])
         Index_pop()
-        File_printTo(pre, "."Project (++precompiled_count[F] == 1 ? "" : precompiled_count[F])"...prec."F)
+        File_printTo(pre, "."Project (++precompiled_count[F] == 1 ? "" : precompiled_count[F])"..."F)
     } }
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
@@ -148,7 +135,7 @@ function make_compile(origin,    a,b,c,C,d,e,f,F,g,h,i,k,l,m,n,o,p,q,r,s,t,u,v,w
 
         compiled[F]["length"]
         if (!@C(compiled[F])) continue
-        if (!compiled[F]["length"]) continue
+        #if (!compiled[F]["length"]) continue
         ++o
 
         File_printTo(compiled[F], "."Project (++compiled_count[F] == 1 ? "" : compiled_count[F])"..."F".o", "\n", "\n", 1)

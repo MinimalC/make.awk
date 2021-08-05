@@ -306,27 +306,27 @@ function List_contains(array, item,    m,n,r) {
     return r
 }
 
-function List_copyTo(array0, array1,    h, i, j, k, l, m, n) {
-    if (typeof(array0) != "array") { __error("List_copyTo: array0 is not array, but "typeof(array0)); return }
-    if (typeof(array1) != "array") { __error("List_copyTo: array1 is not array, but "typeof(array1)); return }
-    for (i = 1; i <= array0["length"]; ++i)
-        array1[++array1["length"]] = array0[i]
+function List_copy(file, copy,    h, i, j, k, l, m, n) {
+    if (typeof(file) != "array") { __error("List_copy: file is not array, but "typeof(file)); return }
+    if (typeof(copy) != "array") { __error("List_copy: copy is not array, but "typeof(copy)); return }
+    for (i = 1; i <= file["length"]; ++i)
+        copy[++copy["length"]] = file[i]
 }
 
-function Dictionary_copyTo(array0, array1,    h, i, j, k, l, m, n) {
-    if (typeof(array0) != "array") { __error("Dictionary_copyTo: array0 is not array, but "typeof(array0)); return }
-    if (typeof(array1) != "array") { __error("Dictionary_copyTo: array1 is not array, but "typeof(array1)); return }
-    for (i in array0) {
+function Dictionary_copy(file, copy,    h, i, j, k, l, m, n) {
+    if (typeof(file) != "array") { __error("Dictionary_copy: file is not array, but "typeof(file)); return }
+    if (typeof(copy) != "array") { __error("Dictionary_copy: copy is not array, but "typeof(copy)); return }
+    for (i in file) {
         if (i == "length" || i ~ /^[1-9][0-9]*$/) continue
-        if (typeof(array0[i]) == "unassigned") {
-            array1[i]
+        if (typeof(file[i]) == "unassigned") {
+            copy[i]
             continue
         }
-        if (typeof(array0[i]) == "array") {
-            Dictionary_copyTo(array0[i], array1[i])
+        if (typeof(file[i]) == "array") {
+            Dictionary_copy(file[i], copy[i])
             continue
         }
-        array1[i] = array0[i]
+        copy[i] = file[i]
     }
 }
 
@@ -408,6 +408,12 @@ function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n
     }
 }
 
+function List_sort(source,    a,b,c,copy,h,i) {
+    for (i = 1; i <= source["length"]; ++i) copy[i] = source[i]
+    asort(copy)
+    for (i = 1; i <= source["length"]; ++i) source[i] = copy[i]
+}
+
 function String_split(array, string, sepp) {
     array["length"] = split(string, array, sepp)
 }
@@ -450,7 +456,7 @@ function String_endsWith(string0, string1,    h, i, j, k, l0, l1, m) {
     return m == string1
 }
 
-function String_trim(string, sepp,    h, i, j) {
+function String_trim(string, sepp,    h, i) {
     if (typeof(sepp) == "untyped") sepp = @/[ \t]/
     Index_push(string, "", "")
     for (i = 1; i <= NF; ++i) {
@@ -464,11 +470,13 @@ function String_trim(string, sepp,    h, i, j) {
     return Index_pop()
 }
 
-function String_countChar(string, char,    a,b,c,d,e,f,g,h,i,j,k,l,m,n) {
-    Index_push(string, "", "")
-    for (n = 1; n <= NF; ++n) if ($n == char) ++c
-    Index_pop()
-    return c
+function String_countChars(string, chars,    h,i,l,n) {
+    l = length(chars)
+    while (i = index(string, chars)) {
+        string = substr(string, i + l)
+        ++n
+    }
+    return n
 }
 
 function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
@@ -708,17 +716,6 @@ function File_toString(file, ors,    o,r,s,x,y,z) {
 function File_clearLines(file, regex,    h, i) {
     for (i = 1; i <= file["length"]; ++i)
         if (file[i] ~ regex) file[i] = ""
-}
-
-function List_copy(file, copy,    h, i) {
-    for (i = 1; i <= file["length"]; ++i)
-        copy[++copy["length"]] = file[i]
-}
-
-function List_sort(source,    a,b,c,copy,h,i) {
-    for (i = 1; i <= source["length"]; ++i) copy[i] = source[i]
-    asort(copy)
-    for (i = 1; i <= source["length"]; ++i) source[i] = copy[i]
 }
 
 function __pipe(command, options, output,    a,b,c,cmd,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {

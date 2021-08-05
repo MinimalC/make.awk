@@ -3,6 +3,7 @@
 # 2021 Hans Riehm
 
 #include "../make.awk/meta.awk"
+#include "../make.awk/make.C.awk"
 
 function CSharp_prepare_preprocess(config,    a,b,c,class,d,e,f,g,h,i,j,k,l,m,member,members,n,namespace,namespaces,o,p,q,r,s,t,u,v,w,x,y,z) {
 
