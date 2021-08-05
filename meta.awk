@@ -190,16 +190,22 @@ function List_clear(array,    h, i) {
 function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
     a,b,c,d,default,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
 {
-    if (typeof(usage) == "untyped") {
-        if (typeof(USAGE) != "untyped") usage = USAGE
-        else usage = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
-    }
     if (typeof(action) == "untyped") {
         action = controller
         controller = ""
     }
+    else if (typeof(usage) == "untyped") {
+        usage = action
+        action = controller
+        controller = ""
+    }
+    if (!usage) {
+        if (typeof(USAGE) != "untyped" && USAGE) usage = USAGE
+        else usage = "Use awk -f Project.awk command [Directory] [File.name]\n"\
+                     "with awk BEGIN { __BEGIN(\"start\") } and function Project_command(config) { }"
+    }
     if (!controller) {
-        if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
+        if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
         else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
         if (!controller || controller == "_") { __error(usage); exit }
     }
@@ -248,7 +254,7 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
         ARGV[i] = ""
     }
     if (!action) {
-        if (typeof(ACTION) != "untyped") action = ACTION
+        if (typeof(ACTION) != "untyped" && ACTION) action = ACTION
         else if (default) action = default
         else action = "BEGIN"
     }

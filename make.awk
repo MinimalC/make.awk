@@ -30,7 +30,9 @@ BEGIN {
 
     Compiler = "gcc"
 
-    __BEGIN("make", "compile", "make.awk: Use make.awk [parse|preprocess|precompile|compile] project=Program Program.c")
+    USAGE = "make.awk: Use make.awk project=Program [preprocess] Program.c [precompile] [compile]"
+
+    __BEGIN("compile")
 }
 
 END {
@@ -94,6 +96,7 @@ function make_preprocess(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,
         preprocessed[F][N]["length"]
         if (!@C(N, preprocessed[F][N])) continue
         #if (!preprocessed[F][N]["length"]) continue
+        #preprocessed[F][ ++preprocessed[F]["length"] ] = N
         ++o
 
         Array_clear(pre)
