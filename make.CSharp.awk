@@ -44,21 +44,18 @@ function CSharp_prepare_preprocess(config,    a,b,c,class,d,e,f,g,h,i,j,k,l,m,me
         parsed["CLI"]["name"] = "CLI"
         parsed["CLI"][++parsed["CLI"]["length"]] = "#"fix"include"fix"<meta/System.h>"
     }
-    if (!("CLI" in preprocessed["C"])) {
-        preprocessed["C"]["CLI"]["length"]
-        C_preprocess("CLI", preprocessed["C"]["CLI"])
-    }
 
-    if (!("System" in CSharp_Types)) ; # TODO
+    preprocessed["CSharp"]["length"]
+    Array_clear(preprocessed["CSharp"])
 }
 
 function CSharp_prepare_precompile(config,    a,b,c,class,d,e,f,g,h,i,j,k,l,m,member,members,n,namespace,namespaces,o,p,q,r,s,t,u,v,w,x,y,z) {
 
+    Array_clear(CSharp_Types)
+    if (!("System" in CSharp_Types)) ; # TODO
+
     precompiled["CSharp"]["length"]
     Array_clear(precompiled["CSharp"])
-
-    Array_clear(CSharp_Types)
-    CSharp_Types["System"]["type"] = "namespace"
 }
 
 function CSharp_parse(fileName, file) {
@@ -126,8 +123,10 @@ if (DEBUG) { __debug("CSharp_using "); Array_debug(using) }
     return !r
 }
 
-function CSharp_compile(output,   a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
-{
-
-}
+#function CSharp_compile(output,   a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
+#{
+#    for (z = 1; z <= precompiled["CSharp"]["length"]; ++z)
+#        output[++output["length"]] = precompiled["CSharp"][z]
+#    return 1
+#}
 

@@ -191,24 +191,23 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
     a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
 {
     if (typeof(usage) == "untyped") {
-        if (typeof(USAGE) != "untyped") usage = USAGE
-        else usage = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
-    }
-    if (typeof(controller) == "untyped") {
-        if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
-        else {
-            if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
-            if (!controller || controller == "_") { __error(usage); exit }
+        usage = controller
+        controller = ""
+        if (!usage) {
+            if (typeof(USAGE) != "untyped") usage = USAGE
+            else usage = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
         }
     }
-    if (typeof(action) == "untyped") {
-        if (typeof(ACTION) != "untyped") action = ACTION
-        else action = "BEGIN"
+    if (!controller) {
+        if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
+        else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
+        if (!controller || controller == "_") { __error(usage); exit }
     }
+
     for (i = 1; i <= ARGV_length(); ++i) {
         if (ARGV[i] ~ /^\s*$/) continue
         if (controller"_"ARGV[i] in FUNCTAB) {
-            if (i > 1) {
+            if (i > 1 && action) {
                 if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
                 @make(origin); if ("next" in origin) delete origin["next"]; else Array_clear(origin)
             }
@@ -247,8 +246,12 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
         __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
         ARGV[i] = ""
     }
-    if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-    @make(origin)
+    if (!action) {
+        if (typeof(ACTION) != "untyped") action = ACTION
+        else action = "BEGIN"
+    }
+    if (!((make = controller"_"action) in FUNCTAB)) __error(controller".awk: Unknown method "make)
+    else @make(origin)
 
     if (typeof(ERRORS) == "number" && ERRORS) exit
     exit 1
