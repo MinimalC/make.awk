@@ -30,11 +30,7 @@ BEGIN {
 
     Compiler = "gcc"
 
-    USAGE = "make.awk: Use make.awk [parse|preprocess|precompile|compile] project=Program Program.c"
-
-    ACTION = "compile"
-
-    __BEGIN()
+    __BEGIN("make", "compile", "make.awk: Use make.awk [parse|preprocess|precompile|compile] project=Program Program.c")
 }
 
 END {

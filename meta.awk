@@ -187,22 +187,23 @@ function List_clear(array,    h, i) {
     array["length"] = 0
 }
 
-function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
-    a,b,c,d,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
+function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
+    a,b,c,d,default,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
 {
     if (typeof(usage) == "untyped") {
-        usage = controller
+        if (typeof(USAGE) != "untyped") usage = USAGE
+        else usage = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
+    }
+    if (typeof(action) == "untyped") {
+        action = controller
         controller = ""
-        if (!usage) {
-            if (typeof(USAGE) != "untyped") usage = USAGE
-            else usage = "meta.awk: Use awk -f Project.awk [command] [Directory] File.name"
-        }
     }
     if (!controller) {
         if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
         else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
         if (!controller || controller == "_") { __error(usage); exit }
     }
+    if (action) { default = action; action = "" }
 
     for (i = 1; i <= ARGV_length(); ++i) {
         if (ARGV[i] ~ /^\s*$/) continue
@@ -248,6 +249,7 @@ function __BEGIN(action, controller, usage, # public CONTROLLER, ACTION, USAGE, 
     }
     if (!action) {
         if (typeof(ACTION) != "untyped") action = ACTION
+        else if (default) action = default
         else action = "BEGIN"
     }
     if (!((make = controller"_"action) in FUNCTAB)) __error(controller".awk: Unknown method "make)
