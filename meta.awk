@@ -1,4 +1,4 @@
-
+#!/usr/bin/awk -f
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
@@ -11,6 +11,13 @@ BEGIN {
     FS="";OFS="";RS="\0";ORS="\n"
 
     MAX_NUMBER = 2147483648
+
+    if (PROCINFO["argv"][1] == "-f") if (get_FileNameNoExt(PROCINFO["argv"][2]) == "meta") __BEGIN()
+}
+
+function meta_ARGC_ARGV() {
+
+    ARGC_ARGV_debug()
 }
 
 # BEGINFILE { } # ENDFILE { }
@@ -61,11 +68,6 @@ function PROCINFO_debug() {
     Array_printTo(PROCINFO, "/dev/stderr", 1)
 }
 
-function ARGV_debug() {
-    print "ARGV" >"/dev/stderr"
-    Array_printTo(ARGV, "/dev/stderr", 1)
-}
-
 function SYMTAB_debug() {
     print "SYMTAB" >"/dev/stderr"
     Array_printTo(SYMTAB, "/dev/stderr", 1)
@@ -74,6 +76,19 @@ function SYMTAB_debug() {
 function FUNCTAB_debug() {
     print "FUNCTAB" >"/dev/stderr"
     Array_printTo(FUNCTAB, "/dev/stderr", 1)
+}
+
+function ARGV_debug() {
+    print "ARGV" >"/dev/stderr"
+    Array_printTo(ARGV, "/dev/stderr", 1)
+}
+
+function ARGC_ARGV_debug() {
+    ENVIRON_debug()
+    PROCINFO_debug()
+    FUNCTAB_debug()
+    SYMTAB_debug()
+    ARGV_debug()
 }
 
 function File_exists(fileName,    h, i, j, r,x,y,z) {
@@ -86,9 +101,14 @@ function File_exists(fileName,    h, i, j, r,x,y,z) {
     return 0 #r
 }
 
-function Directory_exists(dirName) {
-    if (!dirName) { __error("Directory_exists: dirName is null"); return }
-    if (!system("test -d '"dirName"'")) return 1
+function Directory_exists(directory) {
+    if (!directory) { __error("Directory_exists: directory is null"); return }
+    if (!system("test -d '"directory"'")) return 1
+}
+
+function change_Directory(directory) {
+    if (!directory) { __error("change_Directory: directory is null"); return }
+    if (!system("cd '"directory"'")) return 1
 }
 
 function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
@@ -187,8 +207,12 @@ function List_clear(array,    h, i) {
     array["length"] = 0
 }
 
+function cd_awk_coprocess(directory, options, input, output,  a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    __coprocess("cd '"directory"' && awk", "-f "options, input, output)
+}
+
 function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
-    a,b,c,d,default,e,f,g,h,i,j,k,l,m,make,n,o,origin,p,paramName,paramWert,q,r,s,t,u,v,w,x,y,z)
+    a,b,c,d,default,e,f,g,h,i,j,k,l,m,make,n,o,options,origin,output,p,paramName,paramWert,path,q,r,s,t,u,v,w,workingDir,x,y,z)
 {
     if (typeof(action) == "untyped") {
         action = controller
@@ -201,13 +225,30 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
     }
     if (!usage) {
         if (typeof(USAGE) != "untyped" && USAGE) usage = USAGE
-        else usage = "Use awk -f Project.awk command [Directory] [File.name]\n"\
-                     "with awk BEGIN { __BEGIN(\"start\") } and function Project_command(config) { }"
+        else usage = "Use awk -f meta.awk Project.awk command [Directory] [File.name]\n"\
+                     "with Project.awk BEGIN { __BEGIN(\"action\") } and function Project_command(config) { }"
     }
     if (!controller) {
         if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
         else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
-        if (!controller || controller == "_") { __error(usage); exit }
+        if (controller == "meta") {
+            if (ARGV_length() == 0) { __error(usage); exit }
+            if ("meta_"ARGV[1] in FUNCTAB) ;
+            else if (!File_exists(ARGV[1])) { __error("meta.awk: File "ARGV[1]" doesn't exist"); exit }
+            else {
+                controller = ARGV[1]
+                # path = get_DirectoryName(ARGV[1])
+                workingDir = ENVIRON["PWD"]
+__warning(workingDir" "path" "controller)
+                for (o = 2; o <= ARGV_length(); ++o)
+                    options = options" "ARGV[o]
+                output["length"]
+                r = cd_awk_coprocess(workingDir, controller" "options, "", output)
+                File_printTo(output, "/dev/stdout")
+                exit r
+            }
+        }
+        if (!controller) { __error(usage); exit }
     }
     if (action) { default = action; action = "" }
 
