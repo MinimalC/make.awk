@@ -80,19 +80,21 @@ function make_preprocess(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,
         if ((c = F"_""prepare_preprocess") in FUNCTAB) @c(origin)
         if (!((C = F"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
-        preprocessed[F][N]["length"]
-        if (!@C(N, preprocessed[F][N])) continue
-        #if (!preprocessed[F][N]["length"]) continue
-        #preprocessed[F][ ++preprocessed[F]["length"] ] = N
+        preproc[F][N]["length"]
+        if (!@C(N)) continue
+        #if (!preproc[F][N]["length"]) continue
+        #preproc[F][ ++preproc[F]["length"] ] = N
         ++o
 
+if (DEBUG) {
         Array_clear(pre)
-if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
-else       Index_push("", fixFS, " ", "\0", "\n")
-        for (z = 1; z <= preprocessed[F][N]["length"]; ++z)
-            pre[++pre["length"]] = Index_reset(preprocessed[F][N][z])
+if (DEBUG) Index_push("", fixFS, fix, "\0", "\n"); else
+        Index_push("", fixFS, " ", "\0", "\n")
+        for (z = 1; z <= preproc[F][N]["length"]; ++z)
+            pre[++pre["length"]] = Index_reset(preproc[F][N][z])
         Index_pop()
         File_printTo(pre, "."Project (++preprocessed_count[F] == 1 ? "" : preprocessed_count[F])"...prep."F)
+} # if (DEBUG)
     } }
     if (!o) { __error("make.awk: Nothing preprocessed"); return }
 }
@@ -109,16 +111,16 @@ function make_precompile(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,
         if (F != format[get_FileNameExt(N)]) continue
         if (!((C = F"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
-        precompiled[F]["length"]
-        if (!@C(N, precompiled[F])) continue
-        #if (!precompiled[F]["length"]) continue
+        precomp[F]["length"]
+        if (!@C(N)) continue
+        #if (!precomp[F]["length"]) continue
         ++o
 
         Array_clear(pre)
 if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
 else       Index_push("", fixFS, " ", "\0", "\n")
-        for (z = 1; z <= precompiled[F]["length"]; ++z)
-            pre[++pre["length"]] = Index_reset(precompiled[F][z])
+        for (z = 1; z <= precomp[F]["length"]; ++z)
+            pre[++pre["length"]] = Index_reset(precomp[F][z])
         Index_pop()
         File_printTo(pre, "."Project (++precompiled_count[F] == 1 ? "" : precompiled_count[F])"..."F)
     } }
@@ -134,7 +136,7 @@ function make_compile(origin,    a,b,c,C,d,e,f,F,g,h,i,k,l,m,n,o,p,q,r,s,t,u,v,w
         if (!((C = F"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
         compiled[F]["length"]
-        if (!@C(compiled[F])) continue
+        if (!@C()) continue
         #if (!compiled[F]["length"]) continue
         ++o
 

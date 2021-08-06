@@ -85,36 +85,33 @@ function C_prepare_preprocess(config,    a,b,c,d,input,m,output) {
         C_parse(Compiler, output)
     }
 
-    preprocessed["C"]["length"]
-    Array_clear(preprocessed["C"])
-    if (!(Compiler in preprocessed["C"])) {
-        preprocessed["C"][Compiler]["length"]
-        C_preprocess(Compiler, preprocessed["C"][Compiler])
-    }
+    preproc["C"]["length"]
+    Array_clear(preproc["C"])
+    if (!(Compiler in preproc["C"])) C_preprocess(Compiler)
 }
 
-function C_preprocess(fileName, output, # public parsed
+function C_preprocess(fileName,    original, C,  # public parsed
     a,b,c,comments,d,e,expression,f,__FILE__Name,g,h,i,I,ifExpressions,j,k,
     l,leereZeilen,level,m,moved,n,name,o,p,q,r,rendered,s,t,u,v,var,varType,w,x,y,z,zZ)
 {
+    if (!C) C = "C"
+    if (!original) original = fileName
     if (!(fileName in parsed)) if (!C_parse(fileName)) return
 
-    Index_push("", fixFS, fix, "\0", "\n")
-
-    Index_push(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_", "\0", "\0")
-    __FILE__Name = "__FILE__"Index_pop()
+    __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_", "\0", "\0")
 
     # if (!input["length"]) ++input["length"]
 
-    output["fields"]["length"]
-    if (!(__FILE__Name in output["fields"]))
-        output["fields"][__FILE__Name]["body"] = "static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"
+    preproc[C][original]["fields"]["length"]
+    if (!(__FILE__Name in preproc[C][original]["fields"]))
+        preproc[C][original]["fields"][__FILE__Name]["body"] = "static"fix"char"fix __FILE__Name fix"["fix"]"fix"="fix"\""fileName"\""fix";"
 
-    output[++output["length"]] = "#"fix 1 fix"\""fileName"\""
-    # output[output["length"]] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++output["length"]" */"
+    preproc[C][original][ ++preproc[C][original]["length"] ] = "#"fix 1 fix"\""fileName"\""
+    # preproc[C][original][ preproc[C][original]["length"] ] = "#"fix"1"fix"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
 
     C_defines["__FILE__"]["body"] = __FILE__Name
 
+    Index_push("", fixFS, fix, "\0", "\n")
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
         Index_reset(parsed[fileName][z])
 
@@ -209,8 +206,8 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
-                        zZ = output["length"]
-                        C_preprocess(o, output)
+                        zZ = preproc[C][original]["length"]
+                        C_preprocess(o, original, C)
                         C_defines["__FILE__"]["body"] = __FILE__Name
                         C_defines["__LINE__"]["body"] = z
                         break
@@ -223,16 +220,16 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
-                    zZ = output["length"]
-                    C_preprocess(m, output)
+                    zZ = preproc[C][original]["length"]
+                    C_preprocess(m, original, C)
                     C_defines["__FILE__"]["body"] = __FILE__Name
                     C_defines["__LINE__"]["body"] = z
                 }
                 else __warning(fileName" Line "z": File not found: \""m"\"")
             }
-            if (zZ && zZ < output["length"]) {
-                output[++output["length"]] = "#"fix (z + 1) fix"\""fileName"\""
-                # output[output["length"]] = "#"fix (z + 1) fix"\""fileName"\""" /* Zeile "++output["length"]" */"
+            if (zZ && zZ < preproc[C][original]["length"]) {
+                preproc[C][original][ ++preproc[C][original]["length"] ] = "#"fix (z + 1) fix"\""fileName"\""
+                # preproc[C][original][ preproc[C][original]["length"] ] = "#"fix (z + 1) fix"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
                 zZ = 0; leereZeilen = 0
                 continue
             }
@@ -345,7 +342,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             NF = 0
         }
         if (!NF) { ++leereZeilen; continue }
-        output[++output["length"]] = $0; continue
+        preproc[C][original][ ++preproc[C][original]["length"] ] = $0; continue
     }
 
         # for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
@@ -372,15 +369,15 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
 
         if (!NF) { ++leereZeilen; continue }
 
-        if (leereZeilen <= 3) output["length"] += leereZeilen
+        if (leereZeilen <= 3) preproc[C][original]["length"] += leereZeilen
         else {
-            output["length"] += 2
-            output[++output["length"]] = "#"fix z fix"\""fileName"\""
-            # output[output["length"]] = "#"fix z fix"\""fileName"\""" /* Zeile "++output["length"]" */"
+            preproc[C][original]["length"] += 2
+            preproc[C][original][ ++preproc[C][original]["length"] ] = "#"fix z fix"\""fileName"\""
+            # preproc[C][original][ preproc[C][original]["length"] ] = "#"fix z fix"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
         }
         leereZeilen = 0
 
-        output[++output["length"]] = $0
+        preproc[C][original][ ++preproc[C][original]["length"] ] = $0
     }
     return 1
 }

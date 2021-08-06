@@ -111,6 +111,28 @@ function change_Directory(directory) {
     if (!system("cd '"directory"'")) return 1
 }
 
+function create_Directory(directory) {
+    if (!directory) { __error("create_Directory: directory is null"); return }
+    if (!system("mkdir -r '"directory"'")) return 1
+}
+
+function create_SymbolicLink(directory, target) {
+    if (!directory) { __error("create_SymbolicLink: directory is null"); return }
+    if (!target) { __error("create_SymbolicLink: target is null"); return }
+    if (!system("ln -s '"directory"' '"target"'")) return 1
+}
+
+function SymbolicLink_exists(target) {
+    if (!target) { __error("SymbolicLink_exists: target is null"); return }
+    if (!system("test -L '"target"'")) return 1
+}
+
+function create_HardLink(file, target) {
+    if (!file) { __error("create_HardLink: file is null"); return }
+    if (!target) { __error("create_HardLink: target is null"); return }
+    if (!system("ln -P '"file"' '"target"'")) return 1
+}
+
 function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
     if (!fileName) { __error("File_contains: fileName is null"); return }
     if (!string) { __error("File_contains: string is null"); return }
@@ -130,6 +152,7 @@ function File_remove(fileName, force) {
 
 function get_FileName(pathName,    a,b,c,d,e,f,h, i, path, fileName) {
     path["length"] = split(pathName, path, "/")
+    if (path[path["length"]] == "") List_remove(path, path["length"])
     return fileName = path[path["length"]]
 }
 
@@ -207,12 +230,12 @@ function List_clear(array,    h, i) {
     array["length"] = 0
 }
 
-function cd_awk_coprocess(directory, options, input, output,  a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    __coprocess("cd '"directory"' && awk", "-f "options, input, output)
+function cd_awk_coprocess(variables, directory, options, input, output,  a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    __coprocess(variables" cd '"directory"' && awk", options, input, output)
 }
 
 function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
-    a,b,c,d,default,e,f,g,h,i,j,k,l,m,make,n,o,options,origin,output,p,paramName,paramWert,path,q,r,s,t,u,v,w,workingDir,x,y,z)
+    a,b,c,d,default,e,f,file,g,h,i,includeDir,includeName,j,k,l,m,make,n,o,options,origin,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
 {
     if (typeof(action) == "untyped") {
         action = controller
@@ -234,16 +257,13 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
         if (controller == "meta") {
             if (ARGV_length() == 0) { __error(usage); exit }
             if ("meta_"ARGV[1] in FUNCTAB) ;
-            else if (!File_exists(ARGV[1])) { __error("meta.awk: File "ARGV[1]" doesn't exist"); exit }
+            else if (!File_exists(ARGV[1])) { __error("meta.awk: File or Function "ARGV[1]" doesn't exist"); exit }
             else {
-                controller = ARGV[1]
-                # path = get_DirectoryName(ARGV[1])
+                file = ARGV[1]
                 workingDir = ENVIRON["PWD"]
-__warning(workingDir" "path" "controller)
-                for (o = 2; o <= ARGV_length(); ++o)
-                    options = options" "ARGV[o]
+                for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
                 output["length"]
-                r = cd_awk_coprocess(workingDir, controller" "options, "", output)
+                r = cd_awk_coprocess("", workingDir, "-f "file" "options, "", output)
                 File_printTo(output, "/dev/stdout")
                 exit r
             }

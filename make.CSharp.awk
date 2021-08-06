@@ -5,7 +5,7 @@
 #include "../make.awk/meta.awk"
 #include "../make.awk/make.C.awk"
 
-function CSharp_prepare_preprocess(config,    a,b,c,class,d,e,f,g,h,i,j,k,l,m,member,members,n,namespace,namespaces,o,p,q,r,s,t,u,v,w,x,y,z) {
+function CSharp_prepare_preprocess(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
     C_prepare_preprocess(config)
 
@@ -46,34 +46,34 @@ function CSharp_prepare_preprocess(config,    a,b,c,class,d,e,f,g,h,i,j,k,l,m,me
         parsed["CLI"][++parsed["CLI"]["length"]] = "#"fix"include"fix"<meta/System.h>"
     }
 
-    preprocessed["CSharp"]["length"]
-    Array_clear(preprocessed["CSharp"])
+    preproc["CSharp"]["length"]
+    Array_clear(preproc["CSharp"])
 }
 
-function CSharp_prepare_precompile(config,    a,b,c,class,d,e,f,g,h,i,j,k,l,m,member,members,n,namespace,namespaces,o,p,q,r,s,t,u,v,w,x,y,z) {
+function CSharp_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
     Array_clear(CSharp_Types)
     if (!("System" in CSharp_Types)) ; # TODO
 
-    precompiled["CSharp"]["length"]
-    Array_clear(precompiled["CSharp"])
+    precomp["CSharp"]["length"]
+    Array_clear(precomp["CSharp"])
 }
 
 function CSharp_parse(fileName, file) {
     return C_parse(fileName, file)
 }
 
-function CSharp_preprocess(fileName, output) {
-    return C_preprocess(fileName, output)
+function CSharp_preprocess(fileName) {
+    return C_preprocess(fileName, "", "CSharp")
 }
 
-function CSharp_precompile(fileName, output,   a,A,AST,b,c,d,e,expressions,f,g,h,i,I,j,k,l,level,m,n,name,o,p,pre,q,r,s,S,t,T,u,using,v,w,x,y,z)
+function CSharp_precompile(fileName,    a,A,AST,b,c,d,e,expressions,f,g,h,i,I,j,k,l,level,m,n,name,o,p,pre,q,r,s,S,t,T,u,using,v,w,x,y,z)
 {
     Index_push("", fixFS, fix, "\0", "\n")
-    for (z = 1; z <= preprocessed["CSharp"][fileName]["length"]; ++z) {
-        Index_reset(preprocessed["CSharp"][fileName][z])
+    for (z = 1; z <= preproc["CSharp"][fileName]["length"]; ++z) {
+        Index_reset(preproc["CSharp"][fileName][z])
         if ($1 == "#") continue
-        pre = String_concat(pre, fix, preprocessed["CSharp"][fileName][z])
+        pre = String_concat(pre, fix, preproc["CSharp"][fileName][z])
     }
     Index_pop()
 
@@ -112,7 +112,7 @@ for (i = I = 1; i <= NF; ++i) {
         if ($(i + 1) != ";") Index_append(i, ";")
         ++i
 
-        output[++output["length"]] = Index_getRange(I, i)
+        precomp["CSharp"][ ++precomp["CSharp"]["length"] ] = Index_getRange(I, i)
         I = i + 1; S = ++AST[A]["length"]
         continue
     }
@@ -124,10 +124,10 @@ if (DEBUG) { __debug("CSharp_using "); Array_debug(using) }
     return !r
 }
 
-#function CSharp_compile(output,   a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
+#function CSharp_compile(   a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 #{
-#    for (z = 1; z <= precompiled["CSharp"]["length"]; ++z)
-#        output[++output["length"]] = precompiled["CSharp"][z]
+#    for (z = 1; z <= precomp["CSharp"]["length"]; ++z)
+#        compiled["CSharp"][++compiled["CSharp"]["length"]] = precomp["CSharp"][z]
 #    return 1
 #}
 

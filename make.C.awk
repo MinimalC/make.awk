@@ -27,12 +27,10 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
     C_types["_Float128"]["isLiteral"]
     C_types["__builtin_va_list"]["isLiteral"]
 
-    precompiled["C"]["length"]
-    Array_clear(precompiled["C"])
-    C_precompile(Compiler, precompiled["C"])
+    precomp["C"]["length"]
+    Array_clear(precomp["C"])
+    C_precompile(Compiler, precomp["C"])
 }
-
-
 
 function __unused0() {
 
@@ -265,38 +263,39 @@ if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (e
 
 }
 
-function C_precompile(fileName, output,   h,i,input,m,n,z)
+function C_precompile(fileName,    h,i,input,m,n,z)
 {
 #    if (!C_preprocess(fileName, input)) return
 
     # C_precompile is PROTOTYPE
 
-    preprocessed["C"][fileName]["fields"]["length"]
-    for (n in preprocessed["C"][fileName]["fields"]) {
-        if (typeof(preprocessed["C"][fileName]["fields"][n]) == "array")
-            output[++output["length"]] = preprocessed["C"][fileName]["fields"][n]["body"]
+    preproc["C"][fileName]["fields"]["length"]
+    for (n in preproc["C"][fileName]["fields"]) {
+        if (typeof(preproc["C"][fileName]["fields"][n]) == "array")
+            precomp["C"][++precomp["C"]["length"]] = preproc["C"][fileName]["fields"][n]["body"]
     }
 
-    for (z = 1; z <= preprocessed["C"][fileName]["length"]; ++z)
-        output[++output["length"]] = preprocessed["C"][fileName][z]
+    for (z = 1; z <= preproc["C"][fileName]["length"]; ++z)
+        precomp["C"][++precomp["C"]["length"]] = preproc["C"][fileName][z]
 
     return 1
 }
 
-function C_compile(output,    a,b,c,n,o,options,p,pprecompiled,x,y,z)
+function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
 {
     Index_push("", fixFS, " ", "\0", "\n")
-    for (z = 1; z <= precompiled["C"]["length"]; ++z)
-        pprecompiled[++pprecompiled["length"]] = Index_reset(precompiled["C"][z])
+    for (z = 1; z <= precomp["C"]["length"]; ++z)
+        pre[++pre["length"]] = Index_reset(precomp["C"][z])
     Index_pop()
 
     options = ""
     options = options" -c -fPIC"
     if (Compiler == "gcc") options = options" -xc -fpreprocessed"
 
-    if (CCompiler_coprocess(options, pprecompiled, ".make.o")) return
+    if (CCompiler_coprocess(options, pre, ".make.o")) return
 
-    File_read(output, ".make.o", "\n", "\n")
+    compiled["C"]["length"]
+    File_read(compiled["C"], ".make.o", "\n", "\n")
     File_remove(".make.o", 1)
     return 1
 }
