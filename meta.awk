@@ -111,10 +111,11 @@ function Directory_exists(directory) {
     if (!system("test -d '"directory"'")) return 1
 }
 
-function change_Directory(directory) {
-    if (!directory) { __error("change_Directory: directory is null"); return }
-    if (!system("cd '"directory"'")) return 1
-}
+# Look: this is running bash "cd xyz", but not changing the directory in the awk process:
+#function change_Directory(directory) {
+#    if (!directory) { __error("change_Directory: directory is null"); return }
+#    if (!system("cd '"directory"'")) return 1
+#}
 
 function create_Directory(directory) {
     if (!directory) { __error("create_Directory: directory is null"); return }
@@ -132,11 +133,11 @@ function SymbolicLink_exists(target) {
     if (!system("test -L '"target"'")) return 1
 }
 
-function create_HardLink(file, target) {
-    if (!file) { __error("create_HardLink: file is null"); return }
-    if (!target) { __error("create_HardLink: target is null"); return }
-    if (!system("ln -P '"file"' '"target"'")) return 1
-}
+#function create_HardLink(file, target) {
+#    if (!file) { __error("create_HardLink: file is null"); return }
+#    if (!target) { __error("create_HardLink: target is null"); return }
+#    if (!system("ln -P '"file"' '"target"'")) return 1
+#}
 
 function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
     if (!fileName) { __error("File_contains: fileName is null"); return }

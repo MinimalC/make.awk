@@ -108,12 +108,10 @@ function make_preprocess(config,    a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,
         #preproc[format][ ++preproc[format]["length"] ] = name
         ++o
 
-if (DEBUG) {
         Array_clear(pre)
 if (DEBUG) Index_pullArray(pre, preproc[format][name], REFIX, FIX); else
         Index_pullArray(pre, preproc[format][name], REFIX, " ")
-        File_printTo(pre, "."Project (++preprocessed_count[format] == 1 ? "" : preprocessed_count[format])"...prep."format)
-}
+        File_printTo(pre, "."Project (++preprocessed_count[format] == 1 ? "" : preprocessed_count[format])"..."format)
     } }
     if (!o) { __error("make.awk: Nothing preprocessed"); return }
 }

@@ -148,7 +148,6 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                 }
             }
         }
-        Index_reset()
         defineBody = Index_pop()
     }
     Index_push(defineBody, REFIX, FIX)
