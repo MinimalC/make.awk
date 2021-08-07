@@ -13,7 +13,7 @@ if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
     input["name"] = fileName
 
     Index_push("", "", "", "\0", "\n")
-while (++z <= input["length"]) {
+for (z = 1; z <= input["length"]; ++z) {
     Index_reset(input[z])
 
     was = "newline"

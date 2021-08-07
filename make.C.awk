@@ -32,7 +32,7 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
     C_precompile(Compiler, precomp["C"])
 }
 
-function __unused0() {
+function __unused0(fileName, file,     level,expression,name,var,varType,i,k,n,o,p,s,v,z) {
 
         level = expression["length"]
         if (!level) level = ++expression["length"]
@@ -263,11 +263,13 @@ if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (e
 
 }
 
-function C_precompile(fileName,    h,i,input,m,n,z)
+function C_precompile(fileName,    h,i,n,z)
 {
 #    if (!C_preprocess(fileName, input)) return
 
     # C_precompile is PROTOTYPE
+
+    precomp["C"][ precomp["C"]["length"] ] = "#"fix ((++precomp["C"]["length"]) + 1) fix"\"make.awk\""
 
     preproc["C"][fileName]["fields"]["length"]
     for (n in preproc["C"][fileName]["fields"]) {

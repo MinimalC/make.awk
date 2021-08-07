@@ -4,7 +4,9 @@
 
 #include "../make.awk/meta.awk"
 
-BEGIN {
+BEGIN { BEGIN_meta() }
+
+function BEGIN_meta() {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
@@ -15,14 +17,17 @@ BEGIN {
     if (PROCINFO["argv"][1] == "-f") if (get_FileNameNoExt(PROCINFO["argv"][2]) == "meta") __BEGIN()
 }
 
+END { END_meta() }
+
+function END_meta() {
+    # no if (ERRORS) exit 0; else exit 1
+    if (Index["length"]) __error("meta.awk: More Index_push() than Index_pop()")
+}
+
 function meta_ARGC_ARGV() {
 
     ARGC_ARGV_debug()
 }
-
-# BEGINFILE { } # ENDFILE { }
-
-# END { # if (ERRORS) exit 0; else exit 1 }
 
 function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -540,78 +545,81 @@ function String_countChars(string, chars,    h,i,l,n) {
     return n
 }
 
-function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, j, k, l, m, n) {
-    # save old INDEX
-    i = ++INDEX["length"]
-    INDEX[i]["OUTPUTRECORDSEP"] = ORS
-    INDEX[i]["RECORDSEP"] = RS
-    INDEX[i]["OUTPUTFIELDSEP"] = OFS
-    INDEX[i]["FIELDSEP"] = FS
-    INDEX[i][0] = $0
+function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, m) {
+    # save old Index
+    i = ++Index["length"]
+    Index[i]["OUTPUTRECORDSEP"] = ORS
+    Index[i]["RECORDSEP"] = RS
+    Index[i]["OUTPUTFIELDSEP"] = OFS
+    Index[i]["FIELDSEP"] = FS
+    Index[i][0] = $0
 
     if (typeof(ors) != "untyped") ORS = ors
     if (typeof(rs) != "untyped") RS = rs
     if (typeof(ofs) != "untyped") OFS = ofs
     if (typeof(fs) != "untyped") FS = fs
 
-    # new INDEX
+    # new Index
     for (i = from; i <= to && i <= NF; ++i)
         m = String_concat(m, OFS, $i)
     $0 = m
     return Index_reset()
 }
 
-function Index_pull(new, fs, ofs, rs, ors) {
-    Index_push(new, fs, ofs, rs, ors);
-    return Index_pop()
-}
-
-function Index_push(new, fs, ofs, rs, ors,    h,i,m,n) {
-    # save old INDEX
-    i = ++INDEX["length"]
-    INDEX[i]["OUTPUTRECORDSEP"] = ORS
-    INDEX[i]["RECORDSEP"] = RS
-    INDEX[i]["OUTPUTFIELDSEP"] = OFS
-    INDEX[i]["FIELDSEP"] = FS
-    INDEX[i][0] = Index_reset()
+function Index_push(new, fs, ofs, rs, ors,    h,i,n,z) {
+    # save old Index
+    i = ++Index["length"]
+    Index[i]["OUTPUTRECORDSEP"] = ORS
+    Index[i]["RECORDSEP"] = RS
+    Index[i]["OUTPUTFIELDSEP"] = OFS
+    Index[i]["FIELDSEP"] = FS
+    Index[i][0] = Index_reset()
 
     if (typeof(ors) != "untyped") ORS = ors
     if (typeof(rs) != "untyped") RS = rs
     if (typeof(ofs) != "untyped") OFS = ofs
     if (typeof(fs) != "untyped") FS = fs
 
-    # new INDEX
-    if (typeof(new) != "untyped")
-        if (typeof(new) == "array") {
-            for (n = 1; n <= new["length"]; ++n)
-                if (n == 1) m = new[1]
-                else m = m ORS new[n]
-            $0 = m
-        }
-        else $0 = new
+    # new Index
+    if (typeof(new) == "untyped" || typeof(new) == "unassigned")
+        $0 = ""
+    else if (typeof(new) == "array") {
+        for (z = 1; z <= new["length"]; ++z)
+            if (z == 1) n = Index_reset(new[1])
+            else n = n ORS (Index_reset(new[z]))
+        $0 = n
+    }
+    else $0 = new
     return Index_reset()
 }
 
-function Index_pop(fs, ofs, rs, ors,    h,i,q,r) {
+function Index_pop(    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r) {
 
-    if (typeof(ors) != "untyped") ORS = ors
-    if (typeof(rs) != "untyped")  RS  = rs
-    if (typeof(ofs) != "untyped") OFS = ofs
-    if (typeof(fs) != "untyped")  FS  = fs
     r = Index_reset()
 
-    if (i = INDEX["length"]) {
-
-        ORS = INDEX[i]["OUTPUTRECORDSEP"]
-        RS  = INDEX[i]["RECORDSEP"]
-        OFS = INDEX[i]["OUTPUTFIELDSEP"]
-        FS  = INDEX[i]["FIELDSEP"]
-        $0  = INDEX[i][0]
-
-        delete INDEX[INDEX["length"]--]
+    if (!(i = Index["length"])) __error("meta.awk: More Index_pop() than Index_push()")
+    else {
+        ORS = Index[i]["OUTPUTRECORDSEP"]
+        RS  = Index[i]["RECORDSEP"]
+        OFS = Index[i]["OUTPUTFIELDSEP"]
+        FS  = Index[i]["FIELDSEP"]
+        $0  = Index[i][0]
+        delete Index[i]
+        --Index["length"]
+        Index_reset()
     }
-    Index_reset()
     return r
+}
+
+function Index_pull(new, fs, ofs, rs, ors) {
+    Index_push(new, fs, ofs, rs, ors)
+    return Index_pop()
+}
+
+function Index_pullArray(output, input, fs, ofs, rs, ors,   x,y,z) {
+    Index_push("", fs, ofs, rs, ors)
+    for (z = 1; z <= input["length"]; ++z) output[++output["length"]] = Index_reset(input[z])
+    Index_pop()
 }
 
 function Index_insert(i, value, ifNot,    p, q, r) {
@@ -729,8 +737,8 @@ function File_printTo(file, to, rs, ors, noLastORS,    x, y, z) {
         if (noLastORS && z == file["length"]) { printf "%s", file[z] > to; break }
         print file[z] > to
     }
-    if (to != "/dev/stdout" && to != "/dev/stderr") close(to)
     Index_pop()
+    if (to != "/dev/stdout" && to != "/dev/stderr") close(to)
 }
 function File_printFTo(file, to, format, rs, ors, noLastORS,    x, y, z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/

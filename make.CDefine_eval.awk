@@ -29,7 +29,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
         o = i; m = ""; n = 0; p = 0
         while (++o) {
             if (o > NF) {
-                if (typeof(file["I"]) == "number" && file["I"] == INDEX["length"])
+                if (typeof(file["I"]) == "number" && file["I"] == Index["length"])
                 {
                     if (file["z"] + 1 > file["length"]) break
                     if (file[file["z"] + 1] ~ /^#/) break
@@ -213,7 +213,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
     Index_reset()
 
 if (DEBUG == 3) {
-Index_push(defineBody, fixFS, " "); rendered = Index_pop()
+rendered = Index_pull(defineBody, fixFS, " ")
 if (C_defines[name]["isFunction"]) {
 __debug(file["name"]" Line "file["z"]": using "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 # Array_debug(arguments)

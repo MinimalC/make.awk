@@ -12,21 +12,20 @@ function set_make_debug(wert) { DEBUG = wert }
 
 function set_make_compiler(wert) { Compiler = wert }
 
-BEGIN {
+BEGIN { BEGIN_make() }
+
+function BEGIN_make() {
     fixFS = @/\xA0/
     fix = "\xA0"
 
-    if (typeof(format) == "untyped") {
-        format["h"] = "C"
-        format["c"] = "C"
-        # format["inc"] = "C"
-        format["cs"] = "CSharp"
+    Format["h"] = "C"
+    Format["c"] = "C"
+    Format["cs"] = "CSharp"
 
-        format[1] = "CSharp"
-        format[2] = "C"
-        format[3] = "ASM"
-        format["length"] = 3
-    }
+    Format[1] = "CSharp"
+    Format[2] = "C"
+    Format[3] = "ASM"
+    Format["length"] = 3
 
     Compiler = "gcc"
 
@@ -35,48 +34,70 @@ BEGIN {
     __BEGIN("compile")
 }
 
-END {
+END { END_make() }
+
+function END_make(    n,rendered) {
+
     if (DEBUG) {
         __debug("CSharp_Types: "); Array_debug(CSharp_Types)
+        __debug("C_types: "); Array_debug(C_types)
         __debug("C_defines: "); for (n in C_defines) {
             rendered = Index_pull(C_defines[n]["body"], fixFS, " ")
             if (C_defines[n]["isFunction"])
                  __debug("# define "n" ( "C_defines[n]["arguments"]["text"]" ) "rendered)
             else __debug("# define "n"  "rendered)
         }
-        __debug("C_types: "); Array_debug(C_types)
+    }
+    if (RUN_ARGC_ARGV) {
+        delete parsed
+        delete preproc
+        delete precomp
+        delete compiled
+        delete CSharp_Types
+        delete C_types
+        delete C_defines
+        ARGC_ARGV_debug()
     }
 }
 
-function make_parse(origin,    a,b,c,d,e,f,m,n) {
+function make_ARGC_ARGV(origin) {
+
+    RUN_ARGC_ARGV = 1
+}
+
+function make_parse(origin,    a,b,c,C,d,e,f,F,m,n,N,o,p,pre,z) {
 
     if (!origin["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin["files"][1])
     #if (!prepared) make_prepare(origin)
 
+    for (f = 1; f <= Format["length"]; ++f) {
+        F = Format[f]
+        if ((c = F"_""prepare_preprocess") in FUNCTAB) @c(origin)
     for (n = 1; n <= origin["files"]["length"]; ++n) {
-        f = get_FileNameExt(origin["files"][n])
-        if (!(f in format)) { __error("make.awk: No Format for FileName."f); List_remove(origin["files"], n--); continue }
-        if (!((c = format[f]"_""parse") in FUNCTAB)) { __error("No function "c); continue }
+        N = origin["files"][n]
+        if (F != Format[get_FileNameExt(N)]) continue
+        if (!((C = F"_""parse") in FUNCTAB)) { __error("No function "C); continue }
 
-        @c(origin["files"][n])
-    }
+        parsed[N]["length"]
+        @C(N)
+    } }
 
-    for (n in parsed) File_printTo(parsed[n], "."Project"...c")
+    for (n in parsed) if (typeof(parsed[n]) == "array") for (z = 1; z <= parsed[n]["length"]; ++z) pre[++pre["length"]] = parsed[n][z]
+    File_printTo(pre, "."Project"...parsed.C")
 }
 
 function make_preprocess(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
 
-    if (!origin["files"]["length"]) { __error(USAGE); return }
     origin["next"]
+    if (!origin["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(origin["files"][1])
-    #if (!prepared) make_prepare(origin)
 
-    for (f = 1; f <= format["length"]; ++f) {
-        F = format[f]
+    for (f = 1; f <= Format["length"]; ++f) {
+        F = Format[f]
     for (n = 1; n <= origin["files"]["length"]; ++n) {
         N = origin["files"][n]
-        if (F != format[get_FileNameExt(N)]) continue
+        if (F != Format[get_FileNameExt(N)]) continue
         if ((c = F"_""prepare_preprocess") in FUNCTAB) @c(origin)
         if (!((C = F"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
@@ -88,13 +109,10 @@ function make_preprocess(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,
 
 if (DEBUG) {
         Array_clear(pre)
-if (DEBUG) Index_push("", fixFS, fix, "\0", "\n"); else
-        Index_push("", fixFS, " ", "\0", "\n")
-        for (z = 1; z <= preproc[F][N]["length"]; ++z)
-            pre[++pre["length"]] = Index_reset(preproc[F][N][z])
-        Index_pop()
+if (DEBUG) Index_pullArray(pre, preproc[F][N], fixFS, fix); else
+        Index_pullArray(pre, preproc[F][N], fixFS, " ")
         File_printTo(pre, "."Project (++preprocessed_count[F] == 1 ? "" : preprocessed_count[F])"...prep."F)
-} # if (DEBUG)
+}
     } }
     if (!o) { __error("make.awk: Nothing preprocessed"); return }
 }
@@ -103,12 +121,12 @@ function make_precompile(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 
-    for (f = format["length"]; f; --f) {
-        F = format[f]
+    for (f = Format["length"]; f; --f) {
+        F = Format[f]
         if ((c = F"_""prepare_precompile") in FUNCTAB) @c(origin)
     for (n = 1; n <= origin["files"]["length"]; ++n) {
         N = origin["files"][n]
-        if (F != format[get_FileNameExt(N)]) continue
+        if (F != Format[get_FileNameExt(N)]) continue
         if (!((C = F"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
         precomp[F]["length"]
@@ -117,11 +135,8 @@ function make_precompile(origin,    a,b,c,C,d,e,f,F,g,h,i,j,k,l,m,n,N,o,p,pre,q,
         ++o
 
         Array_clear(pre)
-if (DEBUG) Index_push("", fixFS, fix, "\0", "\n")
-else       Index_push("", fixFS, " ", "\0", "\n")
-        for (z = 1; z <= precomp[F]["length"]; ++z)
-            pre[++pre["length"]] = Index_reset(precomp[F][z])
-        Index_pop()
+if (DEBUG) Index_pullArray(pre, precomp[F], fixFS, fix); else
+        Index_pullArray(pre, precomp[F], fixFS, " ")
         File_printTo(pre, "."Project (++precompiled_count[F] == 1 ? "" : precompiled_count[F])"..."F)
     } }
     if (!o) { __error("make.awk: Nothing precompiled"); return }
@@ -131,8 +146,8 @@ function make_compile(origin,    a,b,c,C,d,e,f,F,g,h,i,k,l,m,n,o,p,q,r,s,t,u,v,w
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 
-    for (f = 1; f <= format["length"]; ++f) {
-        F = format[f]
+    for (f = 1; f <= Format["length"]; ++f) {
+        F = Format[f]
         if (!((C = F"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
         compiled[F]["length"]

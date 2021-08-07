@@ -5,7 +5,7 @@
 #include "../make.awk/meta.awk"
 #include "../make.awk/make.C.awk"
 
-function C_prepare_preprocess(config,    a,b,c,d,input,m,output) {
+function C_prepare_preprocess(config,    a,b,c,d,input,output,v) {
 
     if (typeof(C_keywords) == "untyped") {
         C_keywords["struct"]
@@ -79,7 +79,7 @@ function C_prepare_preprocess(config,    a,b,c,d,input,m,output) {
 
         output["name"] = Compiler
         CCompiler_coprocess("-xc -dM -E", input, output)
-      # List_sort(output)
+        List_sort(output)
         CCompiler_coprocess("-xc -E", input, output)
 
         C_parse(Compiler, output)
@@ -90,13 +90,15 @@ function C_prepare_preprocess(config,    a,b,c,d,input,m,output) {
     if (!(Compiler in preproc["C"])) C_preprocess(Compiler)
 }
 
-function C_preprocess(fileName,    original, C,  # public parsed
-    a,b,c,comments,d,e,expression,f,__FILE__Name,g,h,i,I,ifExpressions,j,k,
-    l,leereZeilen,level,m,moved,n,name,o,p,q,r,rendered,s,t,u,v,var,varType,w,x,y,z,zZ)
+function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
+    a,b,c,d,e,f,__FILE__Name,g,h,i,ifExpressions,j,k,
+    l,lz,m,n,name,o,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
 {
     if (!C) C = "C"
     if (!original) original = fileName
     if (!(fileName in parsed)) if (!C_parse(fileName)) return
+
+    Index_push("", fixFS, fix, "\0", "\n")
 
     __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_", "\0", "\0")
 
@@ -111,7 +113,6 @@ function C_preprocess(fileName,    original, C,  # public parsed
 
     C_defines["__FILE__"]["body"] = __FILE__Name
 
-    Index_push("", fixFS, fix, "\0", "\n")
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
         Index_reset(parsed[fileName][z])
 
@@ -187,14 +188,14 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
 
             NF = 0
         }
-        if (!NF) { ++leereZeilen; continue }
+        if (!NF) { ++lz; continue }
     }
 
         for (e = 1; e <= ifExpressions["length"]; ++e) {
             if (ifExpressions[e]["do"] == 1) continue
             NF = 0; break
         }
-        if (!NF) { ++leereZeilen; continue }
+        if (!NF) { ++lz; continue }
 
     if ($1 == "#") {
         # if ($2 == "using")
@@ -230,7 +231,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
             if (zZ && zZ < preproc[C][original]["length"]) {
                 preproc[C][original][ ++preproc[C][original]["length"] ] = "#"fix (z + 1) fix"\""fileName"\""
                 # preproc[C][original][ preproc[C][original]["length"] ] = "#"fix (z + 1) fix"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
-                zZ = 0; leereZeilen = 0
+                zZ = 0; lz = 0
                 continue
             }
             NF = 0
@@ -267,8 +268,8 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                     } else {
                         m = ""; for (o = 2; o < n; ++o) {
                             # if ($o in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (define)")
-                            if ($o in C_types) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (typedef)")
-                            else if ($o in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (keyword)")
+                            # if ($o in C_types) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (typedef)"); else
+                            if ($o in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument "$o" (keyword)")
                             m = String_concat(m, " ", $o)
                             if ($o == ",") continue
                             g = ++C_defines[name]["arguments"]["length"]
@@ -284,7 +285,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                 C_defines[name]["body"] = $0
 
 if (DEBUG == 3 || DEBUG == 4) {
-Index_push(C_defines[name]["body"], fixFS, " "); rendered = Index_pop()
+rendered = Index_pull(C_defines[name]["body"], fixFS, " ")
 if (C_defines[name]["isFunction"])
 __debug(fileName" Line "z": define "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 else
@@ -299,7 +300,7 @@ __debug(fileName" Line "z": define "name"  "rendered)
             if (!(name in C_defines)) __warning(fileName" Line "z": undefine doesn't exist: "name)
             else {
 if (DEBUG == 3 || DEBUG == 4) {
-Index_push(C_defines[name]["body"], fixFS, " "); rendered = Index_pop()
+rendered = Index_pull(C_defines[name]["body"], fixFS, " ")
 if (C_defines[name]["isFunction"])
 __debug(fileName" Line "z": undefine "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 else
@@ -341,13 +342,13 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             Index_pop()
             NF = 0
         }
-        if (!NF) { ++leereZeilen; continue }
+        if (!NF) { ++lz; continue }
         preproc[C][original][ ++preproc[C][original]["length"] ] = $0; continue
     }
 
         # for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
-        parsed[fileName]["I"] = INDEX["length"]
+        parsed[fileName]["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
             if ($i ~ /^\s*$/) continue # no clean, no use
             if ($i in C_defines) {
@@ -367,17 +368,18 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             # if ($i == "\\") { Index_remove(i--); continue }
         }
 
-        if (!NF) { ++leereZeilen; continue }
+        if (!NF) { ++lz; continue }
 
-        if (leereZeilen <= 3) preproc[C][original]["length"] += leereZeilen
+        if (lz <= 3) preproc[C][original]["length"] += lz
         else {
             preproc[C][original]["length"] += 2
             preproc[C][original][ ++preproc[C][original]["length"] ] = "#"fix z fix"\""fileName"\""
             # preproc[C][original][ preproc[C][original]["length"] ] = "#"fix z fix"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
         }
-        leereZeilen = 0
+        lz = 0
 
         preproc[C][original][ ++preproc[C][original]["length"] ] = $0
     }
+    Index_pop()
     return 1
 }
