@@ -269,7 +269,7 @@ function C_precompile(fileName,    h,i,n,z)
 
     # C_precompile is PROTOTYPE
 
-    precomp["C"][ precomp["C"]["length"] ] = "#"fix ((++precomp["C"]["length"]) + 1) fix"\"make.awk\""
+    precomp["C"][ precomp["C"]["length"] ] = "#"FIX ((++precomp["C"]["length"]) + 1) FIX"\"make.awk\""
 
     preproc["C"][fileName]["fields"]["length"]
     for (n in preproc["C"][fileName]["fields"]) {
@@ -285,7 +285,7 @@ function C_precompile(fileName,    h,i,n,z)
 
 function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
 {
-    Index_push("", fixFS, " ", "\0", "\n")
+    Index_push("", REFIX, " ", "\0", "\n")
     for (z = 1; z <= precomp["C"]["length"]; ++z)
         pre[++pre["length"]] = Index_reset(precomp["C"][z])
     Index_pop()

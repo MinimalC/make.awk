@@ -240,7 +240,7 @@ function cd_awk_coprocess(variables, directory, options, input, output,  a,b,c,d
 }
 
 function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
-    a,b,c,d,default,e,f,file,g,h,i,includeDir,includeName,j,k,l,m,make,n,o,options,origin,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
+    a,b,c,config,d,default,e,f,file,g,h,i,includeDir,includeName,j,k,l,m,make,n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
 {
     if (typeof(action) == "untyped") {
         action = controller
@@ -282,7 +282,7 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
         if (controller"_"ARGV[i] in FUNCTAB) {
             if (i > 1 && action) {
                 if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-                @make(origin); if ("next" in origin) delete origin["next"]; else Array_clear(origin)
+                @make(config); if ("next" in config) delete config["next"]; else Array_clear(config)
             }
             action = ARGV[i]
             ARGV[i] = ""; continue
@@ -305,15 +305,15 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
           # if (paramName == "debug") DEBUG = paramWert; else
             if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
             else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
-            else origin["parameters"][paramName] = paramWert
+            else config["parameters"][paramName] = paramWert
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {
-            origin["directories"][++origin["directories"]["length"]] = ARGV[i]
+            config["directories"][++config["directories"]["length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
         if (File_exists(ARGV[i])) {
-            origin["files"][++origin["files"]["length"]] = ARGV[i]
+            config["files"][++config["files"]["length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
         __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
@@ -325,7 +325,7 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
         else action = "BEGIN"
     }
     if (!((make = controller"_"action) in FUNCTAB)) __error(controller".awk: Unknown method "make)
-    else @make(origin)
+    else @make(config)
 
     if (typeof(ERRORS) == "number" && ERRORS) exit
     exit 1

@@ -58,7 +58,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
             }
             if ($o == "(" || $o == "{") ++p
             if (p && ($o == ")" || $o == "}")) --p
-            m = String_concat(m, fix, $o)
+            m = String_concat(m, FIX, $o)
             ++n
         }
         if ($(i + 1) != "(") {
@@ -80,7 +80,7 @@ __debug("applying:  ( "rendered" )")
         else if (arguments["length"] > l && C_defines[name]["arguments"][l] != "...")
             __error(file["name"]" Line "file["z"]": using "name": Too many arguments")
         for (n = 1; n <= arguments["length"]; ++n) {
-            Index_push(arguments[n]["value"], fixFS, fix)
+            Index_push(arguments[n]["value"], REFIX, FIX)
             for (j = 1; j <= NF; ++j) {
                 if ($j in C_defines) {
                     if (C_defines[$j]["isFunction"] && $(j + 1) != "(") {
@@ -95,7 +95,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
             arguments[n]["length"] = NF
             arguments[n]["value"] = Index_pop()
         }
-        Index_push(defineBody, fixFS, fix)
+        Index_push(defineBody, REFIX, FIX)
         for (o = 1; o <= NF; ++o) {
             for (n = 1; n <= l; ++n) {
                 if (n == l && C_defines[name]["arguments"][l] == "...") break
@@ -103,7 +103,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                     if (o > 1 && $(o - 1) == "#") {
                         Index_push(arguments[n]["value"], "", "")
                         for (s = 1; s <= NF; ++s) {
-                            if ($s ~ fixFS) { $s = " "; continue }
+                            if ($s ~ REFIX) { $s = " "; continue }
                             if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
                         }
                         $o = "\""Index_pop()"\""
@@ -122,7 +122,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                 if ($o == "__VA_ARGS__") {
                     code = ""; a = 0
                     for (n = l; n <= arguments["length"]; ++n) {
-                        code = String_concat(code, fix","fix, arguments[n]["value"])
+                        code = String_concat(code, FIX","FIX, arguments[n]["value"])
                         a += arguments[n]["length"]
                         if (n > l) ++a
                     }
@@ -132,7 +132,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                     if (o > 1 && $(o - 1) == "#") {
                         Index_push(code, "", "")
                         for (s = 1; s <= NF; ++s) {
-                            if ($s ~ fixFS) { $s = " "; continue }
+                            if ($s ~ REFIX) { $s = " "; continue }
                             if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
                         }
                         $o = "\""Index_pop()"\""
@@ -151,7 +151,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
         Index_reset()
         defineBody = Index_pop()
     }
-    Index_push(defineBody, fixFS, fix)
+    Index_push(defineBody, REFIX, FIX)
     for (o = 1; o <= NF; ++o) {
         # if ($o == "\\") { Index_remove(o--); continue }
         if ($o == "##") {
@@ -186,7 +186,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without bod
         Index_remove(i)
         return 0
     }
-    Index_push(defineBody, fixFS, fix)
+    Index_push(defineBody, REFIX, FIX)
     ++C_noredefines[name]
     notapplied = 0
     for (j = 1; j <= NF; ++j) {
@@ -213,7 +213,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
     Index_reset()
 
 if (DEBUG == 3) {
-rendered = Index_pull(defineBody, fixFS, " ")
+rendered = Index_pull(defineBody, REFIX, " ")
 if (C_defines[name]["isFunction"]) {
 __debug(file["name"]" Line "file["z"]": using "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 # Array_debug(arguments)
@@ -225,7 +225,7 @@ __debug(file["name"]" Line "file["z"]": using "name" ("C_defines[name]["argument
 function CDefine_eval(expression,    a, arguments, b, c, d, defineBody, e, f, g,
                              h, i, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
-    Index_push(expression, fixFS, fix)
+    Index_push(expression, REFIX, FIX)
     Index_reset()
     for (i = 1; i <= NF; ++i) {
         if ($i ~ /^\s*$/) Index_remove(i--)
@@ -268,11 +268,11 @@ function CDefine_eval(expression,    a, arguments, b, c, d, defineBody, e, f, g,
             p = 0; for (o = i + 1; o <= NF; ++o) {
                 if ($o == "(" || $o == "{") ++p
                 if ($o == ")" || $o == "}") { if (!p) break; --p }
-                m = String_concat(m, fix, $o)
+                m = String_concat(m, FIX, $o)
             }
             Index_removeRange(i + 1, o)
             x = CDefine_eval(m)
-            # Index_push(x, fixFS, fix); n = NF; Index_pop()
+            # Index_push(x, REFIX, FIX); n = NF; Index_pop()
             $i = x
             --i # i += n - 1
             continue
@@ -280,29 +280,29 @@ function CDefine_eval(expression,    a, arguments, b, c, d, defineBody, e, f, g,
         if ($i == "?") {
             q = ""
             for (n = 1; n < i; ++n) {
-                q = String_concat(q, fix, $n)
+                q = String_concat(q, FIX, $n)
             }
             t = ""
             p = 0; for (o = i + 1; o <= NF; ++o) {
                 if (!p && $o == ":") break
                 if ($o == "(" || $o == "{") ++p
                 if ($o == ")" || $o == "}") { if (p) --p }
-                t = String_concat(t, fix, $o)
+                t = String_concat(t, FIX, $o)
             }
             if ($o != ":") __error("QuestionMark isn't followed by :")
             f = ""
             for (p = o + 1; p <= NF; ++p) {
-                f = String_concat(f, fix, $p)
+                f = String_concat(f, FIX, $p)
             }
 if (DEBUG == 4) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
             x = CDefine_eval(q)
             NF = 1
             if (x) {
-                #Index_push(t, fixFS, fix); n = NF; Index_pop()
+                #Index_push(t, REFIX, FIX); n = NF; Index_pop()
                 $1 = t
             }
             else {
-                #Index_push(f, fixFS, fix); n = NF; Index_pop()
+                #Index_push(f, REFIX, FIX); n = NF; Index_pop()
                 $1 = f
             }
             Index_reset()

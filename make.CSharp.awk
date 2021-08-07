@@ -43,7 +43,7 @@ function CSharp_prepare_preprocess(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,
 
     if (!("CLI" in parsed)) {
         parsed["CLI"]["name"] = "CLI"
-        parsed["CLI"][++parsed["CLI"]["length"]] = "#"fix"include"fix"<meta/System.h>"
+        parsed["CLI"][++parsed["CLI"]["length"]] = "#"FIX"include"FIX"<meta/System.h>"
     }
 
     preproc["CSharp"]["length"]
@@ -69,11 +69,11 @@ function CSharp_preprocess(fileName) {
 
 function CSharp_precompile(fileName,    a,A,AST,b,c,d,e,expressions,f,g,h,i,I,j,k,l,level,m,n,name,o,p,pre,q,r,s,S,t,T,u,using,v,w,x,y,z)
 {
-    Index_push("", fixFS, fix, "\0", "\n")
+    Index_push("", REFIX, FIX, "\0", "\n")
     for (z = 1; z <= preproc["CSharp"][fileName]["length"]; ++z) {
         Index_reset(preproc["CSharp"][fileName][z])
         if ($1 == "#") continue
-        pre = String_concat(pre, fix, preproc["CSharp"][fileName][z])
+        pre = String_concat(pre, FIX, preproc["CSharp"][fileName][z])
     }
     Index_pop()
 
@@ -82,7 +82,7 @@ function CSharp_precompile(fileName,    a,A,AST,b,c,d,e,expressions,f,g,h,i,I,j,
     T = AST[A][S]["length"] = 1
     using["length"]
 
-Index_push(pre, fixFS, fix, "\0", "\n")
+Index_push(pre, REFIX, FIX, "\0", "\n")
 for (i = I = 1; i <= NF; ++i) {
 
     if ($i == "using" || (AST[A][S]["type"] == "using" && $i == ",")) {
