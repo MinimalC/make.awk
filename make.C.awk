@@ -272,10 +272,9 @@ function C_precompile(fileName,    h,i,n,z)
     precomp["C"][ precomp["C"]["length"] ] = "#"FIX ((++precomp["C"]["length"]) + 1) FIX"\"make.awk\""
 
     preproc["C"][fileName]["fields"]["length"]
-    for (n in preproc["C"][fileName]["fields"]) {
+    for (n in preproc["C"][fileName]["fields"])
         if (typeof(preproc["C"][fileName]["fields"][n]) == "array")
             precomp["C"][++precomp["C"]["length"]] = preproc["C"][fileName]["fields"][n]["body"]
-    }
 
     for (z = 1; z <= preproc["C"][fileName]["length"]; ++z)
         precomp["C"][++precomp["C"]["length"]] = preproc["C"][fileName][z]
