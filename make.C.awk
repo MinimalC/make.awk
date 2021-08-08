@@ -3,7 +3,6 @@
 # 2020 - 2021 Hans Riehm
 
 #include "../make.awk/meta.awk"
-@include "../make.awk/make.CDefine_eval.awk"
 @include "../make.awk/make.C_parse.awk"
 @include "../make.awk/make.C_preprocess.awk"
 

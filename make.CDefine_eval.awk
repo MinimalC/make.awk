@@ -5,8 +5,8 @@
 #include "../make.awk/meta.awk"
 #include "../make.awk/make.C.awk"
 
-function CDefine_apply(i, file,    a,arguments,b,c,code,d,defineBody,e,f,g,h,j,k,l,m,
-                                   n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
+function CDefine_apply(i, file,
+    __,a,arguments,b,c,code,d,defineBody,e,f,g,h,j,k,l,m,n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
 {
     if (!($i in C_defines)) return 1
     if (typeof(C_defines[$i]) != "array") return 1
@@ -221,8 +221,8 @@ __debug(file["name"]" Line "file["z"]": using "name" ("C_defines[name]["argument
     return n - notapplied
 }
 
-function CDefine_eval(expression,    a, arguments, b, c, d, defineBody, e, f, g,
-                             h, i, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
+function CDefine_eval(expression,
+    __, a, arguments, b, c, d, defineBody, e, f, g, h, i, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     Index_push(expression, REFIX, FIX)
     Index_reset()
@@ -293,7 +293,7 @@ function CDefine_eval(expression,    a, arguments, b, c, d, defineBody, e, f, g,
             for (p = o + 1; p <= NF; ++p) {
                 f = String_concat(f, FIX, $p)
             }
-if (DEBUG == 4) __debug("QuestionMark: "q" TrueAnswer: "t" FalseAnswer: "f)
+if (DEBUG == 4) __debug("QuestionMark: "Index_pull(q, REFIX, " ")" TrueAnswer: "Index_pull(t, REFIX, " ")" FalseAnswer: "Index_pull(f, REFIX, " "))
             x = CDefine_eval(q)
             NF = 1
             if (x) {
@@ -340,14 +340,14 @@ if (DEBUG == 4) __debug("NotUsing "name)
                 else if ($d ~ /^\/\*/) Index_remove(d--)
                 else if ($d ~ /^L?"/) Index_remove(d--)
             }
-if (DEBUG == 4) __debug("Using "name" "$0)
+if (DEBUG == 4) __debug("Using "name" "Index_pull($0, REFIX, " "))
             --i # i += n - 1
             continue
         }
     }
 
     Index_reset()
-if (DEBUG == 4) __debug("Expression: "$0)
+if (DEBUG == 4) __debug("Expression: "Index_pull($0, REFIX, " "))
 
     for (i = 1; i <= NF; ++i) {
         # Evaluate Logical Boolean ! not
@@ -359,7 +359,7 @@ if (DEBUG == 4) __debug("Expression: "$0)
 
             Index_remove(i + 1)
             if ($(i - 1) == "!") --i
-if (DEBUG == 4) __debug("not: "$0)
+if (DEBUG == 4) __debug("not: "Index_pull($0, REFIX, " "))
             continue
         }
         # Evaluate Binary, Bitwise NOT ~ Negation: the complement of n
@@ -369,7 +369,7 @@ if (DEBUG == 4) __debug("not: "$0)
             $i = compl($(i + 1))
             Index_remove(i + 1)
             if ($(i - 1) == "~") --i
-if (DEBUG == 4) __debug("NOT: "$0)
+if (DEBUG == 4) __debug("NOT: "Index_pull($0, REFIX, " "))
             continue
         }
     }
@@ -380,19 +380,19 @@ if (DEBUG == 4) __debug("NOT: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             if (!$(i + 1)) {
                 $i = 0
-if (DEBUG == 4) __debug("Division through null: "$0)
+if (DEBUG == 4) __debug("Division through null: "Index_pull($0, REFIX, " "))
             }
             else {
                 $i = $(i - 1) / $(i + 1)
                 Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("Division: "$0)
+if (DEBUG == 4) __debug("Division: "Index_pull($0, REFIX, " "))
             }
         }
         if ($i == "*") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) * $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("Multiplikation: "$0)
+if (DEBUG == 4) __debug("Multiplikation: "Index_pull($0, REFIX, " "))
         }
     }
 
@@ -403,14 +403,14 @@ if (DEBUG == 4) __debug("Multiplikation: "$0)
             if ((i > 3 && ($(i - 2) == "*" || $(i - 2) == "/")) || ($(i + 2) == "*" || $(i + 2) == "/")) continue
             $i = $(i - 1) - $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("Subtraktion: "$0)
+if (DEBUG == 4) __debug("Subtraktion: "Index_pull($0, REFIX, " "))
         }
         if ($i == "+") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             if ((i > 3 && ($(i - 2) == "*" || $(i - 2) == "/")) || ($(i + 2) == "*" || $(i + 2) == "/")) continue
             $i = $(i - 1) + $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("Addition: "$0)
+if (DEBUG == 4) __debug("Addition: "Index_pull($0, REFIX, " "))
         }
     }
 
@@ -420,13 +420,13 @@ if (DEBUG == 4) __debug("Addition: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = lshift($(i - 1), $(i + 1))
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("LeftShift: "$0)
+if (DEBUG == 4) __debug("LeftShift: "Index_pull($0, REFIX, " "))
         }
         if ($i == ">>") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = rshift($(i - 1), $(i + 1))
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("RightShift: "$0)
+if (DEBUG == 4) __debug("RightShift: "Index_pull($0, REFIX, " "))
         }
     }
 
@@ -436,37 +436,37 @@ if (DEBUG == 4) __debug("RightShift: "$0)
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) == $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("Equals: "$0)
+if (DEBUG == 4) __debug("Equals: "Index_pull($0, REFIX, " "))
         }
         if ($i == "<=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) <= $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug( "LowerThanEquals: "$0 )
+if (DEBUG == 4) __debug( "LowerThanEquals: "Index_pull($0, REFIX, " ") )
         }
         if ($i == "<") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) < $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug( "LowerThan: "$0 )
+if (DEBUG == 4) __debug( "LowerThan: "Index_pull($0, REFIX, " ") )
         }
         if ($i == ">=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) >= $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug( "GreaterThanEquals: "$0 )
+if (DEBUG == 4) __debug( "GreaterThanEquals: "Index_pull($0, REFIX, " ") )
         }
         if ($i == ">") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) > $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug( "GreaterThan: "$0 )
+if (DEBUG == 4) __debug( "GreaterThan: "Index_pull($0, REFIX, " ") )
         }
         if ($i == "!=") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = $(i - 1) != $(i + 1)
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug( "NotEquals: "$0 )
+if (DEBUG == 4) __debug( "NotEquals: "Index_pull($0, REFIX, " ") )
         }
     }
     for (i = 1; i <= NF; ++i) {
@@ -478,7 +478,7 @@ if (DEBUG == 4) __debug( "NotEquals: "$0 )
             x = v && w
             $i = x
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("and: "$0)
+if (DEBUG == 4) __debug("and: "Index_pull($0, REFIX, " "))
 #            if (!x) NF = i
         }
         if ($i == "||") {
@@ -488,7 +488,7 @@ if (DEBUG == 4) __debug("and: "$0)
             x = v || w
             $i = x
             Index_remove(i - 1, i + 1); --i
-if (DEBUG == 4) __debug("or: "$0)
+if (DEBUG == 4) __debug("or: "Index_pull($0, REFIX, " "))
         }
     }
     r = Index_pop()

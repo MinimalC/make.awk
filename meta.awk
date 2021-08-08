@@ -24,41 +24,41 @@ function END_meta() {
     if (Index["length"]) __error("meta.awk: More Index_push() than Index_pop()")
 }
 
-function meta_ARGC_ARGV() {
+function meta_ARGC_ARGV(config) {
 
     ARGC_ARGV_debug()
 }
 
-function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
     print message > to
 }
 
-function __printFTo(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __printFTo(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
     printf format, message > to
 }
 
-function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     __printTo("/dev/stdout", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
-function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
-function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
     else __warning("__error: ERRORS should be number")
     __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
-function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
         __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
 
-function __debugF(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   message) {
+function __debugF(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
         __printFTo("/dev/stderr", format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 }
@@ -96,11 +96,11 @@ function ARGC_ARGV_debug() {
     ARGV_debug()
 }
 
-function File_exists(fileName,    h, i, j, r,x,y,z) {
+function File_exists(fileName,    __,e,r,y) {
     if (!fileName) { __error("File_exists: fileName is null"); return }
     if (!system("test -s '"fileName"'")) return 1
     #r = 0
-    #if (-1 < y = (getline j < fileName)) r = 1
+    #if (-1 < y = (getline e < fileName)) r = 1
     #else return 0
     #close(fileName)
     return 0 #r
@@ -139,12 +139,12 @@ function SymbolicLink_exists(target) {
 #    if (!system("ln -P '"file"' '"target"'")) return 1
 #}
 
-function File_contains(fileName, string,    h, i, j, p, q, r,x,y,z) {
+function File_contains(fileName, string,    __,i,r,y) {
     if (!fileName) { __error("File_contains: fileName is null"); return }
     if (!string) { __error("File_contains: string is null"); return }
     #if (!system("grep -r '"string"' "fileName" >/dev/null")) return 1
-    while (0 < y = (getline j < fileName))
-        if (index(j, string)) { r = 1; break }
+    while (0 < y = (getline i < fileName))
+        if (index(i, string)) { r = 1; break }
     if (y == -1) return 0
     close(fileName)
     return r
@@ -156,19 +156,19 @@ function File_remove(fileName, force) {
     return 0
 }
 
-function get_FileName(pathName,    a,b,c,d,e,f,h, i, path, fileName) {
+function get_FileName(pathName,    __,fileName,path) {
     path["length"] = split(pathName, path, "/")
     if (path[path["length"]] == "") List_remove(path, path["length"])
     return fileName = path[path["length"]]
 }
 
-function get_FileNameExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileExt) {
+function get_FileNameExt(pathName,    __,file,fileExt,path) {
     path["length"] = split(pathName, path, "/")
     file["length"] = split(path[path["length"]], file, ".")
     return fileExt = file[file["length"]]
 }
 
-function get_FileNameNoExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileName) {
+function get_FileNameNoExt(pathName,    __,f,file,fileName,i,path) {
     path["length"] = split(pathName, path, "/")
     file["length"] = split(path[path["length"]], file, ".")
     if (file["length"]) List_remove(file, file["length"])
@@ -176,14 +176,14 @@ function get_FileNameNoExt(pathName,    a,b,c,d,e,f,file,h, i, path, fileName) {
     return fileName
 }
 
-function get_DirectoryName(pathName,    h, i, path, dirName) {
+function get_DirectoryName(pathName,    __,dirName,i,path) {
     path["length"] = split(pathName, path, "/")
     for (i = 1; i < path["length"]; ++i)
         dirName = dirName path[i] "/"
     return dirName
 }
 
-function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, path1, q, r, s) {
+function Path_join(pathName0, pathName1,    __,p,path0,path1,r) {
     path0["length"] = split(pathName0, path0, "/")
     if (path0["length"] && path0[path0["length"]] == "") delete path0[path0["length"]--]
     path1["length"] = split(pathName1, path1, "/")
@@ -196,7 +196,7 @@ function Path_join(pathName0, pathName1,    h, i, j, k, l, m, n, o, p, path0, pa
     return r
 }
 
-function chartonum(char,    a, b, c, h, i, j, k, l, m, n) {
+function chartonum(char,    __,c,n) {
     if (typeof(ALLCHARS) == "untyped")
         for (n = 1; n <= 32767; ++n) {
             c = sprintf("%c", n)
@@ -205,13 +205,13 @@ function chartonum(char,    a, b, c, h, i, j, k, l, m, n) {
     return index(ALLCHARS, char)
 }
 
-function ARGV_contains(item,    s, t, u, v) {
+function ARGV_contains(item,    __,u,v) {
     for (v = 1; v < ARGC; ++v)
         if (ARGV[v] == item) { u = v; break }
     return u
 }
 
-function ARGV_add(item,    p, q, r, s, t, u, v) {
+function ARGV_add(item,    __,r) {
     if (!(r = ARGV_contains(item))) ARGV[r = ARGC++] = item
     return r
 }
@@ -223,26 +223,31 @@ function ARGV_length() {
     return ARGC - 1
 }
 
-function Array_clear(array,    h, i, j, k, l) {
+function Array_clear(array,    __,i) {
     if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
     if (typeof(array) != "array") { __error("Array_clear: array is no Array"); return }
     for (i in array) delete array[i]
 }
 
-function List_clear(array,    h, i) {
+function List_clear(array,    __,i) {
     if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
     if (typeof(array) != "array") { __error("List_clear: array is no Array"); return }
     for (i = 1; i <= array["length"]; ++i) delete array[i]
     array["length"] = 0
 }
 
-function cd_awk_coprocess(variables, directory, options, input, output,  a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function cd_awk_coprocess(variables, directory, options, input, output) {
     __coprocess(variables" cd '"directory"' && awk", options, input, output)
 }
 
-function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, ERRORS
-    a,b,c,config,d,default,e,f,file,g,h,i,includeDir,includeName,j,k,l,m,make,n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
-{
+function __BEGIN(controller, action, usage,
+    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,includeName,j,k,l,m,make,n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
+{   # CONTROLLER, ACTION, USAGE, ERRORS
+
+    if (typeof(null) != "untyped")
+        __warning("meta.awk: Use __BEGIN with just three arguments:\n"\
+                  "__BEGIN(action), __BEGIN(action, usage) or __BEGIN(controller, action, usage)")
+
     if (typeof(action) == "untyped") {
         action = controller
         controller = ""
@@ -254,8 +259,8 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
     }
     if (!usage) {
         if (typeof(USAGE) != "untyped" && USAGE) usage = USAGE
-        else usage = "Use awk -f meta.awk Project.awk command [Directory] [File.name]\n"\
-                     "with Project.awk BEGIN { __BEGIN(\"action\") } and function Project_command(config) { }"
+        else usage = "Use awk -f meta.awk Project.awk [command] [Directory] [File.name]\n"\
+                     "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
     }
     if (!controller) {
         if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
@@ -332,7 +337,7 @@ function __BEGIN(controller, action, usage, # public CONTROLLER, ACTION, USAGE, 
     exit 1
 }
 
-function List_length(array,   s,t) {
+function List_length(array,   __,t) {
     t = typeof(array)
     if (t == "untyped" || t == "unassigned") return
     if (t != "array") __error("List_length: array isn't Array but '"t"'")
@@ -344,26 +349,26 @@ function List_first(array) {
     return array[1]
 }
 
-function List_last(array,    h, i, k, l) {
+function List_last(array,    __,l) {
     if (!(l = List_length(array))) return
     return array[l]
 }
 
-function List_add(array, value,    h, i, k, l) {
+function List_add(array, value,    __,l) {
     l = ++array["length"]
     if (typeof(value) != "untyped") array[l] = value
     return l
 }
 
-function List_insert(array, i, value,    h, k, l) {
+function List_insert(array, i, value,    __,l,n) {
     l = ++array["length"]
     # move all above including i
-    for (h = l; h >= i; --h)
-        array[h] = array[h - 1]
+    for (n = l; n > i; --n)
+        array[n] = array[n - 1]
     if (typeof(value) != "untyped") array[i] = value
 }
 
-function List_contains(array, item,    m,n,r) {
+function List_contains(array, item,    __,n,r) {
     if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
     if (typeof(array) != "array") { __error("List_contains: no array but "typeof(array)); return }
     for (n = 1; n <= array["length"]; ++n) {
@@ -373,14 +378,14 @@ function List_contains(array, item,    m,n,r) {
     return r
 }
 
-function List_copy(file, copy,    h, i, j, k, l, m, n) {
+function List_copy(file, copy,    __,i) {
     if (typeof(file) != "array") { __error("List_copy: file is not array, but "typeof(file)); return }
     if (typeof(copy) != "array") { __error("List_copy: copy is not array, but "typeof(copy)); return }
     for (i = 1; i <= file["length"]; ++i)
         copy[++copy["length"]] = file[i]
 }
 
-function Dictionary_copy(file, copy,    h, i, j, k, l, m, n) {
+function Dictionary_copy(file, copy,    __,i) {
     if (typeof(file) != "array") { __error("Dictionary_copy: file is not array, but "typeof(file)); return }
     if (typeof(copy) != "array") { __error("Dictionary_copy: copy is not array, but "typeof(copy)); return }
     for (i in file) {
@@ -397,7 +402,7 @@ function Dictionary_copy(file, copy,    h, i, j, k, l, m, n) {
     }
 }
 
-function List_remove(array, i,    h, j, k, l, m, n) {
+function List_remove(array, i,    __,l,n) {
     if (typeof(i) == "untyped") { __error("i is untyped"); return }
     if (typeof(i) != "number") { delete array[i]; return }
     l = array["length"]
@@ -407,7 +412,7 @@ function List_remove(array, i,    h, j, k, l, m, n) {
     --array["length"]
 }
 
-function Array_printTo(array, to, level,    h,i,t) {
+function Array_printTo(array, to, level,    __,h,i,t) {
     if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
     t = String_repeat("\t", level)
     if (typeof(array) != "array") { __error(t"Array_print: array is typeof \""typeof(array)"\""); return }
@@ -435,7 +440,7 @@ function Array_debug(array, level) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr")
 }
 
-function List_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
+function List_insertBefore(array, string0, string1,    __,l,n,n0,n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
@@ -455,7 +460,7 @@ function List_insertBefore(array, string0, string1,    h, i, j, k, l, m, n, n0, 
     }
 }
 
-function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n1) {
+function List_insertAfter(array, string0, string1,    __,l,n,n0,n1) {
     l = array["length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
@@ -475,7 +480,7 @@ function List_insertAfter(array, string0, string1,    h, i, j, k, l, m, n, n0, n
     }
 }
 
-function List_sort(source,    a,b,c,copy,h,i) {
+function List_sort(source,    __,copy,i) {
     for (i = 1; i <= source["length"]; ++i) copy[i] = source[i]
     asort(copy)
     for (i = 1; i <= source["length"]; ++i) source[i] = copy[i]
@@ -485,7 +490,7 @@ function String_split(array, string, sepp) {
     array["length"] = split(string, array, sepp)
 }
 
-function String_join(array, ofs,    h,i,r) {
+function String_join(array, ofs,    __,i,r) {
     if (typeof(ofs) == "untyped") ofs = OFS
     if (typeof(array) != "array") { __error("array is no Array"); return }
     if (!array["length"]) return ""
@@ -495,7 +500,7 @@ function String_join(array, ofs,    h,i,r) {
     return r
 }
 
-function String_repeat(string, times,   o,p,q,r) {
+function String_repeat(string, times,   __,p,q,r) {
     for (p = 0; p < times; ++p) r = r string
     return r
 }
@@ -507,7 +512,7 @@ function String_concat(string0, sepp, string1) {
     return string0 sepp string1
 }
 
-function String_startsWith(string0, string1,    h, i, j, k, l0, l1, m) {
+function String_startsWith(string0, string1,    __,l0,l1,m) {
     l0 = length(string0)
     l1 = length(string1)
     if (l1 > l0) return 0
@@ -515,7 +520,7 @@ function String_startsWith(string0, string1,    h, i, j, k, l0, l1, m) {
     return m == string1
 }
 
-function String_endsWith(string0, string1,    h, i, j, k, l0, l1, m) {
+function String_endsWith(string0, string1,    __,l0,l1,m) {
     l0 = length(string0)
     l1 = length(string1)
     if (l1 > l0) return 0
@@ -523,7 +528,7 @@ function String_endsWith(string0, string1,    h, i, j, k, l0, l1, m) {
     return m == string1
 }
 
-function String_trim(string, sepp,    h, i) {
+function String_trim(string, sepp,    __,i) {
     if (typeof(sepp) == "untyped") sepp = @/[ \t]/
     Index_push(string, "", "")
     for (i = 1; i <= NF; ++i) {
@@ -537,7 +542,7 @@ function String_trim(string, sepp,    h, i) {
     return Index_pop()
 }
 
-function String_countChars(string, chars,    h,i,l,n) {
+function String_countChars(string, chars,    __,i,l,n) {
     l = length(chars)
     while (i = index(string, chars)) {
         string = substr(string, i + l)
@@ -546,7 +551,7 @@ function String_countChars(string, chars,    h,i,l,n) {
     return n
 }
 
-function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, m) {
+function Index_pushRange(from, to, fs, ofs, rs, ors,    __,i,m) {
     # save old Index
     i = ++Index["length"]
     Index[i]["OUTPUTRECORDSEP"] = ORS
@@ -567,7 +572,7 @@ function Index_pushRange(from, to, fs, ofs, rs, ors,    h, i, m) {
     return Index_reset()
 }
 
-function Index_push(new, fs, ofs, rs, ors,    h,i,n,z) {
+function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
     # save old Index
     i = ++Index["length"]
     Index[i]["OUTPUTRECORDSEP"] = ORS
@@ -594,7 +599,8 @@ function Index_push(new, fs, ofs, rs, ors,    h,i,n,z) {
     return Index_reset()
 }
 
-function Index_pop(    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r) {
+function Index_pop(    null,i,r) { # Index
+    if (typeof(null) != "untyped") __warning("meta.awk: Use Index_pop() without arguments")
 
     r = Index_reset()
 
@@ -617,7 +623,7 @@ function Index_pull(new, fs, ofs, rs, ors) {
     return Index_pop()
 }
 
-function Index_pullArray(output, input, fs, ofs, rs, ors,   x,y,z) {
+function Index_pullArray(output, input, fs, ofs, rs, ors,   __,z) {
     Index_push("", fs, ofs, rs, ors)
     for (z = 1; z <= input["length"]; ++z) output[++output["length"]] = Index_reset(input[z])
     Index_pop()
@@ -636,60 +642,64 @@ function Index_insert(i, value, ifNot,    p, q, r) {
     return Index_reset()
 }
 
-function Index_prepend(i, value, ifNot,    p, q, r) {
+function Index_prepend(i, value, ifNot,    __,r) {
     if (typeof(ifNot) == "untyped" || (i == 1 || $(i - 1) != ifNot))
         r = Index_insert(i, value)
     return r
 }
 
-function Index_append(i, value, ifNot,    p,q,r) {
+function Index_append(i, value, ifNot,    __,r) {
     if (typeof(ifNot) == "untyped" || (i < NF || $(i + 1) != ifNot))
         r = Index_insert(i + 1, value)
     return r
 }
 
-function Index_remove(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,    removed) {
-    if (typeof(a) == "number") { removed = String_concat(removed, OFS, $a); $a = "CLE\a\r" }
-    if (typeof(b) == "number") { removed = String_concat(removed, OFS, $b); $b = "CLE\a\r" }
-    if (typeof(c) == "number") { removed = String_concat(removed, OFS, $c); $c = "CLE\a\r" }
-    if (typeof(d) == "number") { removed = String_concat(removed, OFS, $d); $d = "CLE\a\r" }
-    if (typeof(e) == "number") { removed = String_concat(removed, OFS, $e); $e = "CLE\a\r" }
-    if (typeof(f) == "number") { removed = String_concat(removed, OFS, $f); $f = "CLE\a\r" }
-    if (typeof(g) == "number") { removed = String_concat(removed, OFS, $g); $g = "CLE\a\r" }
-    if (typeof(h) == "number") { removed = String_concat(removed, OFS, $h); $h = "CLE\a\r" }
-    if (typeof(i) == "number") { removed = String_concat(removed, OFS, $i); $i = "CLE\a\r" }
-    if (typeof(j) == "number") { removed = String_concat(removed, OFS, $j); $j = "CLE\a\r" }
-    if (typeof(k) == "number") { removed = String_concat(removed, OFS, $k); $k = "CLE\a\r" }
-    if (typeof(l) == "number") { removed = String_concat(removed, OFS, $l); $l = "CLE\a\r" }
-    if (typeof(m) == "number") { removed = String_concat(removed, OFS, $m); $m = "CLE\a\r" }
-    if (typeof(n) == "number") { removed = String_concat(removed, OFS, $n); $n = "CLE\a\r" }
-    if (typeof(o) == "number") { removed = String_concat(removed, OFS, $o); $o = "CLE\a\r" }
-    if (typeof(p) == "number") { removed = String_concat(removed, OFS, $p); $p = "CLE\a\r" }
-    if (typeof(q) == "number") { removed = String_concat(removed, OFS, $q); $q = "CLE\a\r" }
-    if (typeof(r) == "number") { removed = String_concat(removed, OFS, $r); $r = "CLE\a\r" }
-    if (typeof(s) == "number") { removed = String_concat(removed, OFS, $s); $s = "CLE\a\r" }
-    if (typeof(t) == "number") { removed = String_concat(removed, OFS, $t); $t = "CLE\a\r" }
-    if (typeof(u) == "number") { removed = String_concat(removed, OFS, $u); $u = "CLE\a\r" }
-    if (typeof(v) == "number") { removed = String_concat(removed, OFS, $v); $v = "CLE\a\r" }
-    if (typeof(w) == "number") { removed = String_concat(removed, OFS, $w); $w = "CLE\a\r" }
-    if (typeof(x) == "number") { removed = String_concat(removed, OFS, $x); $x = "CLE\a\r" }
-    if (typeof(y) == "number") { removed = String_concat(removed, OFS, $y); $y = "CLE\a\r" }
-    if (typeof(z) == "number") { removed = String_concat(removed, OFS, $z); $z = "CLE\a\r" }
+function Index_remove(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,    null,R) {
+    if (typeof(null) != "untyped") {
+        __warning("meta.awk: WARNING: Don't use Index_remove() with more than 26 arguments")
+        R = ""
+    }
+    if (typeof(a) == "number") { R = String_concat(R, OFS, $a); $a = "CLE\a\r" }
+    if (typeof(b) == "number") { R = String_concat(R, OFS, $b); $b = "CLE\a\r" }
+    if (typeof(c) == "number") { R = String_concat(R, OFS, $c); $c = "CLE\a\r" }
+    if (typeof(d) == "number") { R = String_concat(R, OFS, $d); $d = "CLE\a\r" }
+    if (typeof(e) == "number") { R = String_concat(R, OFS, $e); $e = "CLE\a\r" }
+    if (typeof(f) == "number") { R = String_concat(R, OFS, $f); $f = "CLE\a\r" }
+    if (typeof(g) == "number") { R = String_concat(R, OFS, $g); $g = "CLE\a\r" }
+    if (typeof(h) == "number") { R = String_concat(R, OFS, $h); $h = "CLE\a\r" }
+    if (typeof(i) == "number") { R = String_concat(R, OFS, $i); $i = "CLE\a\r" }
+    if (typeof(j) == "number") { R = String_concat(R, OFS, $j); $j = "CLE\a\r" }
+    if (typeof(k) == "number") { R = String_concat(R, OFS, $k); $k = "CLE\a\r" }
+    if (typeof(l) == "number") { R = String_concat(R, OFS, $l); $l = "CLE\a\r" }
+    if (typeof(m) == "number") { R = String_concat(R, OFS, $m); $m = "CLE\a\r" }
+    if (typeof(n) == "number") { R = String_concat(R, OFS, $n); $n = "CLE\a\r" }
+    if (typeof(o) == "number") { R = String_concat(R, OFS, $o); $o = "CLE\a\r" }
+    if (typeof(p) == "number") { R = String_concat(R, OFS, $p); $p = "CLE\a\r" }
+    if (typeof(q) == "number") { R = String_concat(R, OFS, $q); $q = "CLE\a\r" }
+    if (typeof(r) == "number") { R = String_concat(R, OFS, $r); $r = "CLE\a\r" }
+    if (typeof(s) == "number") { R = String_concat(R, OFS, $s); $s = "CLE\a\r" }
+    if (typeof(t) == "number") { R = String_concat(R, OFS, $t); $t = "CLE\a\r" }
+    if (typeof(u) == "number") { R = String_concat(R, OFS, $u); $u = "CLE\a\r" }
+    if (typeof(v) == "number") { R = String_concat(R, OFS, $v); $v = "CLE\a\r" }
+    if (typeof(w) == "number") { R = String_concat(R, OFS, $w); $w = "CLE\a\r" }
+    if (typeof(x) == "number") { R = String_concat(R, OFS, $x); $x = "CLE\a\r" }
+    if (typeof(y) == "number") { R = String_concat(R, OFS, $y); $y = "CLE\a\r" }
+    if (typeof(z) == "number") { R = String_concat(R, OFS, $z); $z = "CLE\a\r" }
     Index_reset()
-    return removed
+    return R
 }
 
-function Index_removeRange(from0, to0,    h, i, removed) {
+function Index_removeRange(from0, to0,    __,i,r) {
     if (typeof(to0) == "untyped") to0 = NF
-    for (i = from0; i <= to0; ++i) { removed = String_concat(removed, OFS, $i); $i = "CLE\a\r" }
+    for (i = from0; i <= to0; ++i) { r = String_concat(r, OFS, $i); $i = "CLE\a\r" }
     Index_reset()
-    return removed
+    return r
 }
 
-function Index_getRange(from0, to0,    h, i, text) {
+function Index_getRange(from0, to0,    __,i,r) {
     if (typeof(to0) == "untyped") to0 = NF
-    for (i = from0; i <= to0; ++i) text = String_concat(text, OFS, $i)
-    return text
+    for (i = from0; i <= to0; ++i) r = String_concat(r, OFS, $i)
+    return r
 }
 
 #function Index_merge(i, len,    h, j, k, l) {
@@ -701,7 +711,7 @@ function Index_getRange(from0, to0,    h, i, text) {
 #    return Index_reset()
 #}
 
-function Index_clear(    h, i, j, k, l, m, n) {
+function Index_clear(    __,i,n) {
     for (i = 1; i <= NF; ++i) {
         if ($i == "CLE\a\r") { ++n; continue }
         $(i - n) = $i
@@ -709,13 +719,13 @@ function Index_clear(    h, i, j, k, l, m, n) {
     NF -= n
 }
 
-function Index_reset(new,    h, i, j, k, l, m, n) {
+function Index_reset(new) {
     if (typeof(new) != "untyped") $0 = new
     Index_clear()
     return $0 = $0
 }
 
-function File_read(file, fileName, rs, ors,    w, x, y, z) {
+function File_read(file, fileName, rs, ors,    __,x,y,z) {
     if (typeof(fileName) == "untyped" || !fileName) { __error("File_read without fileName"); return }
     if (!file["name"]) file["name"] = fileName
     x = z = file["length"]
@@ -730,7 +740,7 @@ function File_read(file, fileName, rs, ors,    w, x, y, z) {
     return z - x
 }
 
-function File_printTo(file, to, rs, ors, noLastORS,    x, y, z) {
+function File_printTo(file, to, rs, ors, noLastORS,    __,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
@@ -741,7 +751,7 @@ function File_printTo(file, to, rs, ors, noLastORS,    x, y, z) {
     Index_pop()
     if (to != "/dev/stdout" && to != "/dev/stderr") close(to)
 }
-function File_printFTo(file, to, format, rs, ors, noLastORS,    x, y, z) {
+function File_printFTo(file, to, format, rs, ors, noLastORS,    __,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
@@ -752,21 +762,21 @@ function File_printFTo(file, to, format, rs, ors, noLastORS,    x, y, z) {
     Index_pop()
 }
 
-function File_print(file, rs, ors, noLastORS,    x, y, z) {
+function File_print(file, rs, ors, noLastORS) {
     File_printTo(file, "/dev/stdout", rs, ors, noLastORS)
 }
 
-function File_error(file, rs, ors, noLastORS,    x, y, z) {
+function File_error(file, rs, ors, noLastORS) {
     if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
     else __warning("File_error: ERRORS should be number")
     File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 
-function File_debug(file, rs, ors, noLastORS,    x, y, z) {
+function File_debug(file, rs, ors, noLastORS) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 
-function String_read(file, string, rs,    h,i,s,splits,x,z) {
+function String_read(file, string, rs,    __,i,splits,x,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     splits["length"] = split(string, splits, rs)
     x = z = file["length"]
@@ -777,39 +787,39 @@ function String_read(file, string, rs,    h,i,s,splits,x,z) {
     return z - x
 }
 
-function File_toString(file, ors,    o,r,s,x,y,z) {
+function File_toString(file, ors,    __,r,z) {
     if (typeof(ors) == "untyped") ors = "\n"
     while (++z <= file["length"]) r = String_concat(r, ors, file[z])
     return r
 }
 
-function File_clearLines(file, regex,    h, i) {
+function File_clearLines(file, regex,    __,i) {
     for (i = 1; i <= file["length"]; ++i)
         if (file[i] ~ regex) file[i] = ""
 }
 
-function __pipe(command, options, output,    a,b,c,cmd,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function __pipe(command, options, output,    __,a,cmd,y) {
     cmd = command" "options
     Index_push("", "", "", "\n", "\n")
-    o = typeof(output) == "array"
+    a = typeof(output) == "array"
     while (0 < y = ( cmd | getline ))
-        if (o) output[++output["length"]] = $0
+        if (a) output[++output["length"]] = $0
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(cmd)
 }
 
-function __coprocess(command, options, input, output,    a,b,c,cmd,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function __coprocess(command, options, input, output,    __,a,cmd,y,z) {
     cmd = command" "options
     if (typeof(input) == "array")
-        for (i = 1; i <= input["length"]; ++i)
-            print input[i] |& cmd
+        for (z = 1; z <= input["length"]; ++z)
+            print input[z] |& cmd
     else print "" |& cmd
     close(cmd, "to")
     Index_push("", "", "", "\n", "\n")
-    o = typeof(output) == "array"
+    a = typeof(output) == "array"
     while (0 < y = ( cmd |& getline ))
-        if (o) output[++output["length"]] = $0
+        if (a) output[++output["length"]] = $0
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(cmd)

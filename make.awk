@@ -37,7 +37,7 @@ function BEGIN_make() {
 
 END { END_make() }
 
-function END_make(    n,rendered) {
+function END_make(    __,n,rendered) {
 
     if (DEBUG) {
         __debug("CSharp_Types: "); Array_debug(CSharp_Types)
@@ -61,12 +61,9 @@ function END_make(    n,rendered) {
     }
 }
 
-function make_ARGC_ARGV(config) {
+function make_ARGC_ARGV(config) { RUN_ARGC_ARGV = 1 }
 
-    RUN_ARGC_ARGV = 1
-}
-
-function make_parse(config,    a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
+function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
 
     if (!config["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(config["files"][1])
@@ -88,7 +85,7 @@ function make_parse(config,    a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
     File_printTo(pre, "."Project"...parsed.C")
 }
 
-function make_preprocess(config,    a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
+function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
 
     config["next"]
     if (!config["files"]["length"]) { __error(USAGE); return }
@@ -116,17 +113,17 @@ if (DEBUG) Index_pullArray(pre, preproc[format][name], REFIX, FIX); else
     if (!o) { __error("make.awk: Nothing preprocessed"); return }
 }
 
-function make_precompile(config,    a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
+function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 
     for (f = Format["length"]; f; --f) {
         format = Format[f]
         if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
+        if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
     for (n = 1; n <= config["files"]["length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
-        if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
         precomp[format]["length"]
         if (!@C(name)) continue
@@ -141,7 +138,7 @@ if (DEBUG) Index_pullArray(pre, precomp[format], REFIX, FIX); else
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
 
-function make_compile(config,    a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function make_compile(config,    __,a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 

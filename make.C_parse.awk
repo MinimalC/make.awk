@@ -6,7 +6,7 @@
 #include "../make.awk/make.C.awk"
 
 function C_parse(fileName, input,
-    a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
+    __,a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
 {
 if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
     if ( !input["length"] ) if (!fileName || !File_read(input, fileName)) return

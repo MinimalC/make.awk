@@ -4,6 +4,7 @@
 
 #include "../make.awk/meta.awk"
 #include "../make.awk/make.C.awk"
+@include "../make.awk/make.CDefine_eval.awk"
 
 function C_prepare_preprocess(config,    a,b,c,d,input,output,v) {
 
