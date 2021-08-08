@@ -88,23 +88,34 @@ function C_prepare_preprocess(config,    a,b,c,d,input,output,v) {
 
     preproc["C"]["length"]
     Array_clear(preproc["C"])
-    if (!(Compiler in preproc["C"])) C_preprocess(Compiler)
+    #if (!(Compiler in preproc["C"]))
+    C_preprocess(Compiler)
 }
 
 function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
     a,b,c,d,e,f,__FILE__Name,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
 {
     if (!C) C = "C"
-    if (!original) original = fileName
+    if (!original) { original = fileName } # if ((c = C"_""prepare_preprocess") in FUNCTAB) @c(config) }
     if (!(fileName in parsed)) if (!C_parse(fileName)) return
+    if (!parsed[fileName]["length"]) return
 
     Index_push("", REFIX, FIX, "\0", "\n")
 
-    __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_", "\0", "\0")
+    preproc[C]["files"]["length"]
+    if (!List_contains(preproc[C]["files"], fileName))
+        preproc[C]["files"][ ++preproc[C]["files"]["length"] ] = fileName
 
-    preproc[C][original]["fields"]["length"]
-    if (!(__FILE__Name in preproc[C][original]["fields"]))
-        preproc[C][original]["fields"][__FILE__Name]["body"] = "static"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
+    __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_")
+    if (!(__FILE__Name in preproc[C]) || preproc[C][__FILE__Name] != fileName) {
+        for (f = 1; f < MAX_NUMBER; ++f) {
+            n = __FILE__Name (f == 1 ? "" : f)
+            if (!(n in preproc[C]) || preproc[C][n] == fileName) break
+        }
+        if (f == MAX_NUMBER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }
+        __FILE__Name = n
+        preproc[C][__FILE__Name] = fileName
+    }
 
     preproc[C][original][ ++preproc[C][original]["length"] ] = "#"FIX 1 FIX"\""fileName"\""
     # preproc[C][original][ preproc[C][original]["length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"

@@ -205,9 +205,12 @@ function chartonum(char,    __,c,n) {
     return index(ALLCHARS, char)
 }
 
-function ARGV_contains(item,    __,u,v) {
+function ARGV_contains(item,    __,t,type,u,v) {
+    type = typeof(item)
+    if (type == "array") { __error("ARGV_contains doesn't work with arrays"); return }
     for (v = 1; v < ARGC; ++v)
-        if (ARGV[v] == item) { u = v; break }
+        if (type == "regex" && ARGV[v] ~ item) { u = v; break }
+        else if (ARGV[v] == item) { u = v; break }
     return u
 }
 
@@ -241,7 +244,7 @@ function cd_awk_coprocess(variables, directory, options, input, output) {
 }
 
 function __BEGIN(controller, action, usage,
-    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,includeName,j,k,l,m,make,n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
+    null,a,b,c,config,d,default,e,f,file,g,h,i,j,k,l,m,make,n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
 {   # CONTROLLER, ACTION, USAGE, ERRORS
 
     if (typeof(null) != "untyped")
@@ -368,12 +371,14 @@ function List_insert(array, i, value,    __,l,n) {
     if (typeof(value) != "untyped") array[i] = value
 }
 
-function List_contains(array, item,    __,n,r) {
-    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
-    if (typeof(array) != "array") { __error("List_contains: no array but "typeof(array)); return }
+function List_contains(array, item,    __,n,r,t,type) {
+    t = typeof(array); type = typeof(item)
+    if (t == "untyped" || t == "unassigned") return
+    if (t != "array") { __error("List_contains: no array but "t); return }
+    if (type == "array") { __error("List_contains: doesn't work with with arrays"); return }
     for (n = 1; n <= array["length"]; ++n) {
-        if (typeof(item) == "regex") { if (array[n] ~ item) { r = n; break } }
-        else { if (array[n] == item) { r = n; break } }
+        if (type == "regex") { if (array[n] ~ item) { r = n; break } }
+        else if (array[n] == item) { r = n; break }
     }
     return r
 }

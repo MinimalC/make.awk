@@ -28,255 +28,31 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
 
     precomp["C"]["length"]
     Array_clear(precomp["C"])
-    C_precompile(Compiler, precomp["C"])
 }
 
-function __unused0(fileName, file,     level,expression,name,var,varType,i,k,n,o,p,s,v,z) {
-
-        level = expression["length"]
-        if (!level) level = ++expression["length"]
-        expression[level]["length"]
-        for (i = 1; i <= NF; ++i) {
-
-            # Get typedef struct SomeThing { ... }  * SomeThing ,  * * Array ,  SomeThing ( * function_Delegate ) ( void ) ;
-
-            # and for ISO C also typedef struct SomeThing { ... } SomeThing_t ,  SomeThing_t ( * fun_Action ) ( void ) ;
-
-            # or just struct SomeThing { ... }, even struct { }
-
-            name = ""; s = 0
-
-            if ($i == "__attribute__") {
-                if ($(i + 1) == "(")
-                    while (++i <= NF) {
-                        if ($i == "(") ++k
-                        if ($i == ")" && --k == 0) break
-                    }
-                continue # Ignore
-            }
-            if ($i == "(") {
-                level = ++expression["length"]
-                expression[level]["length"]
-if (DEBUG == 5) __debug(fileName" Line "z": ++Level == "level" ( "("function" in expression[level - 1] ? "function" : "" ))
-                continue
-            }
-            if ($i == ")") {
-                delete expression[level]
-                level = --expression["length"]
-                expression[level]["length"]
-if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level" )")
-                continue
-            }
-            if ($i == "{") {
-                level = ++expression["length"]
-                expression[level]["length"]
-                file[++file["length"]] = Index_removeRange(1, i)
-                i = 0
-                if (level > 1 && "function" in expression[level - 1]) {
-                    expression[level - 1]["expression"]
-                }
-if (DEBUG == 5) __debug(fileName" Line "z": ++Level == "level" { "("expression" in expression[level - 1] ? "expression" :
-    ("struct" in expression[level - 1] ? "struct" : "" )))
-                continue
-            }
-            if ($i == "," && level > 1 && ("function" in expression[level - 1] ||
-                ("struct" in expression[level - 1] && expression[level - 1]["Type"] ~ /^enum/)))
-            {
-                Array_clear(expression[level])
-                expression[level]["length"]
-                continue
-            }
-            if ($i == ";") {
-                # if (!e) ; # you don't need semikolon
-                Array_clear(expression[level])
-                expression[level]["length"]
-                file[++file["length"]] = Index_removeRange(1, i)
-                i = 0
-                continue
-            }
-            if ($i == "typedef") {
-                # if (level > 1) __error()
-                # if (e > 0) ; # do you need semikolon?
-                if ("isTypedef" in expression[level]) {
-if (DEBUG == 5) __debug(fileName" Line "z": isTypedef is already "expression[level]["isTypedef"]". Missing Semikolon?")
-                    Index_append(--i, ";")
-                    continue
-                }
-                expression[level]["isTypedef"]
-                continue
-            }
-            if ($i == "}") {
-                delete expression[level]
-                level = --expression["length"]
-                expression[level]["length"]
-                if (i > 1) {
-                    file[++file["length"]] = Index_removeRange(1, i - 1)
-                    i = 1
-                }
-if (DEBUG == 5) __debug(fileName" Line "z": --Level == "level" }")
-                if ("expression" in expression[level]) {
-                    Array_clear(expression[level])
-                    expression[level]["length"]
-                    file[++file["length"]] = Index_removeRange(1, i)
-                    i = 0
-                    continue
-                }
-                if (!("struct" in expression[level])) continue
-            }
-            if ($i == "const" || $i == "volatile" || $i in C_types || $i == "struct" || $i == "union" || $i == "enum")
-            {
-                if ("Type" in expression[level] && expression[level]["Type"]) {
-if (DEBUG == 5) __debug(fileName" Line "z": name "name" is already "expression[level]["Type"]". Missing semikolon?")
-                    Index_append(--i, ";")
-                    continue
-                }
-                for (n = i; n <= NF; ++n) {
-                    #$n == "extern" || $n == "static" || $n ~ /^_?_?[iI]nline$/
-                    if ($n == "const" || $n == "volatile") {
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        continue
-                    }
-                    --n; break
-                }
-                if (n >= i) ++i
-                for (n = i; n <= NF; ++n) {
-                    if ($n in C_types && "isLiteral" in C_types[$n]) {
-                        s = 1; name = String_concat(name, " ", $n)
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        continue
-                    }
-                    if (name == "" && ($n in C_types)) {
-                        if ("isLiteral" in C_types[$n]) s = 1
-                        name = $n
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        break
-                    }
-                    if (name == "" && ($n == "struct" || $n == "union" || $n == "enum")) {
-                        s = 1; name = $n
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        if ($(n + 1) in C_keywords) break
-                        if ($(n + 1) !~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) break
-                        name = String_concat(name, " ", $(++n))
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        break
-                    }
-                    --n; break
-                }
-                if (name == "" || name == "struct" || name == "union" || name == "enum") {
-                    if (n < i) --i
-                    # if (n >= i) Index_remove(i--)
-                    __warning(fileName" Line "z": "$i" without name")
-                }
-                else if (level == 1 && !(name in C_types) ) {
-if (DEBUG == 5) __debug(fileName" Line "z": "name)
-                    if (s) C_types[name]["isLiteral"]
-                    else C_types[name]["baseType"]
-                }
-
-                expression[level]["Type"] = name
-
-                if ("isTypedef" in expression[level]) {
-if (expression[level]["isTypedef"])
-if (DEBUG == 5) __debug(fileName" Line "z": isTypedef is already "expression[level]["isTypedef"])
-                    expression[level]["isTypedef"] = $i
-                }
-
-                # if ($(n + 1) == ";" || $(n + 1) in C_keywords) continue
-                if ($(n + 1) == "{") {
-                    expression[level]["struct"]
-if (DEBUG == 5) __debug(fileName" Line "z": delay "name" "$(n + 1))
-                    continue
-                }
-            }
-            if (name || ("struct" in expression[level] && $i == "}") || ("isTypedef" in expression[level] && $i == ",")) {
-                if ($i == "}" || $i == ",") {
-                    name = expression[level]["Type"]
-if (DEBUG == 5) __debug(fileName" Line "z": continue "$i" "name)
-                    # if ($(i + 1) == ";" || $(i + 1) in C_keywords) continue
-                }
-
-                var = varType = ""; k = o = p = 0
-
-                for (n = ++i; n <= NF; ++n) {
-                    if (var == "" && !o && $n == "(") {
-                        ++k; varType = String_concat(varType, " ", $n)
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        continue
-                    }
-                    if (var == "" && !o && $n == "*") {
-                        ++p; varType = String_concat(varType, " ", $n)
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        if ($(n + 1) == "const")
-                            if (n + 1 > i) { $i = String_concat($i, " ", $(n + 1)); Index_remove(n + 1) }
-                        if ($(n + 1) == "__restrict")
-                            if (n + 1 > i) { $i = String_concat($i, " ", $(n + 1)); Index_remove(n + 1) }
-                        continue
-                    }
-                    if (var == "" && !o && $n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
-                        var = $n
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        if (!k) break
-                        continue
-                    }
-                    if (k && $n == ")") {
-                        --k; ++o; varType = String_concat(varType, " ", $n)
-                        if (n > i) { $i = String_concat($i, " ", $n); Index_remove(n--) }
-                        if (!k) break
-                        continue
-                    }
-                    --n; break
-                }
-                if (var == "") {
-                    if (n < i) --i
-                    if (level == 1 && "isTypedef" in expression[level]) {
-if (DEBUG == 5) __debug(fileName" Line "z": typedef "name"  without var")
-                    }
-else if (DEBUG == 5) __debug(fileName" Line "z": "name"  without var")
-                    continue
-                }
-
-                if (level == 1 && "isTypedef" in expression[level]) {
-                    name = expression[level]["isTypedef"]
-
-                    if (!(var in C_types)) {
-                        C_types[var]["baseType"] = String_concat(name, " ", varType)
-                        if (name in C_types && "isLiteral" in C_types[name] && !p)
-                            C_types[var]["isLiteral"]
-if (DEBUG == 5) __debug(fileName" Line "z": typedef "var": "name"  "varType)
-                    }
-else if (DEBUG == 5) __debug(fileName" Line "z": typedef "var": "name" override, with  "varType)
-                }
-                # else expression[level]["var"] = var
-
-                if ($(n + 1) == "(") {
-if (DEBUG == 5) if ("function" in expression[level]) __debug(fileName" Line "z": function "var" is already "expression[level]["function"])
-                    expression[level]["function"]
-if (DEBUG == 5) __debug(fileName" Line "z": function: "name"  "$i)
-                }
-else if (!("isTypedef" in expression[level])) if (DEBUG == 5) __debug(fileName" Line "z": var: "name (varType ? "  "varType : "") (var ? "  "var : "  without var"))
-                continue
-            }
-
-if (DEBUG == 5) __debug(fileName" Line "z": unknown i("i"): "$i ($i == "" ? " (empty)" : ""))
-        }
-
-}
-
-function C_precompile(fileName,    h,i,n,z)
+function C_precompile(fileName,    __,f,h,i,n,name,z)
 {
-#    if (!C_preprocess(fileName, input)) return
+#    if (!C_preprocess(fileName)) return
 
     # C_precompile is PROTOTYPE
 
-    precomp["C"][ precomp["C"]["length"] ] = "#"FIX ((++precomp["C"]["length"]) + 1) FIX"\"make.awk\""
+    precomp["C"][ precomp["C"]["length"] ] = "#"FIX (++precomp["C"]["length"]) FIX"\"make.awk\""
 
-    preproc["C"][fileName]["fields"]["length"]
-    for (n in preproc["C"][fileName]["fields"])
-        if (typeof(preproc["C"][fileName]["fields"][n]) == "array")
-            precomp["C"][++precomp["C"]["length"]] = preproc["C"][fileName]["fields"][n]["body"]
+    preproc["C"]["length"]
+    for (n in preproc["C"]) {
+        if (n == "length" || n ~ /^[1-9][0-9]*$/) continue
+        if (n !~ /^__FILE__./) continue
+        name = preproc["C"][n]
 
-    for (z = 1; z <= preproc["C"][fileName]["length"]; ++z)
-        precomp["C"][++precomp["C"]["length"]] = preproc["C"][fileName][z]
+        precomp["C"][++precomp["C"]["length"]] = "static"FIX"const"FIX"char"FIX n FIX"["FIX"]"FIX"="FIX"\""name"\""FIX";"
+    }
+
+    for (n = 1; n <= preproc["C"]["files"]["length"]; ++n) {
+        name = preproc["C"]["files"][n]
+
+        for (z = 1; z <= preproc["C"][name]["length"]; ++z)
+            precomp["C"][++precomp["C"]["length"]] = preproc["C"][name][z]
+    }
 
     return 1
 }
