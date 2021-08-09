@@ -10,7 +10,7 @@ function C_parse(fileName, input,
 {
 if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
     if ( !input["length"] ) if (!fileName || !File_read(input, fileName)) return
-    input["name"] = fileName
+    parsed[fileName]["name"] = fileName
 
     Index_push("", "", "", "\0", "\n")
 for (z = 1; z <= input["length"]; ++z) {
