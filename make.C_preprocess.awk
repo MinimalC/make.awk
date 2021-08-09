@@ -93,34 +93,34 @@ function C_prepare_preprocess(config,    a,b,c,d,input,output,v) {
 }
 
 function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
-    a,b,c,d,e,f,__FILE__Name,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,OLD_defines,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
+    a,b,c,d,e,f,__FILE__Name,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
 {
     if (!C) C = "C"
-    if (!original) { original = fileName } # if ((c = C"_""prepare_preprocess") in FUNCTAB) @c(config) }
+    if (typeof(fileName) != "string" || !fileName) { __error("make.awk: C_preprocess without fileName"); return }
+    if (!original) { O = fileName } else { O = original }
+
     if (!(fileName in parsed)) if (!C_parse(fileName)) return
     if (!parsed[fileName]["length"]) return
 
     Index_push("", REFIX, FIX, "\0", "\n")
 
-    preproc[C]["files"]["length"]
-    if (!List_contains(preproc[C]["files"], fileName))
-        preproc[C]["files"][ ++preproc[C]["files"]["length"] ] = fileName
+    preproc[C][O]["length"]
 
     __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_")
-    if (!(__FILE__Name in preproc[C]) || preproc[C][__FILE__Name] != fileName) {
+    if (!(__FILE__Name in preproc[C][O]) || preproc[C][O][__FILE__Name] != fileName) {
         for (f = 1; f < MAX_NUMBER; ++f) {
             n = __FILE__Name (f == 1 ? "" : f)
-            if (!(n in preproc[C])) break
-            if (preproc[C][n] !~ "\""fileName"\"") continue
+            if (!(n in preproc[C][O])) break
+            if (preproc[C][O][n] !~ "\""fileName"\"") continue
             break
         }
         if (f == MAX_NUMBER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }
         __FILE__Name = n
-        preproc[C][__FILE__Name] = "static"FIX"const"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
+        preproc[C][O][__FILE__Name] = "static"FIX"const"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
     }
 
-    preproc[C][original][ ++preproc[C][original]["length"] ] = "#"FIX 1 FIX"\""fileName"\""
-    # preproc[C][original][ preproc[C][original]["length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
+    preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX 1 FIX"\""fileName"\""
+    # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
 
     C_defines["__FILE__"]["body"] = __FILE__Name
 
@@ -130,7 +130,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         C_defines["__LINE__"]["body"] = z
 
     if ($1 == "#") {
-        #if ($2 ~ /^\s*$/) Index_remove(2)
+        # if ($2 ~ /^\s*$/) Index_remove(2)
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n)
@@ -218,8 +218,8 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
                     o = Path_join(includeDirs[n], m)
                     if (File_exists(o)) {
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
-                        zZ = preproc[C][original]["length"]
-                        C_preprocess(o, original, C)
+                        zZ = preproc[C][O]["length"]
+                        C_preprocess(o, O, C)
                         C_defines["__FILE__"]["body"] = __FILE__Name
                         C_defines["__LINE__"]["body"] = z
                         break
@@ -232,16 +232,16 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
                 m = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(m)) {
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
-                    zZ = preproc[C][original]["length"]
-                    C_preprocess(m, original, C)
+                    zZ = preproc[C][O]["length"]
+                    C_preprocess(m, O, C)
                     C_defines["__FILE__"]["body"] = __FILE__Name
                     C_defines["__LINE__"]["body"] = z
                 }
                 else __warning(fileName" Line "z": File not found: \""m"\"")
             }
-            if (zZ && zZ < preproc[C][original]["length"]) {
-                preproc[C][original][ ++preproc[C][original]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""
-                # preproc[C][original][ preproc[C][original]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
+            if (zZ && zZ < preproc[C][O]["length"]) {
+                preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""
+                # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
                 zZ = 0; lz = 0
                 continue
             }
@@ -269,31 +269,31 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                 # define name (void) # constant
                 # define name(void)  # expression
                 if ($1 == "(") {
-                    for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
-                    for (n = 2; n <= NF; ++n) {
-                        if ($n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) continue
-                        if ($n == ",") continue
-                        if ($n == "...") continue
-                        if ($n == ")") break
+                    for (a = 2; a <= NF; ++a) {
+                        if ($a ~ /^\s*$/) continue
+                        if ($a ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) continue
+                        if ($a == ",") continue
+                        if ($a == "...") continue
+                        if ($a == ")") break
                         break
                     }
-                    if ($n != ")") {
+                    if ($a != ")") {
                         __warning(fileName" Line "z": define "name" without )")
                     } else {
-                        m = ""; for (o = 2; o < n; ++o) {
-                            if ($o in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument \""$o"\" (is a define)"); else
-                            # if ($o in C_types) __warning(fileName" Line "z": Ambiguous define "name" argument \""$o"\" (is a typedef)"); else
-                            if ($o in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument \""$o"\" (is a keyword)")
-                            m = String_concat(m, " ", $o)
-                            if ($o == ",") continue
-                            g = ++C_defines[name]["arguments"]["length"]
-                            C_defines[name]["arguments"][g] = $o
+                        m = ""; for (n = 2; n < a; ++n) {
+                            if ($n ~ /^\s*$/) { Index_remove(n--); a--; continue } # clean
+                            if ($n in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument \""$n"\" (is a define)"); else
+                            if ($n in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument \""$n"\" (is a keyword)")
+                            m = String_concat(m, " ", $n)
+                            if ($n == ",") continue
+                            C_defines[name]["arguments"][ ++C_defines[name]["arguments"]["length"] ] = $n
                         }
                         C_defines[name]["arguments"]["text"] = m
                         Index_removeRange(1, n)
                     }
                 }
-                else for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
+
+                for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
                 C_defines[name]["body"] = $0
 
@@ -349,7 +349,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             NF = 0
         }
         if (!NF) { ++lz; continue }
-        preproc[C][original][ ++preproc[C][original]["length"] ] = $0; continue
+        preproc[C][O][ ++preproc[C][O]["length"] ] = $0; continue
     }
 
         # for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
@@ -376,15 +376,15 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
 
         if (!NF) { ++lz; continue }
 
-        if (lz <= 3) preproc[C][original]["length"] += lz
+        if (lz <= 3) preproc[C][O]["length"] += lz
         else {
-            preproc[C][original]["length"] += 2
-            preproc[C][original][ ++preproc[C][original]["length"] ] = "#"FIX z FIX"\""fileName"\""
-            # preproc[C][original][ preproc[C][original]["length"] ] = "#"FIX z FIX"\""fileName"\""" /* Zeile "++preproc[C][original]["length"]" */"
+            preproc[C][O]["length"] += 2
+            preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX z FIX"\""fileName"\""
+            # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX z FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
         }
         lz = 0
 
-        preproc[C][original][ ++preproc[C][original]["length"] ] = $0
+        preproc[C][O][ ++preproc[C][O]["length"] ] = $0
     }
     Index_pop()
     for (name in OLD_defines) {

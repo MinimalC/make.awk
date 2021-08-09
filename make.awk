@@ -81,7 +81,8 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
         @C(name)
     } }
 
-    for (n in parsed) if (typeof(parsed[n]) == "array") for (z = 1; z <= parsed[n]["length"]; ++z) pre[++pre["length"]] = parsed[n][z]
+    pre["length"]
+    for (n in parsed) if (typeof(parsed[n]) == "array" && parsed[n]["length"]) Index_pullArray(pre, parsed[n], REFIX, "\x01")
     File_printTo(pre, "."Project"...C")
 }
 

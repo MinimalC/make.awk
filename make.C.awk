@@ -28,30 +28,26 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
 
     precomp["C"]["length"]
     Array_clear(precomp["C"])
+    C_precompile(Compiler)
 }
 
-function C_precompile(fileName,    __,f,h,i,n,name,z)
+function C_precompile(name,    __,c,f,h,i,n,z)
 {
-#    if (!C_preprocess(fileName)) return
+    if (!preproc["C"][name]["length"]) { __error("make.awk: C_precompile: No C_preprocessed file \""name"\""); return }
 
     # C_precompile is PROTOTYPE
 
     precomp["C"][ precomp["C"]["length"] ] = "#"FIX (++precomp["C"]["length"]) FIX"\"make.awk\""
 
-    preproc["C"]["length"]
-    for (n in preproc["C"]) {
+    for (n in preproc["C"][name]) {
         if (n == "length" || n ~ /^[0-9]/) continue
         if (n !~ /^__FILE__./) continue
 
-        precomp["C"][++precomp["C"]["length"]] = preproc["C"][n]
+        precomp["C"][++precomp["C"]["length"]] = preproc["C"][name][n]
     }
 
-    for (n = 1; n <= preproc["C"]["files"]["length"]; ++n) {
-        name = preproc["C"]["files"][n]
-
-        for (z = 1; z <= preproc["C"][name]["length"]; ++z)
-            precomp["C"][++precomp["C"]["length"]] = preproc["C"][name][z]
-    }
+    for (z = 1; z <= preproc["C"][name]["length"]; ++z)
+        precomp["C"][++precomp["C"]["length"]] = preproc["C"][name][z]
 
     return 1
 }
