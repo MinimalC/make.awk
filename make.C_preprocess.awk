@@ -257,7 +257,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
             if (name !~ /^[a-zA-Z_][a-zA-Z_0-9]*$/)
                 __error(fileName" Line "z": define "name" isn't a name")
             else if (name in C_defines)
-                __warning(fileName" Line "z": not redefining "name)
+                __warning(fileName" Line "z": noredefine "name)
             else {
                 #if (name in C_defines) {
                 #    __warning(fileName" Line "z": redefining "name)
