@@ -82,7 +82,7 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
     } }
 
     for (n in parsed) if (typeof(parsed[n]) == "array") for (z = 1; z <= parsed[n]["length"]; ++z) pre[++pre["length"]] = parsed[n][z]
-    File_printTo(pre, "."Project"...parsed.C")
+    File_printTo(pre, "."Project"...C")
 }
 
 function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
@@ -105,6 +105,7 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         #preproc[format][ ++preproc[format]["length"] ] = name
         ++o
 
+        pre["length"]
         Array_clear(pre)
 if (DEBUG) Index_pullArray(pre, preproc[format][name], REFIX, FIX); else
         Index_pullArray(pre, preproc[format][name], REFIX, " ")
@@ -130,6 +131,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         #if (!precomp[format]["length"]) continue
         ++o
 
+        pre["length"]
         Array_clear(pre)
 if (DEBUG) Index_pullArray(pre, precomp[format], REFIX, FIX); else
         Index_pullArray(pre, precomp[format], REFIX, " ")

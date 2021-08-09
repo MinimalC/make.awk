@@ -23,7 +23,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
 
     defineBody = C_defines[name]["body"]
     arguments["length"]
-    if (C_defines[name]["isFunction"]) {
+    if ("arguments" in C_defines[name]) {
         # define expression( arg1 , arg2 ) body
         l = C_defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
@@ -83,7 +83,7 @@ __debug("applying:  ( "rendered" )")
             Index_push(arguments[n]["value"], REFIX, FIX)
             for (j = 1; j <= NF; ++j) {
                 if ($j in C_defines) {
-                    if (C_defines[$j]["isFunction"] && $(j + 1) != "(") {
+                    if ("arguments" in C_defines[$j] && $(j + 1) != "(") {
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
                         continue
                     }
@@ -194,7 +194,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without bod
         #    continue
         #}
         if ($j in C_defines) {
-            if (C_defines[$j]["isFunction"] && $(j + 1) != "(") {
+            if ("arguments" in C_defines[$j] && $(j + 1) != "(") {
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
                 ++notapplied
                 continue
@@ -213,7 +213,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
 
 if (DEBUG == 3) {
 rendered = Index_pull(defineBody, REFIX, " ")
-if (C_defines[name]["isFunction"]) {
+if ("arguments" in C_defines[name]) {
 __debug(file["name"]" Line "file["z"]": using "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 # Array_debug(arguments)
 } else __debug(file["name"]" Line "file["z"]": using "name"  "rendered)

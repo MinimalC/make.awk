@@ -40,11 +40,10 @@ function C_precompile(fileName,    __,f,h,i,n,name,z)
 
     preproc["C"]["length"]
     for (n in preproc["C"]) {
-        if (n == "length" || n ~ /^[1-9][0-9]*$/) continue
+        if (n == "length" || n ~ /^[0-9]/) continue
         if (n !~ /^__FILE__./) continue
-        name = preproc["C"][n]
 
-        precomp["C"][++precomp["C"]["length"]] = "static"FIX"const"FIX"char"FIX n FIX"["FIX"]"FIX"="FIX"\""name"\""FIX";"
+        precomp["C"][++precomp["C"]["length"]] = preproc["C"][n]
     }
 
     for (n = 1; n <= preproc["C"]["files"]["length"]; ++n) {
@@ -59,10 +58,9 @@ function C_precompile(fileName,    __,f,h,i,n,name,z)
 
 function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
 {
-    Index_push("", REFIX, " ", "\0", "\n")
-    for (z = 1; z <= precomp["C"]["length"]; ++z)
-        pre[++pre["length"]] = Index_reset(precomp["C"][z])
-    Index_pop()
+    pre["length"]
+    precomp["C"]["length"]
+    Index_pullArray(pre, precomp["C"], REFIX, " ")
 
     options = ""
     options = options" -c -fPIC"

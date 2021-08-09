@@ -226,19 +226,6 @@ function ARGV_length() {
     return ARGC - 1
 }
 
-function Array_clear(array,    __,i) {
-    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
-    if (typeof(array) != "array") { __error("Array_clear: array is no Array"); return }
-    for (i in array) delete array[i]
-}
-
-function List_clear(array,    __,i) {
-    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
-    if (typeof(array) != "array") { __error("List_clear: array is no Array"); return }
-    for (i = 1; i <= array["length"]; ++i) delete array[i]
-    array["length"] = 0
-}
-
 function cd_awk_coprocess(variables, directory, options, input, output) {
     __coprocess(variables" cd '"directory"' && awk", options, input, output)
 }
@@ -340,10 +327,22 @@ function __BEGIN(controller, action, usage,
     exit 1
 }
 
-function List_length(array,   __,t) {
-    t = typeof(array)
-    if (t == "untyped" || t == "unassigned") return
-    if (t != "array") __error("List_length: array isn't Array but '"t"'")
+function Array_clear(array,    __,at,i) {
+    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
+    if (at != "array") { __error("Array_clear: array isn't array but "at); return }
+    for (i in array) delete array[i]
+}
+
+function List_clear(array,    __,at,i) {
+    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
+    if (at != "array") { __error("List_clear: array isn't array but "at); return }
+    for (i = 1; i <= array["length"]; ++i) delete array[i]
+    array["length"] = 0
+}
+
+function List_length(array,   __,at) {
+    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
+    if (at != "array") { __error("List_clear: array isn't array but "at); return }
     return "length" in array ? array["length"] : 0
 }
 
@@ -365,45 +364,43 @@ function List_add(array, value,    __,l) {
 
 function List_insert(array, i, value,    __,l,n) {
     l = ++array["length"]
-    # move all above including i
-    for (n = l; n > i; --n)
-        array[n] = array[n - 1]
+    for (n = l; n > i; --n) array[n] = array[n - 1]
     if (typeof(value) != "untyped") array[i] = value
 }
 
-function List_contains(array, item,    __,n,r,t,type) {
-    t = typeof(array); type = typeof(item)
-    if (t == "untyped" || t == "unassigned") return
-    if (t != "array") { __error("List_contains: no array but "t); return }
-    if (type == "array") { __error("List_contains: doesn't work with with arrays"); return }
+function List_contains(array, item,    __,at,ir,n,r,type) {
+    if ((at = typeof(array)) != "array") { __error("List_contains: array isn't array but "at); return }
+    if ((type = typeof(item)) == "array") { __error("List_contains: doesn't work with with arrays"); return }
+    ir = (type == "regex")
     for (n = 1; n <= array["length"]; ++n) {
-        if (type == "regex") { if (array[n] ~ item) { r = n; break } }
+        if (ir) { if (array[n] ~ item) { r = n; break } }
         else if (array[n] == item) { r = n; break }
     }
     return r
 }
 
-function List_copy(file, copy,    __,i) {
-    if (typeof(file) != "array") { __error("List_copy: file is not array, but "typeof(file)); return }
-    if (typeof(copy) != "array") { __error("List_copy: copy is not array, but "typeof(copy)); return }
+function List_copy(file, copy,    __,ct,ft,i) {
+    if ((ft = typeof(file)) != "array") { __error("List_copy: file is not array, but "ft); return }
+    if ((ct = typeof(copy)) != "array") { __error("List_copy: copy is not array, but "ct); return }
     for (i = 1; i <= file["length"]; ++i)
         copy[++copy["length"]] = file[i]
 }
 
-function Dictionary_copy(file, copy,    __,i) {
-    if (typeof(file) != "array") { __error("Dictionary_copy: file is not array, but "typeof(file)); return }
-    if (typeof(copy) != "array") { __error("Dictionary_copy: copy is not array, but "typeof(copy)); return }
+function Dictionary_copy(file, copy,    __,ct,cit,ft,fit,i) {
+    if ((ft = typeof(file)) != "array") { __error("Dictionary_copy: file is not array, but "ft); return }
+    if ((ct = typeof(copy)) != "array") { __error("Dictionary_copy: copy is not array, but "ct); return }
     for (i in file) {
-        if (i == "length" || i ~ /^[1-9][0-9]*$/) continue
-        if (typeof(file[i]) == "unassigned") {
-            copy[i]
-            continue
-        }
-        if (typeof(file[i]) == "array") {
+        if (i == "length" || i ~ /^[0-9]/) continue
+        if ((fit = typeof(file[i])) == "unassigned") copy[i]
+        else if (fit == "array") {
+            copy[i]["length"]
             Dictionary_copy(file[i], copy[i])
-            continue
         }
-        copy[i] = file[i]
+        else if (fit == "string" || fit == "number") {
+            if ((cit = typeof(copy[i])) == "array") { __error("Dictionary_copy: Can't copy file["i"] "fit" to copy["i"] "cit); continue }
+            copy[i] = file[i]
+        }
+        else __warning("Dictionary_copy: Unknown typeof item "fit)
     }
 }
 
@@ -417,10 +414,10 @@ function List_remove(array, i,    __,l,n) {
     --array["length"]
 }
 
-function Array_printTo(array, to, level,    __,h,i,t) {
-    if (typeof(array) == "untyped" || typeof(array) == "unassigned") return
+function Array_printTo(array, to, level,    __,at,h,i,t) {
+    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
     t = String_repeat("\t", level)
-    if (typeof(array) != "array") { __error(t"Array_print: array is typeof \""typeof(array)"\""); return }
+    if (at != "array") { __error(t"Array_print: array is typeof \""at"\""); return }
     if (typeof(level) == "untyped") ++level
     if (typeof(to) == "untyped") to = "/dev/stdout"
     for (i in array)
@@ -435,9 +432,9 @@ function Array_print(array) {
     Array_printTo(array, "/dev/stdout")
 }
 
-function Array_error(array) {
-    if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
-    else __warning("Array_error: ERRORS should be number")
+function Array_error(array,    __,et) {
+    if ((et = typeof(ERRORS)) == "untyped" || et == "number") ++ERRORS
+    else __warning("Array_error: ERRORS isn't number but "et)
     Array_printTo(array, "/dev/stderr")
 }
 
@@ -491,13 +488,21 @@ function List_sort(source,    __,copy,i) {
     for (i = 1; i <= source["length"]; ++i) source[i] = copy[i]
 }
 
+function List_replaceString(output, input, fs, ofs) {
+    return Index_pullArray(output, input, fs, ofs)
+}
+
+function String_replace(string, fs, ofs, rs, ors) {
+    return Index_pull(string, fs, ofs, rs, ors)
+}
+
 function String_split(array, string, sepp) {
     array["length"] = split(string, array, sepp)
 }
 
-function String_join(array, ofs,    __,i,r) {
+function String_join(array, ofs,    __,at,i,r) {
     if (typeof(ofs) == "untyped") ofs = OFS
-    if (typeof(array) != "array") { __error("array is no Array"); return }
+    if ((at = typeof(array)) != "array") { __error("String_join: not array but "at); return }
     if (!array["length"]) return ""
     for (i = 1; i <= array["length"]; ++i)
         if (i == 1) r = array[1]
@@ -592,15 +597,15 @@ function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
     if (typeof(fs) != "untyped") FS = fs
 
     # new Index
-    if (typeof(new) == "untyped" || typeof(new) == "unassigned")
-        $0 = ""
+    if (typeof(new) == "untyped" || typeof(new) == "unassigned") $0 = ""
     else if (typeof(new) == "array") {
+        Index_push("", fs, ofs, rs, ors)
         for (z = 1; z <= new["length"]; ++z)
             if (z == 1) n = Index_reset(new[1])
             else n = n ORS (Index_reset(new[z]))
+        Index_pop()
         $0 = n
-    }
-    else $0 = new
+    } else $0 = new
     return Index_reset()
 }
 
@@ -628,8 +633,10 @@ function Index_pull(new, fs, ofs, rs, ors) {
     return Index_pop()
 }
 
-function Index_pullArray(output, input, fs, ofs, rs, ors,   __,z) {
-    Index_push("", fs, ofs, rs, ors)
+function Index_pullArray(output, input, fs, ofs,   __,it,ot,z) {
+    if ((it = typeof(input)) != "array") { __error("Index_pullArray: input not array but "it); return }
+    if ((ot = typeof(output)) != "array") { __error("Index_pullArray: output not array but "ot); return }
+    Index_push("", fs, ofs)
     for (z = 1; z <= input["length"]; ++z) output[++output["length"]] = Index_reset(input[z])
     Index_pop()
 }
