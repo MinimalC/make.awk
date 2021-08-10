@@ -67,14 +67,18 @@ function CSharp_preprocess(fileName) {
     return C_preprocess(fileName, "", "CSharp")
 }
 
-function CSharp_precompile(fileName,    a,A,AST,b,c,d,e,expressions,f,g,h,i,I,j,k,l,level,m,n,name,o,p,pre,q,r,s,S,t,T,u,using,v,w,x,y,z)
+function CSharp_precompile(    __,a,A,AST,b,c,d,e,expressions,f,g,h,i,I,j,k,l,level,m,n,name,o,p,pre,q,r,s,S,t,T,u,using,v,w,x,y,z)
 {
+    if (!preproc["CSharp"]["length"]) return
+
     Index_push("", REFIX, FIX, "\0", "\n")
-    for (z = 1; z <= preproc["CSharp"][fileName]["length"]; ++z) {
-        Index_reset(preproc["CSharp"][fileName][z])
+    for (n = 1; n <= preproc["CSharp"]["length"]; ++n) {
+        name = preproc["CSharp"][n]
+    for (z = 1; z <= preproc["CSharp"][name]["length"]; ++z) {
+        Index_reset(preproc["CSharp"][name][z])
         if ($1 == "#") continue
-        pre = String_concat(pre, FIX, preproc["CSharp"][fileName][z])
-    }
+        pre = String_concat(pre, FIX, preproc["CSharp"][name][z])
+    } }
     Index_pop()
 
     A = AST["length"] = 1

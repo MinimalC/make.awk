@@ -6,7 +6,7 @@
 #include "../make.awk/make.C.awk"
 @include "../make.awk/make.CDefine_eval.awk"
 
-function C_prepare_preprocess(config,    a,b,c,d,input,output,v) {
+function C_prepare_preprocess(config,    a,b,c,d,input,n,name,output,v) {
 
     if (typeof(C_keywords) == "untyped") {
         C_keywords["struct"]
@@ -87,9 +87,7 @@ function C_prepare_preprocess(config,    a,b,c,d,input,output,v) {
     }
 
     preproc["C"]["length"]
-    Array_clear(preproc["C"])
-    #if (!(Compiler in preproc["C"]))
-    C_preprocess(Compiler)
+    # Array_clear(preproc["C"])
 }
 
 function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
@@ -97,7 +95,11 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
 {
     if (!C) C = "C"
     if (typeof(fileName) != "string" || !fileName) { __error("make.awk: C_preprocess without fileName"); return }
-    if (!original) { O = fileName } else { O = original }
+    if (original) O = original
+    else {
+        O = fileName
+        C_preprocess(Compiler, O, C)
+    }
 
     if (!(fileName in parsed)) if (!C_parse(fileName)) return
     if (!parsed[fileName]["length"]) return
@@ -105,18 +107,19 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     Index_push("", REFIX, FIX, "\0", "\n")
 
     preproc[C][O]["length"]
+    if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["length"] ] = O
 
     __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_")
-    if (!(__FILE__Name in preproc[C][O]) || preproc[C][O][__FILE__Name] != fileName) {
+    if (!(__FILE__Name in preproc[C]) || preproc[C][__FILE__Name] != fileName) {
         for (f = 1; f < MAX_NUMBER; ++f) {
             n = __FILE__Name (f == 1 ? "" : f)
-            if (!(n in preproc[C][O])) break
-            if (preproc[C][O][n] !~ "\""fileName"\"") continue
+            if (!(n in preproc[C])) break
+            if (preproc[C][n] !~ "\""fileName"\"") continue
             break
         }
         if (f == MAX_NUMBER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }
         __FILE__Name = n
-        preproc[C][O][__FILE__Name] = "static"FIX"const"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
+        preproc[C][__FILE__Name] = "static"FIX"const"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
     }
 
     preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX 1 FIX"\""fileName"\""
