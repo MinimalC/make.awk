@@ -107,7 +107,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     Index_push("", REFIX, FIX, "\0", "\n")
 
     preproc[C][O]["length"]
-    if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["length"] ] = O
+    if (!original) if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["length"] ] = O
 
     __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_")
     if (!(__FILE__Name in preproc[C]) || preproc[C][__FILE__Name] != fileName) {
