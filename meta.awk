@@ -226,10 +226,6 @@ function ARGV_length() {
     return ARGC - 1
 }
 
-function cd_awk_coprocess(variables, directory, options, input, output) {
-    __coprocess(variables" cd '"directory"' && awk", options, input, output)
-}
-
 function __BEGIN(controller, action, usage,
     null,a,b,c,config,d,default,e,f,file,g,h,i,j,k,l,m,make,n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
 {   # CONTROLLER, ACTION, USAGE, ERRORS
@@ -264,7 +260,7 @@ function __BEGIN(controller, action, usage,
                 workingDir = ENVIRON["PWD"]
                 for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
                 output["length"]
-                r = cd_awk_coprocess("", workingDir, "-f "file" "options, "", output)
+                r = __awk("-f "file" "options, output, workingDir)
                 File_printTo(output, "/dev/stdout")
                 exit r
             }
@@ -273,6 +269,9 @@ function __BEGIN(controller, action, usage,
     }
     if (action) { default = action; action = "" }
 
+    config["parameters"]["length"]
+    config["directories"]["length"]
+    config["files"]["length"]
     for (i = 1; i <= ARGV_length(); ++i) {
         if (ARGV[i] ~ /^\s*$/) continue
         if (controller"_"ARGV[i] in FUNCTAB) {
@@ -328,21 +327,18 @@ function __BEGIN(controller, action, usage,
 }
 
 function Array_clear(array,    __,at,i) {
-    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
-    if (at != "array") { __error("Array_clear: array isn't array but "at); return }
+    if ((at = typeof(array)) != "array") { __error("Array_clear: array is typeof "at); return }
     for (i in array) delete array[i]
 }
 
 function List_clear(array,    __,at,i) {
-    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
-    if (at != "array") { __error("List_clear: array isn't array but "at); return }
+    if ((at = typeof(array)) != "array") { __error("List_clear: array is typeof "at); return }
     for (i = 1; i <= array["length"]; ++i) delete array[i]
     array["length"] = 0
 }
 
 function List_length(array,   __,at) {
-    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
-    if (at != "array") { __error("List_clear: array isn't array but "at); return }
+    if ((at = typeof(array)) != "array") { __error("List_length: array is typeof "at); return }
     return "length" in array ? array["length"] : 0
 }
 
@@ -810,7 +806,28 @@ function File_clearLines(file, regex,    __,i) {
         if (file[i] ~ regex) file[i] = ""
 }
 
-function __pipe(command, options, output,    __,a,cmd,y) {
+function __awk(options, input, output, directory) {
+    return __command("awk", options, input, output, directory)
+}
+
+function __command(command, options, input, output, directory,    __,unseen) {
+    if (typeof(input) == "untyped") {
+        unseen["length"]
+        __pipe(command, options, unseen, directory)
+        return unseen[1]
+    }
+    if (typeof(output) == "untyped" || typeof(output) == "string") {
+        # input is output, output is directory: use pipe out
+        directory = output
+        return __pipe(command, options, input, directory)
+    }
+
+    return __coprocess(command, options, input, output, directory)
+}
+
+function __pipe(command, options, output, directory,    __,a,cmd,y) {
+    if (typeof(directory) == "string")
+        command = "cd \""directory"\" && "command
     cmd = command" "options
     Index_push("", "", "", "\n", "\n")
     a = typeof(output) == "array"
@@ -821,7 +838,9 @@ function __pipe(command, options, output,    __,a,cmd,y) {
     return close(cmd)
 }
 
-function __coprocess(command, options, input, output,    __,a,cmd,y,z) {
+function __coprocess(command, options, input, output, directory,    __,a,cmd,y,z) {
+    if (typeof(directory) == "string")
+        command = "cd \""directory"\" && "command
     cmd = command" "options
     if (typeof(input) == "array")
         for (z = 1; z <= input["length"]; ++z)

@@ -6,7 +6,7 @@
 #include "../make.awk/make.C.awk"
 @include "../make.awk/make.CDefine_eval.awk"
 
-function C_prepare_preprocess(config,    a,b,c,d,input,n,name,output,v) {
+function C_prepare_preprocess(config,    __,a,b,c,d,dir,e,f,file,g,h,i,input,j,k,l,m,n,name,o,output,p,q,r,s,t,u,v,w,x,y,z) {
 
     if (typeof(C_keywords) == "untyped") {
         C_keywords["struct"]
@@ -46,21 +46,34 @@ function C_prepare_preprocess(config,    a,b,c,d,input,n,name,output,v) {
         C_keywords["_Thread"]
     }
 
-    if (typeof(includeDirs) == "untyped") {
-        # includeDirs["length"]
+    includeDirs["length"]
+    # List_clear(includeDirs)
+    if (!includeDirs["length"]) {
         List_add(includeDirs, "/usr/include/")
+
         v = uname_machine()
         if (Compiler == "gcc") {
             List_add(includeDirs, "/usr/include/"v"-linux-gnu/")
-            List_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"gcc_version()"/include/")
+            List_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"Compiler_version()"/include/")
         }
         else if (Compiler == "tcc")
             List_add(includeDirs, "/usr/lib/"v"-linux-gnu/tcc/include/")
         else __warning("make.awk: Unsupported compiler")
+
         for (d = 1; d <= config["directories"]["length"]; ++d)
-            List_add(includeDirs, config["directories"][d])
+            if (Directory_exists(config["directories"][d]"include/"))
+                 List_add(includeDirs, config["directories"][d]"include/")
+            else List_add(includeDirs, config["directories"][d])
+
+        if (d > config["directories"]["length"])
+            for (f = 1; f <= config["files"]["length"]; ++f) {
+                dir = get_DirectoryName(config["files"][f])
+                # use the first file's directory, if there is one
+                if (dir) { List_add(includeDirs, dir); List_add(config["directories"], dir); break }
+            }
     }
 
+    C_defines["length"]
     Array_clear(C_defines)
     config["parameters"]["length"]
     for (d in config["parameters"]) {
@@ -71,13 +84,15 @@ function C_prepare_preprocess(config,    a,b,c,d,input,n,name,output,v) {
         }
     }
 
-    if (!(Compiler in parsed)) {
-        input["name"] = Compiler
+    parsed[Compiler]["length"]
+    if (!parsed[Compiler]["length"]) {
+        input["length"]; Array_clear(input)
         input[++input["length"]] = "# define _GNU_SOURCE 1"
         input[++input["length"]] = "# include <stddef.h>"
         input[++input["length"]] = "# include <stdint.h>"
         input[++input["length"]] = "# include <limits.h>"
 
+        output["length"]; Array_clear(output)
         output["name"] = Compiler
         CCompiler_coprocess("-xc -dM -E", input, output)
         List_sort(output)
@@ -85,20 +100,44 @@ function C_prepare_preprocess(config,    a,b,c,d,input,n,name,output,v) {
 
         C_parse(Compiler, output)
     }
+    if (!parsed["config.h"]["length"]) {
+        output["length"]; Array_clear(output)
+        for (d = 1; d <= config["directories"]["length"]; ++d) {
+            dir = config["directories"][d]
+            output["name"] = "configure"
+            name = Project".config.awk"; if (File_exists(dir name)) break # do nothing
+            name = "configure.sh"; if (File_exists(dir name)) { __command("./"name, "", output, dir); break }
+            name = "configure"; if (File_exists(dir name)) { __command("./"name, "", output, dir); break }
+        }
+if (DEBUG) if (output["length"]) File_printTo(output, "/dev/stderr")
+        if (d > config["directories"]["length"]) __warning("make.awk: "Project".config.awk or configure shell script not found")
+        else if (name != Project".config.awk") { # do nothing if Project".config.awk" exists
+            output["length"]; Array_clear(output)
+            output["name"] = "config.h"
+            if (!output["length"]) { file = ".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+            if (!output["length"]) { file = "config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+            if (output["length"]) C_parse("config.h", output)
+            else __warning("make.awk: Empty "file" after "name)
+        }
+        # if (name == Project".config.awk") run_awk(Project".config.awk", "configure_"Project, config)
+    }
 
     preproc["C"]["length"]
     # Array_clear(preproc["C"])
 }
 
 function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
-    a,b,c,d,e,f,__FILE__Name,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
+    __,a,b,c,d,e,f,__FILE__Name,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
 {
     if (!C) C = "C"
     if (typeof(fileName) != "string" || !fileName) { __error("make.awk: C_preprocess without fileName"); return }
     if (original) O = original
     else {
         O = fileName
-        C_preprocess(Compiler, O, C)
+        if (C == "C") {
+            C_preprocess(Compiler, O, C)
+            C_preprocess("config.h", O, C)
+        }
     }
 
     if (!(fileName in parsed)) if (!C_parse(fileName)) return

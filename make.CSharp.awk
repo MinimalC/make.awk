@@ -41,7 +41,8 @@ function CSharp_prepare_preprocess(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,
         CSharp_keywords["unchecked"]
     }
 
-    if (!("CLI" in parsed)) {
+    parsed["CLI"]["length"]
+    if (!parsed["CLI"]["length"]) {
         parsed["CLI"]["name"] = "CLI"
         parsed["CLI"][++parsed["CLI"]["length"]] = "#"FIX"include"FIX"<meta/System.h>"
     }
@@ -52,6 +53,7 @@ function CSharp_prepare_preprocess(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,
 
 function CSharp_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
+    CSharp_Types["length"]
     Array_clear(CSharp_Types)
     if (!("System" in CSharp_Types)) ; # TODO
 

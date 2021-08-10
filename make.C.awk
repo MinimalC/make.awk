@@ -8,6 +8,7 @@
 
 function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
+    C_types["void"]
     Array_clear(C_types)
     C_types["void"]["isLiteral"]
     C_types["unsigned"]["isLiteral"]
@@ -72,22 +73,16 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
     return 1
 }
 
-function gcc_version(    m,n,o,output) {
-    output["length"]
-    __pipe("gcc", "-dumpversion", output)
-    return output[1]
+function __gcc(options, input, output, directory) {
+    return __command("awk", options, input, output, directory)
+}
+
+function Compiler_version(    ) {
+    return __command(Compiler, "-dumpversion")
 }
 
 function uname_machine(    m,n,o,output) {
-    output["length"]
-    __pipe("uname", "-m", output)
-    return output[1]
-}
-
-function configure_sh(    m,n,o,output) {
-    output["length"]
-    __pipe("./configure", "", output)
-    return output[1]
+    return __command("uname", "-m")
 }
 
 function CCompiler_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
