@@ -5,9 +5,9 @@
 #include "../make.awk/meta.awk"
 #include "../make.awk/make.C.awk"
 
-function CSharp_prepare_preprocess(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function CSharp_prepare_preprocess(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
-    C_prepare_preprocess(config)
+    C_prepare_preprocess(config, "CSharp")
 
     if (typeof(CSharp_keywords) == "untyped") {
         CSharp_keywords["using"]
@@ -40,25 +40,16 @@ function CSharp_prepare_preprocess(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,
         CSharp_keywords["checked"]
         CSharp_keywords["unchecked"]
     }
-
-    parsed["CLI"]["length"]
-    if (!parsed["CLI"]["length"]) {
-        parsed["CLI"]["name"] = "CLI"
-        parsed["CLI"][++parsed["CLI"]["length"]] = "#"FIX"include"FIX"<meta/System.h>"
-    }
-
-    preproc["CSharp"]["length"]
-    Array_clear(preproc["CSharp"])
 }
 
-function CSharp_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function CSharp_prepare_precompile(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
     CSharp_Types["length"]
     Array_clear(CSharp_Types)
     if (!("System" in CSharp_Types)) ; # TODO
 
     precomp["CSharp"]["length"]
-    Array_clear(precomp["CSharp"])
+    # Array_clear(precomp["CSharp"])
 }
 
 function CSharp_parse(fileName, file) {
@@ -130,7 +121,7 @@ if (DEBUG) { __debug("CSharp_using "); Array_debug(using) }
     return !r
 }
 
-#function CSharp_compile(   a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
+#function CSharp_compile(   __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 #{
 #    for (z = 1; z <= precomp["CSharp"]["length"]; ++z)
 #        compiled["CSharp"][++compiled["CSharp"]["length"]] = precomp["CSharp"][z]
