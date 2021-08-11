@@ -63,17 +63,16 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         else __warning("make.awk: Unsupported compiler")
 
         for (d = 1; d <= config["directories"]["length"]; ++d)
-            if (Directory_exists(config["directories"][d]"include/")) {
-                List_add(includeDirs, config["directories"][d])
-                List_add(includeDirs, config["directories"][d]"include/")
-            } else List_add(includeDirs, config["directories"][d])
+            if (Directory_exists((dir = config["directories"][d])"include/")) {
+                List_add(includeDirs, dir)
+                List_add(includeDirs, dir"include/")
+            } else if (Directory_exists(dir))
+                List_add(includeDirs, dir)
 
         if (d > config["directories"]["length"])
-            for (f = 1; f <= config["files"]["length"]; ++f) {
-                dir = get_DirectoryName(config["files"][f])
+            for (f = 1; f <= config["files"]["length"]; ++f)
                 # use the first file's directory, if there is one, add also to config
-                if (dir) { List_add(includeDirs, dir); List_add(config["directories"], dir); break }
-            }
+                if (dir = get_DirectoryName(config["files"][f])) { List_add(includeDirs, dir); List_add(config["directories"], dir); break }
     }
 
     C_defines["length"]
@@ -81,10 +80,8 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     config["parameters"]["length"]
     for (d in config["parameters"]) {
         if (d == "length" || d ~ /^[0-9]+$/) continue
-        if (d ~ /^D.*/) {
-            c = substr(d, 2)
-            C_defines[c] = config["parameters"][d]
-        }
+        if (d !~ /^D.*/) continue
+        C_defines[c = substr(d, 2)] = config["parameters"][d]
     }
 
     parsed[Compiler]["length"]
@@ -109,10 +106,9 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         for (d = 1; d <= config["directories"]["length"]; ++d) {
             dir = config["directories"][d]
             #output["name"] = "configure"
-            name = Project".config.awk"; if (File_exists(dir name)) break # do nothing
-            #name = "config.sh"; if (File_exists(dir name)) break # { __command("./"name, "", output, dir); break }
-            name = "configure.sh"; if (File_exists(dir name)) break # { __command("./"name, "", output, dir); break }
-            name = "configure"; if (File_exists(dir name)) break # { __command("./"name, "", output, dir); break }
+            name = Project".config.awk"; if (File_exists(dir name)) break
+            name = "configure.sh"; if (File_exists(dir name)) break
+            name = "configure"; if (File_exists(dir name)) break
             name = ""
         }
         if (name == Project".config.awk") __warning("make.awk: Using "name) # run_awk(Project".config.awk", "configure_"Project, config)
@@ -175,8 +171,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     if (!(__FILE__Name in preproc[C]) || preproc[C][__FILE__Name] != fileName) {
         for (f = 1; f < MAX_NUMBER; ++f) {
             n = __FILE__Name (f == 1 ? "" : f)
-            if (!(n in preproc[C])) break
-            if (preproc[C][n] !~ "\""fileName"\"") continue
+            if (n in preproc[C] && preproc[C][n] !~ "\""fileName"\"") continue
             break
         }
         if (f == MAX_NUMBER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }

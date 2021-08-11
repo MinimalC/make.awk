@@ -98,7 +98,7 @@ function ARGC_ARGV_debug() {
 
 function File_exists(fileName,    __,e,r,y) {
     if (!fileName) { __error("File_exists: fileName is null"); return }
-    if (!system("test -s '"fileName"'")) return 1
+    if (!system("test -f '"fileName"'")) return 1
     #r = 0
     #if (-1 < y = (getline e < fileName)) r = 1
     #else return 0
