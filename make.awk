@@ -2,9 +2,9 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-@include "../make.awk/meta.awk"
-@include "../make.awk/make.C.awk"
-@include "../make.awk/make.CSharp.awk"
+@include "meta.awk"
+@include "make.C.awk"
+@include "make.CSharp.awk"
 
 function set_make_project(wert) { Project = wert }
 

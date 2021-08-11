@@ -2,9 +2,9 @@
 # Gemeinfrei. Public Domain.
 # 2021 Hans Riehm
 
-#include "../make.awk/meta.awk"
-#include "../make.awk/make.C.awk"
-@include "../make.awk/make.CDefine_eval.awk"
+#include "meta.awk"
+#include "make.C.awk"
+@include "make.CDefine_eval.awk"
 
 function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,j,k,l,m,n,name,o,output,p,q,r,s,t,u,v,w,x,y,z)
 {
@@ -432,11 +432,10 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         delete parsed[fileName]["I"]
 
         for (i = 1; i <= NF; ++i) {
-            # if ($i ~ /^\s*$/) if (i == 1 || NF != 1) continue # except SPACES
+            #if ($i ~ /^\s*$/) if (i == 1 || NF != 1) continue # except SPACES
             if ($i ~ /^\s*$/) { Index_remove(i--); continue } # clean
-            if ($i ~ /^\/\* ?[^#][a-zA-Z_][a-zA-Z_0-9]* ?\*\/$/) continue # allow short comments
-            if ($i ~ /^\/\*/ || $i ~ /\*\/$/) { Index_remove(i--); continue }   # clean comments
-            # if ($i == "\\") { Index_remove(i--); continue }
+            #if ($i ~ /^\/\* ?[^#][a-zA-Z_][a-zA-Z_0-9]* ?\*\/$/) continue # allow short comments
+            #if ($i ~ /^\/\*/ || $i ~ /\*\/$/) { Index_remove(i--); continue }   # clean comments
         }
 
         if (!NF) { ++lz; continue }

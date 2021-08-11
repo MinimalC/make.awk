@@ -2,8 +2,8 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-#include "../make.awk/meta.awk"
-#include "../make.awk/make.C.awk"
+#include "meta.awk"
+#include "make.C.awk"
 
 function CDefine_apply(i, file,
     __,a,arguments,b,c,code,d,defineBody,e,f,g,h,j,k,l,m,n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)

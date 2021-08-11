@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-#include "../make.awk/meta.awk"
+#include "meta.awk"
 
 BEGIN { BEGIN_meta() }
 
@@ -227,7 +227,8 @@ function ARGV_length() {
 }
 
 function __BEGIN(controller, action, usage,
-    null,a,b,c,config,d,default,e,f,file,g,h,i,j,k,l,m,make,n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
+    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,
+    n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
 {   # CONTROLLER, ACTION, USAGE, ERRORS
 
     if (typeof(null) != "untyped")
@@ -257,10 +258,11 @@ function __BEGIN(controller, action, usage,
             else if (!File_exists(ARGV[1])) { __error("meta.awk: File or Function "ARGV[1]" doesn't exist"); exit }
             else {
                 file = ARGV[1]
+                includeDir = get_DirectoryName(file)
                 workingDir = ENVIRON["PWD"]
                 for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
                 output["length"]
-                r = __awk("-f "file" "options, output, workingDir)
+                r = __awk("-f "file" "options, output, workingDir, "AWKPATH=.:"includeDir)
                 File_printTo(output, "/dev/stdout")
                 exit r
             }
@@ -806,29 +808,36 @@ function File_clearLines(file, regex,    __,i) {
         if (file[i] ~ regex) file[i] = ""
 }
 
-function __awk(options, input, output, directory) {
-    return __command("awk", options, input, output, directory)
+function __awk(options, input, output, directory, variables) {
+    return __command("awk", options, input, output, directory, variables)
 }
 
-function __command(command, options, input, output, directory,    __,unseen) {
+function __sh(options, input, output, directory, variables) {
+    return __command("sh", options, input, output, directory, variables)
+}
+
+function __command(command, options, input, output, directory, variables,    __,unseen) {
     if (typeof(input) == "untyped") {
         unseen["length"]
-        __pipe(command, options, unseen, directory)
+        __pipe(command, options, unseen, directory, variables)
         return unseen[1]
     }
     if (typeof(output) == "untyped" || typeof(output) == "string") {
-        # input is output, output is directory: use pipe out
+        # input is output: use pipe out
+        variables = directory
         directory = output
-        return __pipe(command, options, input, directory)
+        return __pipe(command, options, input, directory, variables)
     }
-
-    return __coprocess(command, options, input, output, directory)
+    return __coprocess(command, options, input, output, directory, variables)
 }
 
-function __pipe(command, options, output, directory,    __,a,cmd,y) {
-    if (typeof(directory) == "string")
-        command = "cd \""directory"\" && "command
-    cmd = command" "options
+function __pipe(command, options, output, directory, variables,    __,a,cmd,y) {
+    cmd = command
+    if (typeof(variables) == "string" && variables)
+        cmd = variables" "cmd
+    if (typeof(directory) == "string" && directory)
+        cmd = "cd \""directory"\" ; "cmd
+    cmd = cmd" "options
     Index_push("", "", "", "\n", "\n")
     a = typeof(output) == "array"
     while (0 < y = ( cmd | getline ))
@@ -838,10 +847,13 @@ function __pipe(command, options, output, directory,    __,a,cmd,y) {
     return close(cmd)
 }
 
-function __coprocess(command, options, input, output, directory,    __,a,cmd,y,z) {
-    if (typeof(directory) == "string")
-        command = "cd \""directory"\" && "command
-    cmd = command" "options
+function __coprocess(command, options, input, output, directory, variables,    __,a,cmd,y,z) {
+    cmd = command
+    if (typeof(variables) == "string" && variables)
+        cmd = variables" "cmd
+    if (typeof(directory) == "string" && directory)
+        cmd = "cd \""directory"\" ; "cmd
+    cmd = cmd" "options
     if (typeof(input) == "array")
         for (z = 1; z <= input["length"]; ++z)
             print input[z] |& cmd

@@ -2,9 +2,9 @@
 # Gemeinfrei. Public Domain.
 # 2020 - 2021 Hans Riehm
 
-#include "../make.awk/meta.awk"
-@include "../make.awk/make.C_parse.awk"
-@include "../make.awk/make.C_preprocess.awk"
+#include "meta.awk"
+@include "make.C_parse.awk"
+@include "make.C_preprocess.awk"
 
 function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 

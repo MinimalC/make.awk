@@ -2,8 +2,8 @@
 # Gemeinfrei. Public Domain.
 # 2021 Hans Riehm
 
-#include "../make.awk/meta.awk"
-#include "../make.awk/make.C.awk"
+#include "meta.awk"
+#include "make.C.awk"
 
 function C_parse(fileName, input,
     __,a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
