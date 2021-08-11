@@ -104,40 +104,42 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         C_parse(Compiler, output)
     }
     if (C == "C" && !parsed["."Project".config.h"]["length"]) {
-        output["length"]; Array_clear(output)
+        #output["length"]; Array_clear(output)
+        name = ""
         for (d = 1; d <= config["directories"]["length"]; ++d) {
             dir = config["directories"][d]
-            output["name"] = "configure"
-            name = "."Project".config.awk"; if (File_exists(dir name)) break # do nothing
-            name = "config.sh"; if (File_exists(dir name)) { __command("./"name, "", output, dir); break }
-            name = "configure.sh"; if (File_exists(dir name)) { __command("./"name, "", output, dir); break }
-            name = "configure"; if (File_exists(dir name)) { __command("./"name, "", output, dir); break }
+            #output["name"] = "configure"
+            name = Project".config.awk"; if (File_exists(dir name)) break # do nothing
+            #name = "config.sh"; if (File_exists(dir name)) break # { __command("./"name, "", output, dir); break }
+            name = "configure.sh"; if (File_exists(dir name)) break # { __command("./"name, "", output, dir); break }
+            name = "configure"; if (File_exists(dir name)) break # { __command("./"name, "", output, dir); break }
+            name = ""
         }
-if (DEBUG) if (output["length"]) File_printTo(output, "/dev/stderr")
-        if (name != "."Project".config.awk") {
-            if (d > config["directories"]["length"]) __warning("make.awk: "Project".config.awk or configure shell script not found")
-            else {
-                output["length"]; Array_clear(output)
-                if (!output["length"]) { file = "."Project".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
-                if (!output["length"]) { file = ".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
-                if (!output["length"]) { file = "config.h"; if (File_exists(dir file)) File_read(output, dir file) }
-                if (output["length"]) {
-                    C_parse(dir file, output)
-                    output["name"] = dir file
-                    __warning("make.awk: Using "file" after "name)
-                }
-                else __warning("make.awk: Empty "file" after "name)
-            }
+        if (name == Project".config.awk") __warning("make.awk: Using "name) # run_awk(Project".config.awk", "configure_"Project, config)
+        else if (!name) __warning("make.awk: "Project".config.awk or configure shell script not found")
+        #else __warning("make.awk: Using "name)
+#if (DEBUG) if (output["length"]) File_printTo(output, "/dev/stderr")
+
+        output["length"]; Array_clear(output)
+        if (!output["length"]) { file = "."Project".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+        if (!output["length"]) { file = ".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+        if (!output["length"]) { file = "config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+        if (!output["length"]) {
+            if (name == Project".config.awk") ; # say nothing
+            else if (!name) ; # say nothing
+            else __warning("make.awk: Use "name" to create a "file)
+        } else {
+            C_parse(dir file, output)
+            output["name"] = dir file
+             __warning("make.awk: Using "file)
         }
-        if (name == "."Project".config.awk") __warning("make.awk: Using "name) # run_awk(Project".config.awk", "configure_"Project, config)
     }
 
     parsed["CLI"]["length"]
-    if (!parsed["CLI"]["length"]) {
+    if (C == "CSharp" && !parsed["CLI"]["length"]) {
         parsed["CLI"]["name"] = "CLI"
         ++parsed["CLI"]["length"] # TODO
     }
-    # if (C == "CSharp" && !parsed["config.cs"]["length"]) { }
 
     preproc["C"]["length"]
     # Array_clear(preproc["C"])

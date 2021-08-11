@@ -105,7 +105,7 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
         if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         preproc[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: Not preprocessed "name); List_remove(config["files"], n--) }
+        if (!@C(name)) { __error("make.awk: No "C); List_remove(config["files"], n--) }
         else {
             ++o
             pre["length"]
@@ -139,7 +139,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
 
         precomp[format]["length"]
-        if (!@C()) __error("make.awk: Not precompiled "format)
+        if (!@C()) __error("make.awk: No "C)
         else {
             ++o
             pre["length"]
@@ -162,7 +162,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,o,p,q,r,s
         if (!precomp[format]["length"]) { __error("make.awk: "C": No "format"_precompile"); continue }
 
         compiled[format]["length"]
-        if (!@C()) __error("make.awk: Not compiled "format)
+        if (!@C()) __error("make.awk: No "C)
         else {
             ++o
             File_printTo(compiled[format], "."Project (++compiled_count[format] == 1 ? "" : compiled_count[format])"..."format".o", "\n", "\n", 1)
