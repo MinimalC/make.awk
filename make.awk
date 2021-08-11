@@ -12,6 +12,8 @@ function set_make_debug(wert) { DEBUG = wert }
 
 function set_make_compiler(wert) { Compiler = wert }
 
+function set_make_enableComments(wert) { enable_Comments = wert }
+
 BEGIN { BEGIN_make() }
 
 function BEGIN_make() {

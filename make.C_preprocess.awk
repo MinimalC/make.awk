@@ -434,8 +434,10 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         for (i = 1; i <= NF; ++i) {
             #if ($i ~ /^\s*$/) if (i == 1 || NF != 1) continue # except SPACES
             if ($i ~ /^\s*$/) { Index_remove(i--); continue } # clean
-            #if ($i ~ /^\/\* ?[^#][a-zA-Z_][a-zA-Z_0-9]* ?\*\/$/) continue # allow short comments
-            #if ($i ~ /^\/\*/ || $i ~ /\*\/$/) { Index_remove(i--); continue }   # clean comments
+            if (!enable_Comments) {
+                if ($i ~ /^\/\* ?[^#][a-zA-Z_][a-zA-Z_0-9]* ?\*\/$/) continue # allow short comments
+                if ($i ~ /^\/\*/ || $i ~ /\*\/$/) { Index_remove(i--); continue }   # clean comments
+            }
         }
 
         if (!NF) { ++lz; continue }

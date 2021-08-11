@@ -253,19 +253,22 @@ function __BEGIN(controller, action, usage,
         if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
         else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
         if (controller == "meta") {
+            metaDir = ENVIRON["OLDPWD"]"/"
             if (ARGV_length() == 0) { __error(usage); exit }
             if ("meta_"ARGV[1] in FUNCTAB) ;
-            else if (!File_exists(ARGV[1])) { __error("meta.awk: File or Function "ARGV[1]" doesn't exist"); exit }
             else {
-                file = ARGV[1]
-                includeDir = get_DirectoryName(file)
-                workingDir = ENVIRON["PWD"]"/"
-                metaDir = ENVIRON["OLDPWD"]"/"
-                for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
-                output["length"]
-                r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!metaDir?"":":"metaDir))
-                File_printTo(output, "/dev/stdout")
-                exit r
+                file = metaDir ARGV[1]; if (!File_exists(file)) file = ""
+                if (!file) file = ARGV[1]; if (!File_exists(file)) file = ""
+                if (file) {
+                    includeDir = get_DirectoryName(file)
+                    workingDir = ENVIRON["PWD"]"/"
+                    for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
+                    output["length"]; Array_clear(output)
+                    r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!metaDir?"":":"metaDir))
+                    File_printTo(output, "/dev/stdout")
+                    exit r
+                }
+                else { __error("meta.awk: File or Function "ARGV[1]" doesn't exist"); exit }
             }
         }
         if (!controller) { __error(usage); exit }
