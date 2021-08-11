@@ -227,7 +227,7 @@ function ARGV_length() {
 }
 
 function __BEGIN(controller, action, usage,
-    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,
+    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,metaDir,
     n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
 {   # CONTROLLER, ACTION, USAGE, ERRORS
 
@@ -259,10 +259,11 @@ function __BEGIN(controller, action, usage,
             else {
                 file = ARGV[1]
                 includeDir = get_DirectoryName(file)
-                workingDir = ENVIRON["PWD"]
+                workingDir = ENVIRON["PWD"]"/"
+                metaDir = ENVIRON["OLDPWD"]"/"
                 for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
                 output["length"]
-                r = __awk("-f "file" "options, output, workingDir, "AWKPATH=.:"includeDir)
+                r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!metaDir?"":":"metaDir))
                 File_printTo(output, "/dev/stdout")
                 exit r
             }
