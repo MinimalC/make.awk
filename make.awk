@@ -88,7 +88,7 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
         if (n == "length" || n ~ /^[0-9]/) continue
         if (typeof(parsed[n]) != "array") continue
         if (!parsed[n]["length"]) continue
-        Index_pullArray(pre, parsed[n], REFIX, "\x01")
+        Index_pullArray(pre, parsed[n], REFIX, "\x60")
     }
     File_printTo(pre, "."Project"...C")
 }
