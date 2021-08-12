@@ -229,7 +229,7 @@ function CDefine_eval(expression,
     for (i = 1; i <= NF; ++i) {
         if ($i ~ /^\s*$/) Index_remove(i--)
         else if ($i == "\\") Index_remove(i--)
-        else if ($i ~ /^\/\*/) Index_remove(i--)
+        else if ($i ~ /^\/\*/ || $i ~ /\*\/$/) Index_remove(i--)
         else if ($i ~ /^L?"/) Index_remove(i--)
     }
     for (i = 1; i <= NF; ++i) {
@@ -251,7 +251,7 @@ function CDefine_eval(expression,
             }
             else {
                 n = substr($i, 2, length($i) - 2)
-                $i = chartonum(n)
+                $i = Char_codepoint(n)
             }
         }
         if ($i ~ /[lL]$/) {
@@ -337,7 +337,7 @@ if (DEBUG == 4) __debug("NotUsing "name)
             for (d = i; d <= NF; ++d) {
                 if ($d ~ /^\s*$/) Index_remove(d--)
                 else if ($d == "\\") Index_remove(d--)
-                else if ($d ~ /^\/\*/) Index_remove(d--)
+                else if ($d ~ /^\/\*/ || $i ~ /\*\/$/) Index_remove(d--)
                 else if ($d ~ /^L?"/) Index_remove(d--)
             }
 if (DEBUG == 4) __debug("Using "name" "Index_pull($0, REFIX, " "))

@@ -209,7 +209,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
             Index_remove(1, 2)
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
-            f = List_add(ifExpressions)
+            f = ++ifExpressions["length"]
             ifExpressions[f]["if"] = $0
 
             w = CDefine_eval($0)

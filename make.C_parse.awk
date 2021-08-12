@@ -357,11 +357,19 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
+        if ($i ~ /[¢£¥§µ]/ || $i ~ /[À-ÖÙ-öù-퟿]/) {
+            $i = "U"__HEX(Char_codepoint($i))
+            Index_reset()
+        }
         if ($i ~ /[a-zA-Z_]/) {
             if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             name = $i
             n = i; while (++n <= NF) {
                 if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                if ($n ~ /[¢£¥§µ]/ || $n ~ /[À-ÖÙ-öù-퟿]/) {
+                    $n = "U"__HEX(Char_codepoint($n))
+                    Index_reset()
+                }
                 if ($n ~ /[a-zA-Z_0-9]/) { name = name $n; continue }
                 --n; break
             }
@@ -372,7 +380,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
-        __warning(fileName": Line "z": Unknown Character "$i); Index_remove(i--)
+        __warning(fileName": Line "z": Unknown Character U"__HEX(Char_codepoint($i))" "$i); Index_remove(i--)
     }
 
     parsed[fileName][++parsed[fileName]["length"]] = $0

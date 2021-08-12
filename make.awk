@@ -18,8 +18,8 @@ BEGIN { BEGIN_make() }
 
 function BEGIN_make() {
 
-    REFIX = @/\xA0/
-    FIX = "\xA0"
+    REFIX = @/\xC2\xA0/
+    FIX = "\xC2\xA0"
 
     Format["h"] = "C"
     Format["c"] = "C"

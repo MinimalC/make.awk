@@ -97,7 +97,7 @@ function ARGC_ARGV_debug() {
 }
 
 function File_exists(fileName,    __,e,r,y) {
-    if (!fileName) { __error("File_exists: fileName is null"); return }
+    if (!fileName) { __error("File_exists: no fileName"); return }
     if (!system("test -f '"fileName"'")) return 1
     #r = 0
     #if (-1 < y = (getline e < fileName)) r = 1
@@ -107,41 +107,41 @@ function File_exists(fileName,    __,e,r,y) {
 }
 
 function Directory_exists(directory) {
-    if (!directory) { __error("Directory_exists: directory is null"); return }
+    if (!directory) { __error("Directory_exists: no directory"); return }
     if (!system("test -d '"directory"'")) return 1
 }
 
 # Look: this is running bash "cd xyz", but not changing the directory in the awk process:
 #function change_Directory(directory) {
-#    if (!directory) { __error("change_Directory: directory is null"); return }
+#    if (!directory) { __error("change_Directory: no directory"); return }
 #    if (!system("cd '"directory"'")) return 1
 #}
 
 function create_Directory(directory) {
-    if (!directory) { __error("create_Directory: directory is null"); return }
+    if (!directory) { __error("create_Directory: no directory"); return }
     if (!system("mkdir -r '"directory"'")) return 1
 }
 
 function create_SymbolicLink(directory, target) {
-    if (!directory) { __error("create_SymbolicLink: directory is null"); return }
-    if (!target) { __error("create_SymbolicLink: target is null"); return }
+    if (!directory) { __error("create_SymbolicLink: no directory"); return }
+    if (!target) { __error("create_SymbolicLink: no target"); return }
     if (!system("ln -s '"directory"' '"target"'")) return 1
 }
 
 function SymbolicLink_exists(target) {
-    if (!target) { __error("SymbolicLink_exists: target is null"); return }
+    if (!target) { __error("SymbolicLink_exists: no target"); return }
     if (!system("test -L '"target"'")) return 1
 }
 
 #function create_HardLink(file, target) {
-#    if (!file) { __error("create_HardLink: file is null"); return }
-#    if (!target) { __error("create_HardLink: target is null"); return }
+#    if (!file) { __error("create_HardLink: no file"); return }
+#    if (!target) { __error("create_HardLink: no target"); return }
 #    if (!system("ln -P '"file"' '"target"'")) return 1
 #}
 
 function File_contains(fileName, string,    __,i,r,y) {
-    if (!fileName) { __error("File_contains: fileName is null"); return }
-    if (!string) { __error("File_contains: string is null"); return }
+    if (!fileName) { __error("File_contains: no fileName"); return }
+    if (!string) { __error("File_contains: no string"); return }
     #if (!system("grep -r '"string"' "fileName" >/dev/null")) return 1
     while (0 < y = (getline i < fileName))
         if (index(i, string)) { r = 1; break }
@@ -151,7 +151,7 @@ function File_contains(fileName, string,    __,i,r,y) {
 }
 
 function File_remove(fileName, force) {
-    if (!fileName) { __error("File_remove: fileName is null"); return }
+    if (!fileName) { __error("File_remove: no fileName"); return }
     if (!system("rm"(force ? " -f" : "")" '"fileName"'")) return 1
     return 0
 }
@@ -194,15 +194,6 @@ function Path_join(pathName0, pathName1,    __,p,path0,path1,r) {
     for (p = 1; p <= path0["length"]; ++p)
         r = r path0[p] (p < path0["length"] ? "/" : "")
     return r
-}
-
-function chartonum(char,    __,c,n) {
-    if (typeof(ALLCHARS) == "untyped")
-        for (n = 1; n <= 32767; ++n) {
-            c = sprintf("%c", n)
-            ALLCHARS = ALLCHARS c
-        }
-    return index(ALLCHARS, char)
 }
 
 function ARGV_contains(item,    __,t,type,u,v) {
@@ -348,30 +339,35 @@ function List_length(array,   __,at) {
     return "length" in array ? array["length"] : 0
 }
 
-function List_first(array) {
+function List_first(array,    __,at) {
+    if ((at = typeof(array)) != "array") { __error("List_first: array is typeof "at); return }
     if (!List_length(array)) return
     return array[1]
 }
 
-function List_last(array,    __,l) {
+function List_last(array,    __,at,l) {
+    if ((at = typeof(array)) != "array") { __error("List_last: array is typeof "at); return }
     if (!(l = List_length(array))) return
     return array[l]
 }
 
-function List_add(array, value,    __,l) {
+function List_add(array, value,    __,at,l) {
+    if ((at = typeof(array)) != "array") { __error("List_add: array is typeof "at); return }
     l = ++array["length"]
     if (typeof(value) != "untyped") array[l] = value
     return l
 }
 
-function List_insert(array, i, value,    __,l,n) {
+function List_insert(array, i, value,    __,at,it,l,n) {
+    if ((at = typeof(array)) != "array") { __error("List_insert: array is typeof "at); return }
+    if ((it = typeof(i)) != "number") { __error("List_insert: i is typeof "it); return }
     l = ++array["length"]
     for (n = l; n > i; --n) array[n] = array[n - 1]
     if (typeof(value) != "untyped") array[i] = value
 }
 
 function List_contains(array, item,    __,at,ir,n,r,type) {
-    if ((at = typeof(array)) != "array") { __error("List_contains: array isn't array but "at); return }
+    if ((at = typeof(array)) != "array") { __error("List_contains: array is typeof "at); return }
     if ((type = typeof(item)) == "array") { __error("List_contains: doesn't work with with arrays"); return }
     ir = (type == "regex")
     for (n = 1; n <= array["length"]; ++n) {
@@ -382,15 +378,15 @@ function List_contains(array, item,    __,at,ir,n,r,type) {
 }
 
 function List_copy(file, copy,    __,ct,ft,i) {
-    if ((ft = typeof(file)) != "array") { __error("List_copy: file is not array, but "ft); return }
-    if ((ct = typeof(copy)) != "array") { __error("List_copy: copy is not array, but "ct); return }
+    if ((ft = typeof(file)) != "array") { __error("List_copy: file is typeof "ft); return }
+    if ((ct = typeof(copy)) != "array") { __error("List_copy: copy is typeof "ct); return }
     for (i = 1; i <= file["length"]; ++i)
         copy[++copy["length"]] = file[i]
 }
 
 function Dictionary_copy(file, copy,    __,ct,cit,ft,fit,i) {
-    if ((ft = typeof(file)) != "array") { __error("Dictionary_copy: file is not array, but "ft); return }
-    if ((ct = typeof(copy)) != "array") { __error("Dictionary_copy: copy is not array, but "ct); return }
+    if ((ft = typeof(file)) != "array") { __error("Dictionary_copy: file is typeof "ft); return }
+    if ((ct = typeof(copy)) != "array") { __error("Dictionary_copy: copy is typeof "ct); return }
     for (i in file) {
         if (i == "length" || i ~ /^[0-9]/) continue
         if ((fit = typeof(file[i])) == "unassigned") copy[i]
@@ -406,9 +402,9 @@ function Dictionary_copy(file, copy,    __,ct,cit,ft,fit,i) {
     }
 }
 
-function List_remove(array, i,    __,l,n) {
-    if (typeof(i) == "untyped") { __error("i is untyped"); return }
-    if (typeof(i) != "number") { delete array[i]; return }
+function List_remove(array, i,    __,at,it,l,n) {
+    if ((at = typeof(array)) != "array") { __error("List_remove: array is typeof "at); return }
+    if ((it = typeof(i)) != "number") { __error("List_remove: i is typeof "it); return }
     l = array["length"]
     for (n = i; n < l; ++n)
         array[n] = array[n + 1]
@@ -416,11 +412,11 @@ function List_remove(array, i,    __,l,n) {
     --array["length"]
 }
 
-function Array_printTo(array, to, level,    __,at,h,i,t) {
+function Array_printTo(array, to, level,    __,at,h,i,lt,t) {
     if ((at = typeof(array)) == "untyped" || at == "unassigned") return
-    t = String_repeat("\t", level)
-    if (at != "array") { __error(t"Array_print: array is typeof \""at"\""); return }
-    if (typeof(level) == "untyped") ++level
+    if ((lt = typeof(level)) == "number") t = String_repeat("\t", level)
+    if (at != "array") { __error("Array_printTo: array is typeof "at); return }
+    if (lt != "number" && lt != "untyped") { __error("Array_printTo: level is typeof "lt); return }
     if (typeof(to) == "untyped") to = "/dev/stdout"
     for (i in array)
         if (typeof(array[i]) == "array") {
@@ -436,7 +432,7 @@ function Array_print(array) {
 
 function Array_error(array,    __,et) {
     if ((et = typeof(ERRORS)) == "untyped" || et == "number") ++ERRORS
-    else __warning("Array_error: ERRORS isn't number but "et)
+    else __warning("Array_error: ERRORS is typeof "et)
     Array_printTo(array, "/dev/stderr")
 }
 
@@ -503,8 +499,8 @@ function String_split(array, string, sepp) {
 }
 
 function String_join(array, ofs,    __,at,i,r) {
+    if ((at = typeof(array)) != "array") { __error("String_join: array is typeof "at); return }
     if (typeof(ofs) == "untyped") ofs = OFS
-    if ((at = typeof(array)) != "array") { __error("String_join: not array but "at); return }
     if (!array["length"]) return ""
     for (i = 1; i <= array["length"]; ++i)
         if (i == 1) r = array[1]
@@ -512,7 +508,9 @@ function String_join(array, ofs,    __,at,i,r) {
     return r
 }
 
-function String_repeat(string, times,   __,p,q,r) {
+function String_repeat(string, times,   __,p,q,r,st,tt) {
+    if ((st = typeof(string)) != "string") { __error("String_repeat: string is typeof "st); return }
+    if ((tt = typeof(times)) != "number") { __error("String_repeat: times is typeof "tt); return }
     for (p = 0; p < times; ++p) r = r string
     return r
 }
@@ -524,7 +522,9 @@ function String_concat(string0, sepp, string1) {
     return string0 sepp string1
 }
 
-function String_startsWith(string0, string1,    __,l0,l1,m) {
+function String_startsWith(string0, string1,    __,l0,l1,m,st0,st1) {
+    if ((st0 = typeof(string0)) != "string") { __error("String_startsWith: string0 is typeof "st0); return }
+    if ((st1 = typeof(string1)) != "string") { __error("String_startsWith: string1 is typeof "st1); return }
     l0 = length(string0)
     l1 = length(string1)
     if (l1 > l0) return 0
@@ -532,7 +532,9 @@ function String_startsWith(string0, string1,    __,l0,l1,m) {
     return m == string1
 }
 
-function String_endsWith(string0, string1,    __,l0,l1,m) {
+function String_endsWith(string0, string1,    __,l0,l1,m,st0,st1) {
+    if ((st0 = typeof(string0)) != "string") { __error("String_endsWith: string0 is typeof "st0); return }
+    if ((st1 = typeof(string1)) != "string") { __error("String_endsWith: string1 is typeof "st1); return }
     l0 = length(string0)
     l1 = length(string1)
     if (l1 > l0) return 0
@@ -540,7 +542,8 @@ function String_endsWith(string0, string1,    __,l0,l1,m) {
     return m == string1
 }
 
-function String_trim(string, sepp,    __,i) {
+function String_trim(string, sepp,    __,i,st) {
+    if ((st = typeof(string)) != "string") { __error("String_trim: string is typeof "st); return }
     if (typeof(sepp) == "untyped") sepp = @/[ \t]/
     Index_push(string, "", "")
     for (i = 1; i <= NF; ++i) {
@@ -554,13 +557,59 @@ function String_trim(string, sepp,    __,i) {
     return Index_pop()
 }
 
-function String_countChars(string, chars,    __,i,l,n) {
+function String_countChars(string, chars,    __,ct,i,l,n,st) {
+    if ((st = typeof(string)) != "string") { __error("String_countChars: string is typeof "st); return }
+    if ((ct = typeof(chars)) != "string") { __error("String_countChars: char is typeof "ct); return }
     l = length(chars)
     while (i = index(string, chars)) {
         string = substr(string, i + l)
         ++n
     }
     return n
+}
+
+function Char_codepoint(char,    __,c,ct,n) {
+    if ((ct = typeof(char)) != "string") { __error("Char_codepoint: char is typeof "ct); return }
+    if (typeof(ALLCHARS) == "untyped")
+        for (n = 1; n <= 55295; ++n) {
+            c = sprintf("%c", n)
+            ALLCHARS = ALLCHARS c
+        }
+    return index(ALLCHARS, char)
+}
+
+function String_padLeft(string, size, sepp,    __,l,n,st,sizet) {
+    if ((st = typeof(string)) != "string") { __error("String_padLeft: string is typeof "st); return }
+    if ((sizet = typeof(size)) != "number") { __error("String_padLeft: size is typeof "sizet); return }
+    if (typeof(sepp) == "untyped") sepp = " "
+    l = length(string)
+    if (l >= size) return string
+    n = size - l
+    return String_repeat(sepp, n) string
+}
+
+function String_padRight(string, size, sepp,    __,l,n,st,sizet) {
+    if ((st = typeof(string)) != "string") { __error("String_padRight: string is typeof "st); return }
+    if ((sizet = typeof(size)) != "number") { __error("String_padRight: size is typeof "sizet); return }
+    if (typeof(sepp) == "untyped") sepp = " "
+    l = length(string)
+    if (l >= size) return string
+    n = size - l
+    return string String_repeat(sepp, n)
+}
+
+function __HEX(number,    __,nt,s) {
+    if ((nt = typeof(number)) != "number") { __error("__HEX: number is typeof "nt); return }
+    s = sprintf("%X", number)
+    if (length(s) % 2 == 1) s = "0"s
+    return s
+}
+
+function __hex(number,    __,nt,s) {
+    if ((nt = typeof(number)) != "number") { __error("__hex: number is typeof "nt); return }
+    s = sprintf("%x", number)
+    if (length(s) % 2 == 1) s = "0"s
+    return s
 }
 
 function Index_pushRange(from, to, fs, ofs, rs, ors,    __,i,m) {
@@ -636,8 +685,8 @@ function Index_pull(new, fs, ofs, rs, ors) {
 }
 
 function Index_pullArray(output, input, fs, ofs,   __,it,ot,z) {
-    if ((it = typeof(input)) != "array") { __error("Index_pullArray: input not array but "it); return }
-    if ((ot = typeof(output)) != "array") { __error("Index_pullArray: output not array but "ot); return }
+    if ((it = typeof(input)) != "array") { __error("Index_pullArray: input is typeof "it); return }
+    if ((ot = typeof(output)) != "array") { __error("Index_pullArray: output is typeof "ot); return }
     Index_push("", fs, ofs)
     for (z = 1; z <= input["length"]; ++z) output[++output["length"]] = Index_reset(input[z])
     Index_pop()
