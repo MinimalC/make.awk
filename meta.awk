@@ -422,14 +422,17 @@ function List_remove(array, i,    __,at,it,l,n) {
     --array["length"]
 }
 
-function Array_printTo(array, to, level,    __,at,h,i,lt,t) {
+function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
     if ((at = typeof(array)) == "untyped" || at == "unassigned") return
     if ((lt = typeof(level)) == "number") t = String_repeat("\t", level)
     if (at != "array") { __error("Array_printTo: array is typeof "at); return }
     if (lt != "number" && lt != "untyped") { __error("Array_printTo: level is typeof "lt); return }
     if (typeof(to) == "untyped") to = "/dev/stdout"
+
     for (i in array)
-        if (typeof(array[i]) == "array") {
+        if ((it = typeof(array[i])) == "unassigned")
+            print t i > to
+        else if (it == "array") {
             print t i ": " > to
             Array_printTo(array[i], to, level + 1)
         } else
