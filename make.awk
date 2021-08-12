@@ -47,8 +47,8 @@ function END_make(    __,name,rendered) {
         if (Dictionary_count(C_defines)) { __debug("C_defines: "); for (name in C_defines) {
             rendered = Index_pull(C_defines[name]["body"], REFIX, " ")
             if ("arguments" in C_defines[name])
-                 __debug("# define "n" ( "C_defines[n]["arguments"]["text"]" ) "rendered)
-            else __debug("# define "n"  "rendered)
+                 __debug("# define "name" ( "C_defines[name]["arguments"]["text"]" ) "rendered)
+            else __debug("# define "name"  "rendered)
         } }
     }
     if (RUN_ARGC_ARGV) {
