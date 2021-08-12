@@ -39,17 +39,17 @@ function BEGIN_make() {
 
 END { END_make() }
 
-function END_make(    __,n,rendered) {
+function END_make(    __,name,rendered) {
 
     if (DEBUG) {
-        __debug("CSharp_Types: "); Array_debug(CSharp_Types)
-        __debug("C_types: "); Array_debug(C_types)
-        __debug("C_defines: "); for (n in C_defines) {
-            rendered = Index_pull(C_defines[n]["body"], REFIX, " ")
-            if (C_defines[n]["isFunction"])
+        if (Dictionary_count(CSharp_Types)) { __debug("CSharp_Types: "); Array_debug(CSharp_Types) }
+        if (Dictionary_count(C_types)) { __debug("C_types: "); Array_debug(C_types) }
+        if (Dictionary_count(C_defines)) { __debug("C_defines: "); for (name in C_defines) {
+            rendered = Index_pull(C_defines[name]["body"], REFIX, " ")
+            if ("arguments" in C_defines[name])
                  __debug("# define "n" ( "C_defines[n]["arguments"]["text"]" ) "rendered)
             else __debug("# define "n"  "rendered)
-        }
+        } }
     }
     if (RUN_ARGC_ARGV) {
         delete parsed

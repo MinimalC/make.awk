@@ -402,6 +402,16 @@ function Dictionary_copy(file, copy,    __,ct,cit,ft,fit,i) {
     }
 }
 
+function Dictionary_count(array,    __,at,count,name) {
+    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
+    if (at != "array") { __error("Dictionary_count: array is typeof "at); return }
+    for (name in array) {
+        if (name == "length" || name ~ /^[0-9]/) continue
+        ++count
+    }
+    return count
+}
+
 function List_remove(array, i,    __,at,it,l,n) {
     if ((at = typeof(array)) != "array") { __error("List_remove: array is typeof "at); return }
     if ((it = typeof(i)) != "number") { __error("List_remove: i is typeof "it); return }
