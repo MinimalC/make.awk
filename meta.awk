@@ -12,7 +12,11 @@ function BEGIN_meta() {
 
     FS="";OFS="";RS="\0";ORS="\n"
 
-    MAX_NUMBER = 2147483648
+    if (__HEX(2 ^ 64) == "10000000000000000") MAX_INTEGER = 2 ^ 64          # awk --bignum with MPFR
+    else if (__HEX(2 ^ 63) == "8000000000000000") MAX_INTEGER = 2 ^ 63  # awk on 64bit
+    else MAX_INTEGER = 2 ^ 31 # if (__HEX(2 ^ 31) == "80000000")    # awk on 32bit
+    # else MAX_INTEGER = 2 ^ 15  # if (__HEX(2 ^ 15) == "8000") # awk on 16bit ?
+    # else MAX_INTEGER = 2 ^ 7 # if (__HEX(2 ^ 7) == "80")  # awk on 8bit :-)
 
     if (PROCINFO["argv"][1] == "-f") if (get_FileNameNoExt(PROCINFO["argv"][2]) == "meta") __BEGIN()
 }

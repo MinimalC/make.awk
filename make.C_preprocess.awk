@@ -169,12 +169,12 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
 
     __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+-:$%!?\^\.]+/, "_")
     if (!(__FILE__Name in preproc[C]) || preproc[C][__FILE__Name] != fileName) {
-        for (f = 1; f < MAX_NUMBER; ++f) {
+        for (f = 1; f < MAX_INTEGER; ++f) {
             n = __FILE__Name (f == 1 ? "" : f)
             if (n in preproc[C] && preproc[C][n] !~ "\""fileName"\"") continue
             break
         }
-        if (f == MAX_NUMBER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }
+        if (f == MAX_INTEGER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }
         __FILE__Name = n
         preproc[C][__FILE__Name] = "static"FIX"const"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
     }
@@ -412,7 +412,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         preproc[C][O][ ++preproc[C][O]["length"] ] = $0; continue
     }
 
-        # for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
+        #for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
         parsed[fileName]["I"] = Index["length"]
         for (i = 1; i <= NF; ++i) {
