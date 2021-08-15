@@ -327,15 +327,25 @@ function __BEGIN(controller, action, usage,
     exit 1
 }
 
+function Array_create(array) {
+    if ((at = typeof(array)) == "untyped") ;
+    else if ((at) != "array") { __error("Array_create: array is typeof "at); return }
+    if (!array["length"]) delete array["length"]
+}
+
+function List_create(array) {
+    Array_create(array)
+}
+
 function Array_clear(array,    __,at,i) {
-    if ((at = typeof(array)) != "array") { __error("Array_clear: array is typeof "at); return }
+    Array_create(array)
     for (i in array) delete array[i]
 }
 
 function List_clear(array,    __,at,i) {
-    if ((at = typeof(array)) != "array") { __error("List_clear: array is typeof "at); return }
+    Array_create(array)
     for (i = 1; i <= array["length"]; ++i) delete array[i]
-    array["length"] = 0
+    delete array["length"]
 }
 
 function List_length(array,   __,at) {
