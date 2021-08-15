@@ -48,7 +48,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         C_keywords["_Thread"]
     }
 
-    includeDirs["length"]
+    List_create(includeDirs)
     # List_clear(includeDirs)
     if (!includeDirs["length"]) {
         List_add(includeDirs, "/usr/include/")
@@ -75,31 +75,22 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
                 if (dir = get_DirectoryName(config["files"][f])) { List_add(includeDirs, dir); List_add(config["directories"], dir); break }
     }
 
-    C_defines["length"]
     Array_clear(C_defines)
-    config["parameters"]["length"]
     for (d in config["parameters"]) {
         if (d == "length" || d ~ /^[0-9]+$/) continue
         if (d !~ /^D.*/) continue
         C_defines[c = substr(d, 2)] = config["parameters"][d]
     }
 
-    parsed[Compiler]["length"]
+    Array_create(parsed)
     if (!parsed[Compiler]["length"]) {
-        input["length"]; Array_clear(input)
+        Array_clear(input)
         input[++input["length"]] = "# define _GNU_SOURCE 1"
-        #input[++input["length"]] = "# define NULL  0"
-        #input[++input["length"]] = "# define static_assert  _Static_assert"
-        #input[++input["length"]] = "# if defined ( NDEBUG )"
-        #input[++input["length"]] = "# define assert( e )"
-        #input[++input["length"]] = "# else"
-        #input[++input["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
-        #input[++input["length"]] = "# endif"
         input[++input["length"]] = "# include <stddef.h>"
         input[++input["length"]] = "# include <stdint.h>"
         input[++input["length"]] = "# include <limits.h>"
 
-        output["length"]; Array_clear(output)
+        Array_clear(output)
         output["name"] = Compiler
         CCompiler_coprocess("-xc -dM -E", input, output)
         List_sort(output)
@@ -107,8 +98,20 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
 
         C_parse(Compiler, output)
     }
+    if (!parsed[Compiler".custom.h"]["length"]) {
+        Array_clear(input)
+        input[++input["length"]] = "# undefine NULL"
+        input[++input["length"]] = "# define NULL  0"
+        input[++input["length"]] = "# noundefine NULL"
+        #input[++input["length"]] = "# define static_assert  _Static_assert"
+        input[++input["length"]] = "# if defined ( NDEBUG )"
+        input[++input["length"]] = "# define assert( e )"
+        input[++input["length"]] = "# else"
+        input[++input["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
+        input[++input["length"]] = "# endif"
+        C_parse(Compiler".custom.h", input)
+    }
     if (C == "C" && !parsed["."Project".config.h"]["length"]) {
-        #output["length"]; Array_clear(output)
         name = ""
         for (d = 1; d <= config["directories"]["length"]; ++d) {
             dir = config["directories"][d]
@@ -123,7 +126,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         #else __warning("make.awk: Using "name)
 #if (DEBUG) if (output["length"]) File_printTo(output, "/dev/stderr")
 
-        output["length"]; Array_clear(output)
+        Array_clear(output)
         if (!output["length"]) { file = "."Project".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
         if (!output["length"]) { file = ".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
         if (!output["length"]) { file = "config.h"; if (File_exists(dir file)) File_read(output, dir file) }
@@ -138,7 +141,6 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         }
     }
 
-    parsed["CLI"]["length"]
     if (C == "CSharp" && !parsed["CLI"]["length"]) {
         parsed["CLI"]["name"] = "CLI"
         ++parsed["CLI"]["length"] # TODO
@@ -158,7 +160,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         O = fileName
         if (C == "C") {
             C_preprocess(Compiler, O, C)
-            # C_preprocess(Compiler".assert.h", O, C) # TODO
+            C_preprocess(Compiler".custom.h", O, C)
             C_preprocess("."Project".config.h", O, C)
         }
         else if (C == "CSharp") { # TODO
@@ -375,11 +377,20 @@ __debug(fileName" Line "z": define "name"  "rendered)
             }
             NF = 0
         }
+        else if ($2 == "noundef" || $2 == "noundefine") {
+            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
+            name = $3
+            if (!(name in C_defines)) __warning(fileName" Line "z": noundefine doesn't exist: "name)
+            else C_defines[name]["noundefine"]
+            NF = 0
+        }
         else if ($2 == "undef" || $2 == "undefine") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             name = $3
             if (!(name in C_defines)) __warning(fileName" Line "z": undefine doesn't exist: "name)
+            else if ("noundefine" in C_defines[name]) __warning(fileName" Line "z": no undefine "name)
             else {
+                delete C_defines[name]
 if (DEBUG == 3 || DEBUG == 4) {
 rendered = Index_pull(C_defines[name]["body"], REFIX, " ")
 if ("arguments" in C_defines[name])
@@ -387,7 +398,6 @@ __debug(fileName" Line "z": undefine "name" ("C_defines[name]["arguments"]["text
 else
 __debug(fileName" Line "z": undefine "name"  "rendered)
 }
-                delete C_defines[name]
             }
             NF = 0
         }
@@ -456,6 +466,8 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         preproc[C][O][ ++preproc[C][O]["length"] ] = $0
     }
     Index_pop()
+    if ("length" in ifExpressions && ifExpressions["length"])
+        __warning(fileName" Line "z": Missing "(ifExpressions["length"]>1?ifExpressions["length"]" ":"")"# endif")
     for (name in OLD_defines) {
         delete C_defines[name]
         C_defines[name]["body"]
