@@ -6,7 +6,7 @@
 #include "make.C.awk"
 @include "make.CDefine_eval.awk"
 
-function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,j,k,l,m,n,name,o,output,p,q,r,s,t,u,v,w,x,y,z)
+function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h,i,input,j,k,l,m,n,name,o,output,p,q,r,s,t,u,v,w,x,y,z)
 {
     if (!C) C = "C"
 
@@ -88,6 +88,13 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     if (!parsed[Compiler]["length"]) {
         input["length"]; Array_clear(input)
         input[++input["length"]] = "# define _GNU_SOURCE 1"
+        #input[++input["length"]] = "# define NULL  0"
+        #input[++input["length"]] = "# define static_assert  _Static_assert"
+        #input[++input["length"]] = "# if defined ( NDEBUG )"
+        #input[++input["length"]] = "# define assert( e )"
+        #input[++input["length"]] = "# else"
+        #input[++input["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
+        #input[++input["length"]] = "# endif"
         input[++input["length"]] = "# include <stddef.h>"
         input[++input["length"]] = "# include <stdint.h>"
         input[++input["length"]] = "# include <limits.h>"
@@ -151,6 +158,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         O = fileName
         if (C == "C") {
             C_preprocess(Compiler, O, C)
+            # C_preprocess(Compiler".assert.h", O, C) # TODO
             C_preprocess("."Project".config.h", O, C)
         }
         else if (C == "CSharp") { # TODO

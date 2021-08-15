@@ -507,8 +507,8 @@ function List_replaceString(output, input, fs, ofs) {
     return Index_pullArray(output, input, fs, ofs)
 }
 
-function String_replace(string, fs, ofs, rs, ors) {
-    return Index_pull(string, fs, ofs, rs, ors)
+function String_replace(string, fs, ofs, rs, ors,   __,r) {
+    r = Index_pull(string, fs, ofs, rs, ors); return r
 }
 
 function String_split(array, string, sepp) {

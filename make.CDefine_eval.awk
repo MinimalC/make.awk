@@ -6,19 +6,18 @@
 #include "make.C.awk"
 
 function CDefine_apply(i, file,
-    __,a,arguments,b,c,code,d,defineBody,e,f,g,h,hasVarArgs,j,k,l,m,n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
+    __,a,argsL,arguments,b,c,code,d,defineBody,e,f,g,h,hasVarArgs,j,k,l,m,n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
 {
     if (!($i in C_defines)) return 1
     if (typeof(C_defines[$i]) != "array") return 1
 
     name = $i
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
-
     defineBody = C_defines[name]["body"]
     arguments["length"]
+
     if ("arguments" in C_defines[name]) {
         # define expression( arg1 , arg2 ) body
-        l = C_defines[name]["arguments"]["length"]
+        argsL = C_defines[name]["arguments"]["length"]
         o = i; m = ""; n = 0; p = 0
         while (++o) {
             if (o > NF) {
@@ -39,7 +38,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
                 continue
             }
             if (!p && ($o == "," || $o == ")")) {
-                if (l || n) {
+                if (argsL || n) {
                     a = ++arguments["length"]
                     arguments[a]["value"] = m
                     arguments[a]["length"] = n
@@ -54,7 +53,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name)
             ++n
         }
         if ($(i + 1) != "(") {
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not applying "name)
+if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
             return 1
         }
         if ($o != ")") {
@@ -63,21 +62,20 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not applying "name)
         }
         else Index_removeRange(i + 1, o)
 if (DEBUG == 3) {
-__debug("arguments: ( "C_defines[name]["arguments"]["text"]" )")
 rendered = ""; for (a = 1; a <= arguments["length"]; ++a) rendered = rendered ( a > 1 ? " , " : "" ) arguments[a]["value"]
-__debug("applying:  ( "rendered" )")
+__debug(file["name"]" Line "file["z"]": using "name"  ( "C_defines[name]["arguments"]["text"]" )  ( "rendered" )")
 }
-        hasVarArgs = C_defines[name]["arguments"][l] == "..."
+        hasVarArgs = C_defines[name]["arguments"][argsL] == "..."
         if (hasVarArgs) {
-            if (arguments["length"] < l - 1)
-                __error(file["name"]" Line "file["z"]": applying "name": Not enough arguments") # ("arguments["length"]" insteadof "l") "m)
+            if (arguments["length"] < (argsL - 1))
+                __error(file["name"]" Line "file["z"]": define "name": Not enough arguments") # ("arguments["length"]" insteadof "argsL") "m)
         } else {
-            if (arguments["length"] < l)
-                __error(file["name"]" Line "file["z"]": applying "name": Not enough arguments") # ("arguments["length"]" insteadof "l") "m)
-            else if (arguments["length"] > l)
-                __error(file["name"]" Line "file["z"]": applying "name": Too many arguments")
+            if (arguments["length"] < argsL)
+                __error(file["name"]" Line "file["z"]": define "name": Not enough arguments") # ("arguments["length"]" insteadof "argsL") "m)
+            else if (arguments["length"] > argsL)
+                __error(file["name"]" Line "file["z"]": define "name": Too many arguments")
         }
-        for (n = 1; n <= arguments["length"]; ++n) { # Prepare arguments
+        for (n = 1; n <= arguments["length"]; ++n) {
             Index_push(arguments[n]["value"], REFIX, FIX)
             for (j = 1; j <= NF; ++j) {
                 if ($j in C_defines) {
@@ -85,10 +83,10 @@ __debug("applying:  ( "rendered" )")
                         #__warning(file["name"]" Line "file["z"]": self-referencing1 define "$j" "$j)
                         continue
                     if ("arguments" in C_defines[$j] && $(j + 1) != "(") {
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
+if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
                         continue
                     }
-# if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 applying "$j)
+# if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 apply "$j)
                     m = CDefine_apply(j, file)
                     j += m - 1
                 }
@@ -98,92 +96,108 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not applying "$j)
         }
         Index_push(defineBody, REFIX, FIX)
         for (o = 1; o <= NF; ++o) {
-            for (n = 1; n <= l; ++n) {
-                if (n == l && hasVarArgs) break
-                if ($o == C_defines[name]["arguments"][n]) { # && !($(o - 1) == "." || $(o - 1) == "->")) {
-                    if (o > 1 && $(o - 1) == "#") {
-                        Index_push(arguments[n]["value"], "", "")
-                        for (s = 1; s <= NF; ++s) {
-                            if ($s ~ REFIX) { $s = " "; continue }
-                            if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
+            for (n = 1; n <= argsL; ++n) {
+                if (hasVarArgs && n == argsL) {
+                    if ($o == "__VA_ARGS__" || $o == "ARGUMENTS") {
+                        if (o > 1 && $(o - 1) == "##") {
+                            Index_remove(o - 1); __warning(file["name"]" Line "file["z"]": Not concatenating variable arguments")
                         }
-                        $o = "\""Index_pop()"\""
-                        #$o = "\""arguments[n]["value"]"\""
-                        Index_remove(--o)
-                        continue
+                        if ($(o + 1) == "##") {
+                            Index_remove(o + 1); __warning(file["name"]" Line "file["z"]": Not concatenating variable arguments")
+                        }
+                        code = ""; a = 0
+                        for (c = argsL; c <= arguments["length"]; ++c) {
+                            code = String_concat(code, FIX","FIX, arguments[c]["value"])
+                            a += arguments[c]["length"]
+                            if (c > argsL) ++a
+                        }
+                        if ($(o - 1) == "#") {
+                            if (!a) $o = "\"\""
+                            else {
+                                Index_push(code, "", "")
+                                for (s = 1; s <= NF; ++s) {
+                                    if ($s ~ REFIX) { $s = " "; continue }
+                                    if ($s == "\"" && (s == 1 || $(s - 1) != "\\")) { $s = "\\\""; Index_reset(); ++s; continue }
+                                }
+                                $o = "\""Index_pop()"\""
+                            }
+                            Index_remove(o - 1); --o
+                        }
+                        else {
+                            if (!a) {
+                                if ($(o - 1) == ",") Index_remove(--o)
+                                Index_remove(o--)
+                            }
+                            else {
+                                $o = code
+                                o += a - 1
+                                Index_reset()
+                            }
+                        }
                     }
-                    $o = arguments[n]["value"]
-                    o += arguments[n]["length"] - 1; Index_reset()
                     break
                 }
-            }
-        }
-        if (hasVarArgs) {
-            for (o = 1; o <= NF; ++o) {
-                if ($o == "__VA_ARGS__") {
-                    code = ""; a = 0
-                    for (n = l; n <= arguments["length"]; ++n) {
-                        code = String_concat(code, FIX","FIX, arguments[n]["value"])
-                        a += arguments[n]["length"]
-                        if (n > l) ++a
-                    }
-                    if (o > 1 && $(o - 1) == "##") {
-                        Index_remove(--o); __warning(file["name"]" Line "file["z"]": Concatenating Variable Arguments")
-                    }
-                    if (o > 1 && $(o - 1) == "#") {
-                        Index_push(code, "", "")
-                        for (s = 1; s <= NF; ++s) {
-                            if ($s ~ REFIX) { $s = " "; continue }
-                            if (s > 1 && $s == "\"" && $(s - 1) != "\\") { $s = "\\\""; Index_reset(); ++s; continue }
+                if ($o == C_defines[name]["arguments"][n]) {
+                    if (n in arguments && arguments[n]["length"]) {
+                        if (arguments[n]["length"] > 1 && $(o - 1) == "#") {
+                            Index_push(arguments[n]["value"], "", "")
+                            for (s = 1; s <= NF; ++s) {
+                                if ($s ~ REFIX) { $s = " "; continue }
+                                if ($s == "\"" && (s == 1 || $(s - 1) != "\\")) { $s = "\\\""; Index_reset(); ++s; continue }
+                            }
+                            $o = "\""Index_pop()"\""
+                            Index_remove(o - 1); --o
                         }
-                        $o = "\""Index_pop()"\""
-                        #$o = "\""$o"\""
-                        Index_remove(--o)
-                        continue
+                        else {
+                            $o = arguments[n]["value"]
+                            o += arguments[n]["length"]
+                            Index_reset()
+                        }
                     }
-                    if (!code) { if (o > 1 && $(o - 1) == ",") Index_remove(--o); Index_remove(o--) }
                     else {
-                        $o = code
-                        o += a - 1; Index_reset()
+                        while (o > 1 && $(o - 1) == "#") Index_remove(--o)
+                        while (o > 1 && $(o - 1) == "##") Index_remove(--o)
+                        while ($(o + 1) == "##") Index_remove(o + 1)
+                        Index_remove(o--)
                     }
                 }
             }
         }
         defineBody = Index_pop()
     }
+
     # define AWA AWA
     Index_push(defineBody, REFIX, FIX)
     for (o = 1; o <= NF; ++o) {
-        # if ($o == "\\") { Index_remove(o--); continue }
-        if ($o == "##") {
+        while ($(o + 1) == "##") {
             s = ""
-            if ($(o - 1) ~ /^[a-zA-Z_0-9]+$/) {
-                s = $(o - 1)
-                Index_remove(--o)
+            if ($(o) ~ /^[a-zA-Z_0-9]+$/) {
+                s = $o
             }
-            if ($(o + 1) ~ /^[a-zA-Z_0-9]+$/) {
-                s = s $(o + 1)
-                Index_remove(o + 1)
+            if ($(o + 2) ~ /^[a-zA-Z_0-9]+$/) {
+                s = s $(o + 2)
+                Index_remove(o + 1, o + 2)
             }
             if (s == "") Index_remove(o--)
             else $o = s
-            continue
+            # continue
         }
-        if ($o == "#") {
+        if (o > 1 && $(o - 1) == "#") {
             s = ""
-            if ($(o + 1) ~ /^[a-zA-Z_0-9]+$/) {
-                s = "\""$(o + 1)"\""
-                Index_remove(o + 1)
+            if ($o ~ /^[a-zA-Z_0-9]+$/) {
+                s = "\""$o"\""
+                Index_remove(o--)
             }
-            if (s != "") $o = s
-            else $o = "\"\""
-            continue
+            if (s == "") $o = "\"\""
+            else $o = s
+            # continue
         }
+        while (o > 1 && $(o - 1) == "#") Index_remove(--o)
     }
     defineBody = Index_pop()
     if (defineBody == "") {
         # define unsafe  /* unsafe */
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name" without body")
+if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without body")
         Index_remove(i)
         return 0
     }
@@ -193,15 +207,16 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": applying "name" without 
     for (j = 1; j <= NF; ++j) {
         if ($j in C_defines) {
             if ($j in C_selfreference) {
-                __warning(file["name"]" Line "file["z"]": self-referencing define "$j" "$j)
+                rendered = Index_pull(defineBody, REFIX, " ")
+                __warning(file["name"]" Line "file["z"]": self-reference in define "$j" "rendered)
                 continue
             }
             if ("arguments" in C_defines[$j] && $(j + 1) != "(") {
-if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
+if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not apply "$j)
                 ++notapplied
                 continue
             }
-#if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 applying "$j)
+#if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 apply "$j)
             n = CDefine_apply(j, file)
             j += n-1
         }
@@ -216,9 +231,9 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 1 not applying "$j)
 if (DEBUG == 3) {
 rendered = Index_pull(defineBody, REFIX, " ")
 if ("arguments" in C_defines[name]) {
-__debug(file["name"]" Line "file["z"]": applying "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
+__debug(file["name"](file["z"]?" Line "file["z"]:"")(file["name"]?": ":"")"apply "name"  "rendered)
 # Array_debug(arguments)
-} else __debug(file["name"]" Line "file["z"]": applying "name"  "rendered)
+} else __debug(file["name"](file["z"]?" Line "file["z"]:"")(file["name"]?": ":"")"using "name"  "rendered)
 }
     return n - notapplied
 }
