@@ -2,11 +2,11 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-#include "meta.awk"
+#include "run.awk"
 
-BEGIN { BEGIN_meta() }
+BEGIN { BEGIN_run() }
 
-function BEGIN_meta() {
+function BEGIN_run() {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
@@ -18,17 +18,17 @@ function BEGIN_meta() {
     # else MAX_INTEGER = 2 ^ 15  # if (__HEX(2 ^ 15) == "8000") # awk on 16bit ?
     # else MAX_INTEGER = 2 ^ 7 # if (__HEX(2 ^ 7) == "80")  # awk on 8bit :-)
 
-    if (PROCINFO["argv"][1] == "-f") if (get_FileNameNoExt(PROCINFO["argv"][2]) == "meta") __BEGIN()
+    if (PROCINFO["argv"][1] == "-f") if (get_FileNameNoExt(PROCINFO["argv"][2]) == "run") __BEGIN()
 }
 
-END { END_meta() }
+END { END_run() }
 
-function END_meta() {
+function END_run() {
     # no if (ERRORS) exit 0; else exit 1
-    if (Index["length"]) __error("meta.awk: More Index_push() than Index_pop()")
+    if (Index["length"]) __error("run.awk: More Index_push() than Index_pop()")
 }
 
-function meta_ARGC_ARGV(config) {
+function run_ARGC_ARGV(config) {
 
     ARGC_ARGV_debug()
 }
@@ -222,12 +222,12 @@ function ARGV_length() {
 }
 
 function __BEGIN(controller, action, usage,
-    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,metaDir,
+    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,runDir,
     n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
 {   # CONTROLLER, ACTION, USAGE, ERRORS
 
     if (typeof(null) != "untyped")
-        __warning("meta.awk: Use __BEGIN with just three arguments:\n"\
+        __warning("run.awk: Use __BEGIN with just three arguments:\n"\
                   "__BEGIN(action), __BEGIN(action, usage) or __BEGIN(controller, action, usage)")
 
     if (typeof(action) == "untyped") {
@@ -241,29 +241,29 @@ function __BEGIN(controller, action, usage,
     }
     if (!usage) {
         if (typeof(USAGE) != "untyped" && USAGE) usage = USAGE
-        else usage = "Use awk -f meta.awk Project.awk [command] [Directory] [File.name]\n"\
+        else usage = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
                      "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
     }
     if (!controller) {
         if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
         else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
-        if (controller == "meta") {
-            metaDir = ENVIRON["OLDPWD"]"/"
+        if (controller == "run") {
+            runDir = ENVIRON["OLDPWD"]"/"
             if (ARGV_length() == 0) { __error(usage); exit }
-            if ("meta_"ARGV[1] in FUNCTAB) ;
+            if ("run_"ARGV[1] in FUNCTAB) ;
             else {
-                file = metaDir ARGV[1]; if (!File_exists(file)) file = ""
+                file = runDir ARGV[1]; if (!File_exists(file)) file = ""
                 if (!file) file = ARGV[1]; if (!File_exists(file)) file = ""
                 if (file) {
                     includeDir = get_DirectoryName(file)
                     workingDir = ENVIRON["PWD"]"/"
                     for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
                     output["length"]; Array_clear(output)
-                    r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!metaDir?"":":"metaDir))
+                    r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!runDir?"":":"runDir))
                     File_printTo(output, "/dev/stdout")
                     exit r
                 }
-                else { __error("meta.awk: File or Function "ARGV[1]" doesn't exist"); exit }
+                else { __error("run.awk: File or Function "ARGV[1]" doesn't exist"); exit }
             }
         }
         if (!controller) { __error(usage); exit }
@@ -688,11 +688,11 @@ function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
 }
 
 function Index_pop(    null,i,r) { # Index
-    if (typeof(null) != "untyped") __warning("meta.awk: Use Index_pop() without arguments")
+    if (typeof(null) != "untyped") __warning("run.awk: Use Index_pop() without arguments")
 
     r = Index_reset()
 
-    if (!(i = Index["length"])) __error("meta.awk: More Index_pop() than Index_push()")
+    if (!(i = Index["length"])) __error("run.awk: More Index_pop() than Index_push()")
     else {
         ORS = Index[i]["OUTPUTRECORDSEP"]
         RS  = Index[i]["RECORDSEP"]
@@ -746,7 +746,7 @@ function Index_append(i, value, ifNot,    __,r) {
 
 function Index_remove(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,    null,R) {
     if (typeof(null) != "untyped") {
-        __warning("meta.awk: WARNING: Don't use Index_remove() with more than 26 arguments")
+        __warning("run.awk: WARNING: Don't use Index_remove() with more than 26 arguments")
         R = ""
     }
     if (typeof(a) == "number") { R = String_concat(R, OFS, $a); $a = "CLE\a\r" }

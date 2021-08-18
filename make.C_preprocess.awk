@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2021 Hans Riehm
 
-#include "meta.awk"
+#include "run.awk"
 #include "make.C.awk"
 @include "make.CDefine_eval.awk"
 
@@ -46,6 +46,8 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         C_keywords["_Noreturn"]
 
         C_keywords["_Thread"]
+
+        C_keywords["__VA_ARGS__"]
     }
 
     List_create(includeDirs)
@@ -79,7 +81,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
     for (d in config["parameters"]) {
         if (d == "length" || d ~ /^[0-9]+$/) continue
         if (d !~ /^D.*/) continue
-        C_defines[c = substr(d, 2)] = config["parameters"][d]
+        C_defines[c = substr(d, 2)]["value"] = config["parameters"][d]
     }
 
     Array_create(parsed)
@@ -100,15 +102,21 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
     }
     if (!parsed[Compiler".custom.h"]["length"]) {
         Array_clear(input)
-        input[++input["length"]] = "# undefine NULL"
+        input[++input["length"]] = "# undef NULL"
         input[++input["length"]] = "# define NULL  0"
-        input[++input["length"]] = "# noundefine NULL"
-        #input[++input["length"]] = "# define static_assert  _Static_assert"
+        input[++input["length"]] = "# noundef NULL"
+
         input[++input["length"]] = "# if defined ( NDEBUG )"
+        input[++input["length"]] = "# noundefine NDEBUG"
         input[++input["length"]] = "# define assert( e )"
         input[++input["length"]] = "# else"
+        input[++input["length"]] = "/* GCC 7 assert.h: This prints an \"Assertion failed\" message and aborts.  */\n"\
+    "extern void  __assert_fail ( const char  * __assertion, const char  * __file, unsigned int  __line, const char  * __function )\n"\
+    "__attribute__ (( __nothrow__ , __leaf__ )) __attribute__ (( __noreturn__ )) ;"
         input[++input["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
         input[++input["length"]] = "# endif"
+        input[++input["length"]] = "# noundefine assert"
+
         C_parse(Compiler".custom.h", input)
     }
     if (C == "C" && !parsed["."Project".config.h"]["length"]) {
@@ -192,12 +200,12 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX 1 FIX"\""fileName"\""
     # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
 
-    C_defines["__FILE__"]["body"] = __FILE__Name
+    C_defines["__FILE__"]["value"] = __FILE__Name
 
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
         Index_reset(parsed[fileName][z])
 
-        C_defines["__LINE__"]["body"] = z
+        C_defines["__LINE__"]["value"] = z
 
     if ($1 == "#") {
         # if ($2 ~ /^\s*$/) Index_remove(2)
@@ -290,8 +298,8 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"]
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
                         zZ = preproc[C][O]["length"]
                         C_preprocess(o, O, C)
-                        C_defines["__FILE__"]["body"] = __FILE__Name
-                        C_defines["__LINE__"]["body"] = z
+                        C_defines["__FILE__"]["value"] = __FILE__Name
+                        C_defines["__LINE__"]["value"] = z
                         break
                     }
                 }
@@ -304,8 +312,8 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                     zZ = preproc[C][O]["length"]
                     C_preprocess(m, O, C)
-                    C_defines["__FILE__"]["body"] = __FILE__Name
-                    C_defines["__LINE__"]["body"] = z
+                    C_defines["__FILE__"]["value"] = __FILE__Name
+                    C_defines["__LINE__"]["value"] = z
                 }
                 else __warning(fileName" Line "z": File not found: \""m"\"")
             }
@@ -331,7 +339,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
             else {
                 #if (name in C_defines) {
                 #    __warning(fileName" Line "z": redefining "name)
-                #    OLD_defines[name]["body"]
+                #    OLD_defines[name]["value"]
                 #    Dictionary_copy(C_defines[name], OLD_defines[name])
                 #    delete C_defines[name]
                 #}
@@ -365,10 +373,10 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
 
                 for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
-                C_defines[name]["body"] = $0
+                C_defines[name]["value"] = $0
 
 if (DEBUG == 3 || DEBUG == 4) {
-rendered = Index_pull(C_defines[name]["body"], REFIX, " ")
+rendered = Index_pull(C_defines[name]["value"], REFIX, " ")
 if ("arguments" in C_defines[name])
 __debug(fileName" Line "z": define "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 else
@@ -388,11 +396,11 @@ __debug(fileName" Line "z": define "name"  "rendered)
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             name = $3
             if (!(name in C_defines)) __warning(fileName" Line "z": undefine doesn't exist: "name)
-            else if ("noundefine" in C_defines[name]) __warning(fileName" Line "z": no undefine "name)
+            else if ("noundefine" in C_defines[name]) __warning(fileName" Line "z": noundefine "name)
             else {
                 delete C_defines[name]
 if (DEBUG == 3 || DEBUG == 4) {
-rendered = Index_pull(C_defines[name]["body"], REFIX, " ")
+rendered = Index_pull(C_defines[name]["value"], REFIX, " ")
 if ("arguments" in C_defines[name])
 __debug(fileName" Line "z": undefine "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 else
@@ -401,7 +409,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             }
             NF = 0
         }
-        else if ($2 == "warning") {
+        else if ($2 == "warning" || $2 == "info") {
             rendered = Index_pull($0, REFIX, "")
             __warning(fileName" Line "z": "rendered)
             NF = 0
@@ -409,11 +417,11 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         else if ($2 == "error") {
             rendered = Index_pull($0, REFIX, "")
             __error(fileName" Line "z": "rendered)
-        #    NF = 0
+            # NF = 0
         }
         else if ($2 == "pragma") {
             rendered = Index_pull($0, REFIX, "")
-            __warning(fileName" Line "z": "rendered)
+            __warning(fileName" Line "z": Unknown "rendered)
             NF = 0
         }
         else if ($2 == "line" || $2 ~ /^[+-]?[0-9]+$/) {
@@ -470,7 +478,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         __warning(fileName" Line "z": Missing "(ifExpressions["length"]>1?ifExpressions["length"]" ":"")"# endif")
     for (name in OLD_defines) {
         delete C_defines[name]
-        C_defines[name]["body"]
+        C_defines[name]["value"]
         Dictionary_copy(OLD_defines[name], C_defines[name])
         delete OLD_defines[name]
     }

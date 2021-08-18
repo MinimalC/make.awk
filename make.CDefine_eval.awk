@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-#include "meta.awk"
+#include "run.awk"
 #include "make.C.awk"
 
 function CDefine_apply(i, file,
@@ -12,7 +12,7 @@ function CDefine_apply(i, file,
     if (typeof(C_defines[$i]) != "array") return 1
 
     name = $i
-    defineBody = C_defines[name]["body"]
+    defineBody = C_defines[name]["value"]
     arguments["length"]
 
     if ("arguments" in C_defines[name]) {
@@ -26,7 +26,7 @@ function CDefine_apply(i, file,
                     if (file[file["z"] + 1] ~ /^#/) break
                     Index_append(NF, file[++file["z"]])
                     for (j = o; j <= NF; ++j) if ($j ~ /^\s*$/) Index_remove(j--) # clean
-                    C_defines["__LINE__"]["body"] = file["z"]
+                    C_defines["__LINE__"]["value"] = file["z"]
                     --o
                     continue
                 }
