@@ -80,7 +80,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
     Array_clear(C_defines)
     for (d in config["parameters"]) {
         if (d == "length" || d ~ /^[0-9]+$/) continue
-        if (d !~ /^D.*/) continue
+        if (d !~ /^D.+/) continue
         C_defines[c = substr(d, 2)]["value"] = config["parameters"][d]
     }
 
@@ -110,9 +110,9 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         input[++input["length"]] = "# noundefine NDEBUG"
         input[++input["length"]] = "# define assert( e )"
         input[++input["length"]] = "# else"
-        input[++input["length"]] = "/* GCC 7 assert.h: This prints an \"Assertion failed\" message and aborts.  */\n"\
-    "extern void  __assert_fail ( const char  * __assertion, const char  * __file, unsigned int  __line, const char  * __function )\n"\
-    "__attribute__ (( __nothrow__ , __leaf__ )) __attribute__ (( __noreturn__ )) ;"
+        input[++input["length"]] = "/* GLIBC 7 assert.h: This prints an \"Assertion failed\" message and aborts. */"\
+    " extern void  __assert_fail ( const char  * __assertion, const char  * __file, unsigned int  __line, const char  * __function )"\
+    " __attribute__ (( __nothrow__ , __leaf__ )) __attribute__ (( __noreturn__ )) ;"
         input[++input["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
         input[++input["length"]] = "# endif"
         input[++input["length"]] = "# noundefine assert"

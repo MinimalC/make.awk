@@ -45,7 +45,7 @@ function END_make(    __,name,rendered) {
         if (Dictionary_count(CSharp_Types)) { __debug("CSharp_Types: "); Array_debug(CSharp_Types) }
         if (Dictionary_count(C_types)) { __debug("C_types: "); Array_debug(C_types) }
         if (Dictionary_count(C_defines)) { __debug("C_defines: "); for (name in C_defines) {
-            rendered = Index_pull(C_defines[name]["body"], REFIX, " ")
+            rendered = Index_pull(C_defines[name]["value"], REFIX, " ")
             if ("arguments" in C_defines[name])
                  __debug("# define "name" ( "C_defines[name]["arguments"]["text"]" ) "rendered)
             else __debug("# define "name"  "rendered)
