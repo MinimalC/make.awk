@@ -473,8 +473,10 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         preproc[C][O][ ++preproc[C][O]["length"] ] = $0
     }
     Index_pop()
-    if ("length" in ifExpressions && ifExpressions["length"])
-        __warning(fileName" Line "z": Missing "(ifExpressions["length"]>1?ifExpressions["length"]" ":"")"# endif")
+    if ("length" in ifExpressions && ifExpressions["length"]) {
+        m = ""; for (n = 1; n <= ifExpressions["length"]; ++n) m = String_concat(m, " ", "# endif "ifExpressions[n]["if"])
+        __warning(fileName" Line "z": Missing "m)
+    }
     for (name in OLD_defines) {
         delete C_defines[name]
         C_defines[name]["value"]
