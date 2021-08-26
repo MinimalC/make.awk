@@ -193,8 +193,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
             break
         }
         if (f == MAX_INTEGER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }
-        __FILE__Name = n
-        preproc[C][__FILE__Name] = "static"FIX"const"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
+        preproc[C][__FILE__Name = n] = "static"FIX"const"FIX"char"FIX __FILE__Name FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
     }
 
     preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX 1 FIX"\""fileName"\""

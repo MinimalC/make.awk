@@ -357,10 +357,19 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
-        if ($i ~ /[¢£¥§µ]/ || $i ~ /[À-ÖÙ-öù-퟿]/) {
-            $i = "U"__HEX(Char_codepoint($i))
-            Index_reset()
-        }
+        # Σ » « ° ± ² ³ ´ · × ÷ ø Ø º ¹ ¼ ½ ¾
+        if ($i == "π") { $i = "PI"; Index_reset() }
+        if ($i == "µ") { $i = "micro"; Index_reset() }
+        if ($i == "¢") { $i = "cent"; Index_reset() }
+        if ($i == "¸") { $i = "cedi"; Index_reset() }
+        if ($i == "£") { $i = "Pound"; Index_reset() }
+        if ($i == "¥") { $i = "Yen"; Index_reset() }
+        if ($i == "€") { $i = "Euro"; Index_reset() }
+        if ($i == "§") { $i = "PARAGRAPH"; Index_reset() }
+        if ($i == "₤") { $i = "Lira"; Index_reset() }
+        if ($i == "₱") { $i = "Peso"; Index_reset() }
+        if ($i == "₿") { $i = "BTC"; Index_reset() }
+        if ($i ~ /[À-ÖÙ-öù-퟿]/) { $i = "U"__HEX(Char_codepoint($i)); Index_reset() }
         if ($i ~ /[a-zA-Z_]/) {
             if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             name = $i
