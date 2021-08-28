@@ -21,7 +21,6 @@ for (z = 1; z <= input["length"]; ++z) {
 
     for (i = 1; i <= NF; ++i) {
         if ($i == "/") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             if ($(i + 1) == "*") {
                 was = "comment"; comments = 0; ++i
                 for (n = i; n <= NF; ++n) {
@@ -74,7 +73,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
         }
         if ($i == "#") {
             if ($(i + 1) == "#") {
-                if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
                 ++i; was = "##"
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 if (i < NF) if (Index_append(i, FIX, FIX)) ++i
@@ -92,14 +90,12 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 if (i < NF) if (Index_append(i, FIX, FIX)) ++i
                 continue
             }
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = "#"
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i ~ /\s/) {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             n = i; while (++n <= NF) {
                 if ($n ~ /\s/) continue
                 --n; break
@@ -110,11 +106,9 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
             continue
         }
         if ($i == "L" && $(i + 1) == "\"") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             ++i
         }
         if ($i == "\"") {
-            if ($(i - 1) != "L") if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = "\""
             string = ""
             n = i; while (++n <= NF) {
@@ -140,7 +134,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
             continue
         }
         if ($i == "<") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = "<"
             if (hash == "# include") {
                 string = ""
@@ -171,12 +164,8 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
-        if ($i == "L" && $(i + 1) == "'") {
-            if (Index_prepend(i, FIX, FIX)) ++i
-            ++i
-        }
+        if ($i == "L" && $(i + 1) == "'") ++i
         if ($i == "'") {
-            if ($(i - 1) != "L") if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = "'"
             string = ""
             n = i; while (++n <= NF) {
@@ -198,21 +187,18 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 Index_remove(i, i + 1); --i
                 continue
             }
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = "*"
             if ($(i + 1) == "=") { ++i; was = was"=" }
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i == "=" || $i == "%" || $i == "^" || $i == "!") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = $i
             if ($(i + 1) == "=") { ++i; was = was"=" }
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i == "&" || $i == "|") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = $i
             if ($(i + 1) == $i) { ++i; was = was $i }
             else if ($(i + 1) == "=") { ++i; was = was"=" }
@@ -220,7 +206,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
         if ($i == ">") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = ">"
             if ($(i + 1) == ">") { ++i; was = was">" }
             if ($(i + 1) == "=") { ++i; was = was"=" }
@@ -228,7 +213,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
         if ($i == ".") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = "."
             if ( $(i + 1) == "." && $(i + 2) == "." ) { i += 2; was = "..." }
             # if ( $(i + 1) == "." ) { ++i; was = ".." }
@@ -236,37 +220,31 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
         if ($i == "(" || $i == "[") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = $i
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i == ")" || $i == "]") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = $i
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i == "," || $i == "?" || $i == "~") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = $i
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i == ":") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             if ($(i + 1) == ":") { ++i; was = was":" }
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i == ";" || $i == "{" || $i == "}") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             was = $i
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
         if ($i == "+") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             if ($(i + 1) ~ /[0-9]/ && was !~ /[0-9]/) continue
             was = "+"
             if ($(i + 1) == "+") { ++i; was = was"+" }
@@ -275,7 +253,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
         if ($i == "-") {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             if ($(i + 1) ~ /[0-9]/ && was !~ /[0-9]/) continue
             was = "-"
             if ($(i + 1) == ">") { ++i; was = was">" }
@@ -304,7 +281,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 continue
             }
-            if ($(i - 1) !~ /[+-]/) if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             zahl = $i
             while (++i <= NF) {
                 if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
@@ -373,7 +349,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             $i = "U"__HEX(Char_codepoint($i)); Index_reset()
         }
         if ($i ~ /[a-zA-Z_]/) {
-            if (i > 1) if (Index_prepend(i, FIX, FIX)) ++i
             name = $i
             n = i; while (++n <= NF) {
                 if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
