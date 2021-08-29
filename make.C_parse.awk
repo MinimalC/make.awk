@@ -22,22 +22,22 @@ for (z = 1; z <= input["length"]; ++z) {
     for (i = 1; i <= NF; ++i) {
         if ($i == "/") {
             if ($(i + 1) == "*") {
-                was = "comment"; comments = 0; ++i
-                for (n = i; n <= NF; ++n) {
-                    if (n == NF) { Index_append(NF, "\n"); if (++z <= input["length"]) Index_append(NF, input[z]) }
-                    if (n != i && $n == "*" && $(n + 1) == "/") {
-                        if (comments > 1) {
-                            --comments
-                             ++n; $n = "*"
-                            continue
-                        }
-                        comments = 0; ++n
+                was = "comment"; comments = 1; n = ++i
+                while (++n) {
+                    if (n > NF) {
+                        if (++z <= input["length"]) { Index_append(NF, "\n"); Index_append(NF, input[z]); --n; continue }
                         break
                     }
-                    if (n + 1 == NF) { Index_append(NF, "\n"); if (++z <= input["length"]) Index_append(NF, input[z]) }
-                    if ($n == "/" && $(n + 1) == "*") {
-                        ++comments
-                        if (comments > 1) { $n = "*"; __warning(fileName" Line "z": "comments". Comment in Comment /* /*") }
+                    if (n != i && $(n - 1) == "*" && $n == "/") {
+                        if (comments == 1) {
+                            comments = 0
+                            break
+                        }
+                        --comments; $n = "*"
+                        continue
+                    }
+                    if ($(n - 1) == "/" && $n == "*") {
+                        ++comments; $(n - 1) = "*"; __warning(fileName" Line "z": "comments". Comment in Comment /* /*")
                         continue
                     }
                 }
