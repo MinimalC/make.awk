@@ -22,22 +22,22 @@ for (z = 1; z <= input["length"]; ++z) {
     for (i = 1; i <= NF; ++i) {
         if ($i == "/") {
             if ($(i + 1) == "*") {
-                was = "comment"; comments = 1; n = ++i
+                was = "comment"; comments = 1; n = i + 1
                 while (++n) {
                     if (n > NF) {
                         if (++z <= input["length"]) { Index_append(NF, "\n"); Index_append(NF, input[z]); --n; continue }
                         break
                     }
-                    if (n != i && $(n - 1) == "*" && $n == "/") {
+                    if (n > i + 2 && $(n - 1) == "/" && $n == "*") {
+                        ++comments; $(n - 1) = "*"; __warning(fileName" Line "z": "comments". Comment in Comment /* /*")
+                        continue
+                    }
+                    if (n > i + 2 && $(n - 1) == "*" && $n == "/") {
                         if (comments == 1) {
                             comments = 0
                             break
                         }
                         --comments; $n = "*"
-                        continue
-                    }
-                    if ($(n - 1) == "/" && $n == "*") {
-                        ++comments; $(n - 1) = "*"; __warning(fileName" Line "z": "comments". Comment in Comment /* /*")
                         continue
                     }
                 }
@@ -105,9 +105,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
             if (i < NF) if (Index_append(i, FIX, FIX)) ++i
             continue
         }
-        if ($i == "L" && $(i + 1) == "\"") {
-            ++i
-        }
+        if ($i == "L" && $(i + 1) == "\"") ++i
         if ($i == "\"") {
             was = "\""
             string = ""
