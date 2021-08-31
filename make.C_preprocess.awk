@@ -227,7 +227,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
             f = ++ifExpressions["length"]
-            ifExpressions[f]["if"] = $0
+            ifExpressions[f]["if"] = Index_pull($0, REFIX, " ")
 
             w = CDefine_eval($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
@@ -235,7 +235,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
 
 if (DEBUG == 3 || DEBUG == 4) {
 for (e = 1; e <= ifExpressions["length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
-if (e > f) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
 }
             NF = 0
         }
@@ -244,7 +244,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressio
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
             f = ifExpressions["length"]
-            ifExpressions[f]["else if"] = $0
+            ifExpressions[f]["else if"] = Index_pull($0, REFIX, " ")
 
             w = CDefine_eval($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
@@ -253,7 +253,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if "$0"  == "w" "(ifExpressio
 
 if (DEBUG == 3 || DEBUG == 4) {
 for (e = 1; e <= ifExpressions["length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
-if (e > f) __debug(fileName" Line "z": (Level "f") else if "$0"  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (e > f) __debug(fileName" Line "z": (Level "f") else if " ifExpressions[f]["else if"] "  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
 }
             NF = 0
         }

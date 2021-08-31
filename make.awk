@@ -20,6 +20,7 @@ function BEGIN_make() {
 
     REFIX = @/\x01/
     FIX = "\x01"
+    DEFIX = DEBUG ? "`" : " "
 
     Format["h"] = "C"
     Format["c"] = "C"
@@ -88,7 +89,7 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
         if (n == "length" || n ~ /^[0-9]/) continue
         if (typeof(parsed[n]) != "array") continue
         if (!parsed[n]["length"]) continue
-        Index_pullArray(pre, parsed[n], REFIX, (DEBUG ? "`" : " "))
+        Index_pullArray(pre, parsed[n], REFIX, DEFIX)
     }
     File_printTo(pre, "."Project"...C")
 }
@@ -112,7 +113,7 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             ++o
             pre["length"]
             Array_clear(pre)
-            Index_pullArray(pre, preproc[format][name], REFIX, (DEBUG ? "`" : " "))
+            Index_pullArray(pre, preproc[format][name], REFIX, DEFIX)
             File_printTo(pre, "."Project (++preprocessed_count[format] == 1 ? "" : preprocessed_count[format])"..."format)
         }
     } }
@@ -145,7 +146,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             ++o
             pre["length"]
             Array_clear(pre)
-            Index_pullArray(pre, precomp[format], REFIX, (DEBUG ? "`" : " "))
+            Index_pullArray(pre, precomp[format], REFIX, DEFIX)
             File_printTo(pre, "."Project (++precompiled_count[format] == 1 ? "" : precompiled_count[format])"..."format)
         }
     }
