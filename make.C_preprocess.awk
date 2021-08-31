@@ -42,7 +42,6 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         C_keywords["sizeof"]
         C_keywords["return"]
 
-        C_keywords["inline"]
         C_keywords["_Noreturn"]
 
         C_keywords["_Thread"]
