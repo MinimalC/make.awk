@@ -65,6 +65,7 @@ function END_make(    __,name,rendered) {
 }
 
 function make_ARGC_ARGV(config) { RUN_ARGC_ARGV = 1 }
+#function make_ARGV_ARGC(config) { RUN_ARGC_ARGV = 1 }
 
 function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
 

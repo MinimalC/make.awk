@@ -78,6 +78,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
     }
 
     Array_clear(C_defines)
+    config["parameters"]["length"]
     for (d in config["parameters"]) {
         if (d == "length" || d ~ /^[0-9]+$/) continue
         if (d !~ /^D.+/) continue
@@ -207,7 +208,6 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         C_defines["__LINE__"]["value"] = z
 
     if ($1 == "#") {
-        # if ($2 ~ /^\s*$/) Index_remove(2)
         if ($2 == "ifdef") {
             $2 = "if"
             for (n = 3; n <= NF; ++n)
@@ -239,8 +239,8 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "
 }
             NF = 0
         }
-        else if ($2 == "elif" || $2 == "elseif") {
-            Index_remove(1, 2)
+        else if ($2 == "elif" || $2 == "elseif" || ($2 == "else" && $3 == "if")) {
+            if ($3 == "if") Index_remove(1, 2, 3); else Index_remove(1, 2)
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
             f = ifExpressions["length"]

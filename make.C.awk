@@ -73,16 +73,16 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
     return 1
 }
 
-function __gcc(options, input, output, directory) {
-    return __command("awk", options, input, output, directory)
+function Compiler_version(    __,output) {
+    output["length"]
+    __command(Compiler, "-dumpversion", output)
+    return output[1]
 }
 
-function Compiler_version(    ) {
-    return __command(Compiler, "-dumpversion")
-}
-
-function uname_machine(    m,n,o,output) {
-    return __command("uname", "-m")
+function uname_machine(    __,output) {
+    output["length"]
+    __command("uname", "-m", output)
+    return output[1]
 }
 
 function CCompiler_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {

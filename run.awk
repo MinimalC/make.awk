@@ -899,8 +899,7 @@ function __sh(options, input, output, directory, variables) {
 function __command(command, options, input, output, directory, variables,    __,unseen) {
     if (typeof(input) == "untyped") {
         unseen["length"]
-        __pipe(command, options, unseen, directory, variables)
-        return unseen[1]
+        return __pipe(command, options, unseen, directory, variables)
     }
     if (typeof(output) == "untyped" || typeof(output) == "string") {
         # input is output: use pipe out
