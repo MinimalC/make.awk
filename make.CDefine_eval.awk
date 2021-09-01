@@ -4,6 +4,7 @@
 
 #include "run.awk"
 #include "make.C.awk"
+@include "make.C_parse.awk"
 
 function CDefine_apply(i, file,
     __,a,argsL,arguments,b,c,code,d,defineBody,e,f,g,h,hasVarArgs,j,k,l,m,n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
@@ -172,10 +173,10 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
     for (o = 1; o <= NF; ++o) {
         while ($(o + 1) == "##") {
             s = ""
-            if ($(o) ~ /^[a-zA-Z_0-9]+$/) {
+            if (is_CName($o, 1)) {
                 s = $o
             }
-            if ($(o + 2) ~ /^[a-zA-Z_0-9]+$/) {
+            if (is_CName($(o + 2), 1)) {
                 s = s $(o + 2)
                 Index_remove(o + 1, o + 2)
             }
@@ -185,7 +186,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
         }
         if (o > 1 && $(o - 1) == "#") {
             s = ""
-            if ($o ~ /^[a-zA-Z_0-9]+$/) {
+            if (is_CName($o, 1)) {
                 s = "\""$o"\""
                 Index_remove(o--)
             }
@@ -345,7 +346,7 @@ else __debug("NotDefined "n)
             continue
         }
         # Evaluate AWA ( a , b ) or AWA
-        if ($i ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
+        if (is_CName($i)) {
             name = $i
             if (!(name in C_defines)) {
 if (DEBUG == 4) __debug("NotUsing "name)
@@ -356,7 +357,7 @@ if (DEBUG == 4) __debug("NotUsing "name)
             for (d = i; d <= NF; ++d) {
                 if ($d ~ /^\s*$/) Index_remove(d--)
                 else if ($d == "\\") Index_remove(d--)
-                else if ($d ~ /^\/\*/ || $i ~ /\*\/$/) Index_remove(d--)
+                else if ($d ~ /^\/\*/ || $d ~ /\*\/$/) Index_remove(d--)
                 else if ($d ~ /^L?"/) Index_remove(d--)
             }
 if (DEBUG == 4) __debug("Using "name" "Index_pull($0, REFIX, " "))

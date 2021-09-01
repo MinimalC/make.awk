@@ -7,29 +7,29 @@ function Define_eval(expression,    __,d) {
     if (typeof(REFIX) == "untyped") REFIX = @/\xA0/
     if (typeof(FIX) == "untyped") FIX = "\xA0"
     gsub(/\s+/, FIX, expression)
-    for (d in C_defines) if ("body" in C_defines[d]) gsub(/\s+/, FIX, C_defines[d]["body"])
+    for (d in C_defines) if ("value" in C_defines[d]) gsub(/\s+/, FIX, C_defines[d]["value"])
     return CDefine_eval(expression)
 }
 
 BEGIN {
     DEBUG=4
 
-    C_defines["AWA"]["body"] = 5
-    #C_defines["OHO"]["body"] = 5
+    C_defines["AWA"]["value"] = 5
+    #C_defines["OHO"]["value"] = 5
 
-    C_defines["__GNUC__"]["body"] = 7
-    C_defines["__GNUC_MINOR__"]["body"] = 11
+    C_defines["__GNUC__"]["value"] = 7
+    C_defines["__GNUC_MINOR__"]["value"] = 11
     C_defines["__GNUC_PREREQ"]["isFunction"] = 1
     C_defines["__GNUC_PREREQ"]["arguments"][1] = "maj"
     C_defines["__GNUC_PREREQ"]["arguments"][2] = "min"
     C_defines["__GNUC_PREREQ"]["arguments"]["length"] = 2
-    C_defines["__GNUC_PREREQ"]["body"] = "\\ ( ( __GNUC__ << 16 ) + __GNUC_MINOR__ >= ( ( maj ) << 16 ) + ( min ) )"
-    C_defines["SQLITE_THREADSAFE"]["body"] = "1 /*IMP:R-07272-22309*/"
-    C_defines["SQLITE_MAX_MMAP_SIZE"]["body"] = "0x7fff0000"
+    C_defines["__GNUC_PREREQ"]["value"] = "\\ ( ( __GNUC__ << 16 ) + __GNUC_MINOR__ >= ( ( maj ) << 16 ) + ( min ) )"
+    C_defines["SQLITE_THREADSAFE"]["value"] = "1 /*IMP:R-07272-22309*/"
+    C_defines["SQLITE_MAX_MMAP_SIZE"]["value"] = "0x7fff0000"
 
-    C_defines["__GNUG__"]["body"] = 1
-#    C_defines["size_t"]["body"] = 1
-    C_defines["_XOPEN_SOURCE"]["body"] = 1100
+    C_defines["__GNUG__"]["value"] = 1
+#    C_defines["size_t"]["value"] = 1
+    C_defines["_XOPEN_SOURCE"]["value"] = 1100
 
     for (m = 1; m <= ARGV_length(); ++m) {
         print ""; print "\""Define_eval( ARGV[m])"\""
@@ -69,6 +69,9 @@ BEGIN {
         print ""; print "\""Define_eval(" ! defined __GNUC__ || __GNUC__ < 2")"\""
 
         print ""; print "\""Define_eval( " ! __GNUC_PREREQ ( 7 , 0 )")"\""
+
+        print ""; print "\""Define_eval( " /*IMP:R-07272-22309*/ 1")"\""
+
 
     }
 

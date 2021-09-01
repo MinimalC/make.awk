@@ -5,6 +5,15 @@
 #include "run.awk"
 #include "make.C.awk"
 
+function is_CName(name, end) {
+
+    if (end ? name ~ /[a-zA-Z_0-9]/ : name ~ /[a-zA-Z_]/) return 1
+
+    if (name ~ /[¢£¥§µ]/) return 1     # U00A2 U00A3 U00A5 U00A7 U00B5
+
+    if (name ~ /[À-ÖÙ-öù-퟿]/) return 1 # U00C0-U00D6 or U00D9-U00F6 or U00F9-UD7FF
+}
+
 function C_parse(fileName, input,
     __,a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
 {
@@ -331,40 +340,11 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             continue
         }
-        # Σ » « ° ± ² ³ ´ · × ÷ ø Ø º ¹ ¼ ½ ¾
-        if ($i == "¢") { $i = "cent"    ; Index_reset() }   # U00A2
-        if ($i == "£") { $i = "Pound"   ; Index_reset() }   # U00A3
-        if ($i == "¥") { $i = "Yen"     ; Index_reset() }   # U00A5
-        if ($i == "§") { $i = "PARAGRAF"; Index_reset() }   # U00A7
-        if ($i == "µ") { $i = "micro"   ; Index_reset() }   # U00B5
-        if ($i == "¸") { $i = "cedi"    ; Index_reset() }   # U00B8
-        if ($i == "π") { $i = "PI"      ; Index_reset() }   # U03C0
-        if ($i == "€") { $i = "Euro"    ; Index_reset() }   # U20AC
-        if ($i == "₤") { $i = "Lira"    ; Index_reset() }   # U20A4
-        if ($i == "₱") { $i = "Peso"    ; Index_reset() }   # U20B1
-        if ($i == "₿") { $i = "BTC"     ; Index_reset() }   # U20BF
-        if ($i ~ /[À-ÖÙ-öù-퟿]/) {   # this is U00C0-U00D6 or U00D9-U00F6 or U00F9-UD7FF
-            $i = "U"__HEX(Char_codepoint($i)); Index_reset()
-        }
-        if ($i ~ /[a-zA-Z_]/) {
+        if (is_CName($i)) {
             name = $i
             n = i; while (++n <= NF) {
                 if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
-                if ($n == "¢") { $n = "cent"    ; Index_reset() }   # U00A2
-                if ($n == "£") { $n = "Pound"   ; Index_reset() }   # U00A3
-                if ($n == "¥") { $n = "Yen"     ; Index_reset() }   # U00A5
-                if ($n == "§") { $n = "PARAGRAF"; Index_reset() }   # U00A7
-                if ($n == "µ") { $n = "micro"   ; Index_reset() }   # U00B5
-                if ($n == "¸") { $n = "cedi"    ; Index_reset() }   # U00B8
-                if ($n == "π") { $n = "PI"      ; Index_reset() }   # U03C0
-                if ($n == "€") { $n = "Euro"    ; Index_reset() }   # U20AC
-                if ($n == "₤") { $n = "Lira"    ; Index_reset() }   # U20A4
-                if ($n == "₱") { $n = "Peso"    ; Index_reset() }   # U20B1
-                if ($n == "₿") { $n = "BTC"     ; Index_reset() }   # U20BF
-                if ($n ~ /[À-ÖÙ-öù-퟿]/) {   # this is U00C0-U00D6 or U00D9-U00F6 or U00F9-UD7FF
-                    $n = "U"__HEX(Char_codepoint($n)); Index_reset()
-                }
-                if ($n ~ /[a-zA-Z_0-9]/) { name = name $n; continue }
+                if (is_CName($n, 1)) { name = name $n; continue }
                 --n; break
             }
             was = name

@@ -59,7 +59,30 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
 {
     pre["length"]
     precomp["C"]["length"]
-    Index_pullArray(pre, precomp["C"], REFIX, " ")
+#    Index_pullArray(pre, precomp["C"], REFIX, " ")
+    Index_push("", "", "")
+    for (z = 1; z <= precomp["C"]["length"]; ++z) {
+        Index_reset(precomp["C"][z])
+    for (n = 1; n <= NF; ++n) {
+        if ($n ~ REFIX){ $n = " ";      Index_reset() }   # U0001 to U0020
+        if ($n == "¢") { $n = "cent";   Index_reset() }   # U00A2
+        if ($n == "£") { $n = "Pound";  Index_reset() }   # U00A3
+        if ($n == "¥") { $n = "Yen";    Index_reset() }   # U00A5
+        if ($n == "§") { $n = "PARAGRAF"; Index_reset() } # U00A7
+        if ($n == "µ") { $n = "micro";  Index_reset() }   # U00B5
+        if ($n == "¸") { $n = "cedi";   Index_reset() }   # U00B8
+        if ($n == "π") { $n = "PI";     Index_reset() }   # U03C0
+        if ($n == "€") { $n = "Euro";   Index_reset() }   # U20AC
+        if ($n == "₤") { $n = "Lira";   Index_reset() }   # U20A4
+        if ($n == "₱") { $n = "Peso";   Index_reset() }   # U20B1
+        if ($n == "₿") { $n = "BTC";    Index_reset() }   # U20BF
+        if ($n ~ /[À-ÖÙ-öù-퟿]/) {   # U00C0-U00D6 or U00D9-U00F6 or U00F9-UD7FF
+            $n = "X"__HEX(Char_codepoint($n)); Index_reset()
+        }
+    }
+        pre[ ++pre["length"] ] = $0
+    }
+    Index_pop()
 
     options = ""
     options = options" -c -fPIC"
@@ -71,18 +94,6 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
     File_read(compiled["C"], ".make.o", "\n", "\n")
     File_remove(".make.o", 1)
     return 1
-}
-
-function Compiler_version(    __,output) {
-    output["length"]
-    __command(Compiler, "-dumpversion", output)
-    return output[1]
-}
-
-function uname_machine(    __,output) {
-    output["length"]
-    __command("uname", "-m", output)
-    return output[1]
 }
 
 function CCompiler_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {

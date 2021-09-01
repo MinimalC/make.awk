@@ -6,6 +6,18 @@
 #include "make.C.awk"
 @include "make.CDefine_eval.awk"
 
+function uname_machine(    __,output) {
+    output["length"]
+    __command("uname", "-m", output)
+    return output[1]
+}
+
+function Compiler_version(    __,output) {
+    output["length"]
+    __command(Compiler, "-dumpversion", output)
+    return output[1]
+}
+
 function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h,i,input,j,k,l,m,n,name,o,output,p,q,r,s,t,u,v,w,x,y,z)
 {
     if (!C) C = "C"
@@ -209,21 +221,30 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     if ($1 == "#") {
         if ($2 == "ifdef") {
             $2 = "if"
-            for (n = 3; n <= NF; ++n)
-                if ($n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
+            for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
+                if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
+                if (is_CName($n)) {
                     $n = "defined"FIX"("FIX $n FIX")"; Index_reset(); n += 3
                 }
+            }
         }
         else if ($2 == "ifndef") {
             $2 = "if"
-            for (n = 3; n <= NF; ++n)
-                if ($n ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) {
+            for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
+                if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
+                if (is_CName($n)) {
                     $n = "!"FIX"defined"FIX"("FIX $n FIX")"; Index_reset(); n += 4
                 }
+            }
         }
         if ($2 == "if") {
             Index_remove(1, 2)
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
+            for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
+                if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
+            }
 
             f = ++ifExpressions["length"]
             ifExpressions[f]["if"] = Index_pull($0, REFIX, " ")
@@ -240,7 +261,10 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "
         }
         else if ($2 == "elif" || $2 == "elseif" || ($2 == "else" && $3 == "if")) {
             if ($3 == "if") Index_remove(1, 2, 3); else Index_remove(1, 2)
-            for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
+            for (n = 3; n <= NF; ++n) {
+                if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
+                if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
+            }
 
             f = ifExpressions["length"]
             ifExpressions[f]["else if"] = Index_pull($0, REFIX, " ")
@@ -257,15 +281,18 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else if " ifExpressions[f]["e
             NF = 0
         }
         else if ($2 == "else") {
+            Index_remove(1)
+
             f = ifExpressions["length"]
-            ifExpressions[f]["else"] = 1
+            ifExpressions[f]["else"] = Index_pull($0, REFIX, " ")
 
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             else if (!ifExpressions[f]["do"]) ifExpressions[f]["do"] = 1
 
 if (DEBUG == 3 || DEBUG == 4) {
 for (e = 1; e <= ifExpressions["length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
-if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
+if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else"]?ifExpressions[f]["else"]" ":(ifExpressions[f]["if"]?ifExpressions[f]["if"]" ":""))\
+(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
 }
             NF = 0
         }
@@ -325,12 +352,12 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
         }
         else if ($2 == "define") {
             for (n = 3; n <= NF; ++n) {
-                if ($n ~ /^\s*$/) { Index_remove(n--); continue } # remove spaces
-                if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # remove comments
-                break
+                if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
+                if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
+                break # define just before name
             }
             name = $3
-            if (name !~ /^[a-zA-Z_][a-zA-Z_0-9]*$/)
+            if (!is_CName(name))
                 __error(fileName" Line "z": define "name" isn't a name")
             else if (name in C_defines)
                 __warning(fileName" Line "z": noredefine "name)
@@ -347,7 +374,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                 if ($1 == "(") {
                     for (a = 2; a <= NF; ++a) {
                         if ($a ~ /^\s*$/) continue
-                        if ($a ~ /^[a-zA-Z_][a-zA-Z_0-9]*$/) continue
+                        if (is_CName($a)) continue
                         if ($a == ",") continue
                         if ($a == "...") continue
                         if ($a == ")") break
@@ -396,7 +423,6 @@ __debug(fileName" Line "z": define "name"  "rendered)
             if (!(name in C_defines)) __warning(fileName" Line "z": undefine doesn't exist: "name)
             else if ("noundefine" in C_defines[name]) __warning(fileName" Line "z": noundefine "name)
             else {
-                delete C_defines[name]
 if (DEBUG == 3 || DEBUG == 4) {
 rendered = Index_pull(C_defines[name]["value"], REFIX, " ")
 if ("arguments" in C_defines[name])
@@ -404,6 +430,7 @@ __debug(fileName" Line "z": undefine "name" ("C_defines[name]["arguments"]["text
 else
 __debug(fileName" Line "z": undefine "name"  "rendered)
 }
+                delete C_defines[name]
             }
             NF = 0
         }
