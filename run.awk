@@ -339,7 +339,7 @@ function List_create(array) {
 
 function Array_clear(array,    __,at,i) {
     Array_create(array)
-    for (i in array) delete array[i]
+    delete array # array["length"]
 }
 
 function List_clear(array,    __,at,i) {

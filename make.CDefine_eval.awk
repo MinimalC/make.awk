@@ -79,6 +79,7 @@ __debug(file["name"]" Line "file["z"]": using "name"  ( "C_defines[name]["argume
             Index_push(arguments[n]["value"], REFIX, FIX)
             for (j = 1; j <= NF; ++j) {
                 if ($j in C_defines) {
+                    if (typeof(C_defines[$j]) != "array") continue
                     if ($j in C_selfreference)
                         #__warning(file["name"]" Line "file["z"]": self-referencing1 define "$j" "$j)
                         continue
@@ -206,6 +207,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without bod
     notapplied = 0
     for (j = 1; j <= NF; ++j) {
         if ($j in C_defines) {
+            if (typeof(C_defines[$j]) != "array") continue
             if ($j in C_selfreference) {
                 rendered = Index_pull(defineBody, REFIX, " ")
                 __warning(file["name"]" Line "file["z"]": self-reference in define "$j" "rendered)

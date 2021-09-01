@@ -442,6 +442,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         for (i = 1; i <= NF; ++i) {
             if ($i ~ /^\s*$/) continue # no clean, no use
             if ($i in C_defines) {
+                if (typeof(C_defines[$i]) != "array") continue
                 parsed[fileName]["z"] = z
                 n = CDefine_apply(i, parsed[fileName])
                 z = parsed[fileName]["z"]
