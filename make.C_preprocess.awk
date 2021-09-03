@@ -12,9 +12,9 @@ function uname_machine(    __,output) {
     return output[1]
 }
 
-function Compiler_version(    __,output) {
+function gcc_version(    __,output) {
     output["length"]
-    __command(Compiler, "-dumpversion", output)
+    __command("gcc", "-dumpversion", output)
     return output[1]
 }
 
@@ -64,16 +64,16 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
     List_create(includeDirs)
     # List_clear(includeDirs)
     if (!includeDirs["length"]) {
-        List_add(includeDirs, "/usr/include/")
-
         v = uname_machine()
-        if (Compiler == "gcc") {
-            List_add(includeDirs, "/usr/include/"v"-linux-gnu/")
-            List_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"Compiler_version()"/include/")
-        }
-        else if (Compiler == "tcc")
+        List_add(includeDirs, "/usr/include/")
+        List_add(includeDirs, "/usr/include/"v"-linux-gnu/")
+
+        if (Compiler == "tcc")
             List_add(includeDirs, "/usr/lib/"v"-linux-gnu/tcc/include/")
-        else __warning("make.awk: Unsupported compiler")
+        else {
+            if (Compiler != "gcc") __warning("make.awk: Unsupported compiler")
+            List_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"gcc_version()"/include/")
+        }
 
         for (d = 1; d <= config["directories"]["length"]; ++d)
             if (Directory_exists((dir = config["directories"][d])"include/")) {
