@@ -142,7 +142,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
         }
         if ($i == "<") {
             was = "<"
-            if (hash == "# include") {
+            if (hash == "# include" || hash == "# using") {
                 string = ""
                 n = i; while (++n <= NF) {
                     if ($n == "\\") {
@@ -153,7 +153,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
                     if ($n == ">") break
                     string = string $n
                 }
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": # include <"string">")
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "hash" <"string">")
                 i = n
                 Index_append(i++, FIX)
                 continue

@@ -241,7 +241,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         }
         if ($2 == "if") {
             Index_remove(1, 2)
-            for (n = 3; n <= NF; ++n) {
+            for (n = 1; n <= NF; ++n) {
                 if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
                 if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
             }
@@ -261,7 +261,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "
         }
         else if ($2 == "elif" || $2 == "elseif" || ($2 == "else" && $3 == "if")) {
             if ($3 == "if") Index_remove(1, 2, 3); else Index_remove(1, 2)
-            for (n = 3; n <= NF; ++n) {
+            for (n = 1; n <= NF; ++n) {
                 if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
                 if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
             }
@@ -296,7 +296,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
 }
             NF = 0
         }
-        else if ($2 == "endif") {
+        else if ($2 == "endif" || $2 == "end") {
             f = ifExpressions["length"]
             List_remove(ifExpressions, f)
 
@@ -312,17 +312,21 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
         if (!NF) { ++lz; continue }
 
     if ($1 == "#") {
-        # if ($2 == "using")
-        if ($2 == "include") {
+        if ($2 == "include" || $2 == "using") {
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             if ($3 ~ /^</) {
                 m = substr($3, 2, length($3) - 2)
                 for (n = 1; n <= includeDirs["length"]; ++n) {
-                    o = Path_join(includeDirs[n], m)
-                    if (File_exists(o)) {
-if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
+                    f = Path_join(includeDirs[n], m)
+                    if (File_exists(f)) {
+                        if ($2 == "using") {
+                            d = Index_pull(get_FileNameNoExt(m), @/[ *|+:$%!?\^\.\-]/, "_")
+if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
+                            C_defines["using_"d]["value"]
+                        }
+if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                         zZ = preproc[C][O]["length"]
-                        C_preprocess(o, O, C)
+                        C_preprocess(f, O, C)
                         C_defines["__FILE__"]["value"] = __FILE__Name
                         C_defines["__LINE__"]["value"] = z
                         break
@@ -332,15 +336,20 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "o)
             }
             else {
                 m = get_DirectoryName(fileName)
-                m = Path_join(m, substr($3, 2, length($3) - 2))
-                if (File_exists(m)) {
-if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
+                f = Path_join(m, substr($3, 2, length($3) - 2))
+                if (File_exists(f)) {
+                    if ($2 == "using") {
+                        d = Index_pull(get_FileNameNoExt(f), @/[ *|+:$%!?\^\.\-]/, "_")
+if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
+                        C_defines["using_"d]["value"]
+                    }
+if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                     zZ = preproc[C][O]["length"]
-                    C_preprocess(m, O, C)
+                    C_preprocess(f, O, C)
                     C_defines["__FILE__"]["value"] = __FILE__Name
                     C_defines["__LINE__"]["value"] = z
                 }
-                else __warning(fileName" Line "z": File not found: \""m"\"")
+                else __warning(fileName" Line "z": File not found: \""f"\"")
             }
             if (zZ && zZ < preproc[C][O]["length"]) {
                 preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""
