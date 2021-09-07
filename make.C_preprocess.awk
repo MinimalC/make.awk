@@ -369,6 +369,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                 #    delete C_defines[name]
                 #}
                 Index_remove(1, 2, 3)
+                zZ = 0
                 # define name (void) # constant
                 # define name(void)  # expression
                 if ($1 == "(") {
@@ -382,17 +383,32 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "m)
                     }
                     if ($a != ")") {
                         __warning(fileName" Line "z": define "name" without )")
-                    } else {
-                        m = ""; for (n = 2; n < a; ++n) {
-                            if ($n ~ /^\s*$/) { Index_remove(n--); a--; continue } # clean
-                            if ($n in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument \""$n"\" (is a define)"); else
-                            if ($n in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument \""$n"\" (is a keyword)")
-                            m = String_concat(m, " ", $n)
-                            if ($n == ",") continue
-                            C_defines[name]["arguments"][ ++C_defines[name]["arguments"]["length"] ] = $n
+                        Index_insert(a, ")")
+                    }
+                    m = ""; for (n = 2; n < a; ++n) {
+                        if ($n ~ /^\s*$/) { Index_remove(n--); a--; continue } # clean
+                        if ($n in C_defines) __warning(fileName" Line "z": Ambiguous define "name" argument \""$n"\" (is a define)"); else
+                        if ($n in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument \""$n"\" (is a keyword)")
+                        m = String_concat(m, " ", $n)
+                        if ($n == ",") continue
+                        C_defines[name]["arguments"][ ++C_defines[name]["arguments"]["length"] ] = $n
+                    }
+                    C_defines[name]["arguments"]["text"] = m
+                    Index_removeRange(1, a)
+                    if ($1 == ":") {
+                        Index_remove(1)
+                        zZ = z; m = $0; while (++zZ <= parsed[fileName]["length"]) {
+                            if (parsed[fileName][zZ] ~ /^#/) break
+                            m = String_concat(m, FIX"\n"FIX, parsed[fileName][zZ])
                         }
-                        C_defines[name]["arguments"]["text"] = m
-                        Index_removeRange(1, n)
+                        if (parsed[fileName][zZ] !~ "^#"FIX"end" && parsed[fileName][zZ] != "#") {
+                            __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): doesn't # end")
+                        }
+                        if (zZ > parsed[fileName]["length"]) {
+                            __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): without # end")
+                            zZ = 0
+                        }
+                        else Index_reset(m)
                     }
                 }
 
@@ -407,6 +423,7 @@ __debug(fileName" Line "z": define "name" ("C_defines[name]["arguments"]["text"]
 else
 __debug(fileName" Line "z": define "name"  "rendered)
 }
+                if (zZ) z = zZ
             }
             NF = 0
         }
