@@ -171,7 +171,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
 }
 
 function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
-    __,a,b,c,d,e,f,__FILE__Name,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
+    __,a,b,c,d,e,f,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
 {
     if (!C) C = "C"
     if (typeof(fileName) != "string" || !fileName) { __error("make.awk: C_preprocess without fileName"); return }
@@ -197,21 +197,10 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     preproc[C][O]["length"]
     if (!original) if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["length"] ] = O
 
-    __FILE__Name = "__FILE__"Index_pull(get_FileName(fileName), @/[ *|+:$%!?\^\.\-]/, "_")
-    if (!(__FILE__Name in preproc[C]) || preproc[C][__FILE__Name] != fileName) {
-        for (f = 1; f < MAX_INTEGER; ++f) {
-            n = __FILE__Name (f == 1 ? "" : f)
-            if (n in preproc[C] && preproc[C][n] !~ "\""fileName"\"") continue
-            break
-        }
-        if (f == MAX_INTEGER) { __error("C_preprocess: Too many files named \""__FILE__Name"\""); return }
-        preproc[C][__FILE__Name] = "static"FIX"const"FIX"char"FIX (__FILE__Name = n) FIX"["FIX"]"FIX"="FIX"\""fileName"\""FIX";"
-    }
-
     preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX 1 FIX"\""fileName"\""
     # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
 
-    C_defines["__FILE__"]["value"] = __FILE__Name
+    C_defines["__FILE__"]["value"] = "\""fileName"\""
 
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
         Index_reset(parsed[fileName][z])
@@ -327,7 +316,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                         zZ = preproc[C][O]["length"]
                         C_preprocess(f, O, C)
-                        C_defines["__FILE__"]["value"] = __FILE__Name
+                        C_defines["__FILE__"]["value"] = "\""fileName"\""
                         C_defines["__LINE__"]["value"] = z
                         break
                     }
@@ -346,7 +335,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                     zZ = preproc[C][O]["length"]
                     C_preprocess(f, O, C)
-                    C_defines["__FILE__"]["value"] = __FILE__Name
+                    C_defines["__FILE__"]["value"] = "\""fileName"\""
                     C_defines["__LINE__"]["value"] = z
                 }
                 else __warning(fileName" Line "z": File not found: \""f"\"")

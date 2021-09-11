@@ -31,20 +31,15 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
     Array_clear(precomp["C"])
 }
 
-function C_precompile(    __,c,f,h,i,n,name,z)
+function C_precompile(    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,name,o,p,q,r,s,t,u,v,w,x,y,z)
 {
     if (!preproc["C"]["length"]) return
 
+
+
     # C_precompile is PROTOTYPE
 
-    precomp["C"][ precomp["C"]["length"] ] = "#"FIX (++precomp["C"]["length"]) FIX"\"make.awk\""
-
-    for (n in preproc["C"]) {
-        if (n == "length" || n ~ /^[0-9]/) continue
-        if (n !~ /^__FILE__./) continue
-
-        precomp["C"][ ++precomp["C"]["length"] ] = preproc["C"][n]
-    }
+    # precomp["C"][ precomp["C"]["length"] ] = "#"FIX (++precomp["C"]["length"]) FIX"\"make.awk\""
 
     for (n = 1; n <= preproc["C"]["length"]; ++n) {
         name = preproc["C"][n]
@@ -68,7 +63,7 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
         if ($n == "¢") { $n = "cent";   Index_reset() }   # U00A2
         if ($n == "£") { $n = "Pound";  Index_reset() }   # U00A3
         if ($n == "¥") { $n = "Yen";    Index_reset() }   # U00A5
-        if ($n == "§") { $n = "PARAGRAF"; Index_reset() } # U00A7
+        if ($n == "§") { $n = "PARAGRAF";Index_reset()}   # U00A7
         if ($n == "µ") { $n = "micro";  Index_reset() }   # U00B5
         if ($n == "¸") { $n = "cedi";   Index_reset() }   # U00B8
         if ($n == "π") { $n = "PI";     Index_reset() }   # U03C0
