@@ -399,10 +399,10 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                             if (parsed[fileName][zZ] ~ /^#/) break
                             m = String_concat(m, FIX"\n"FIX, parsed[fileName][zZ])
                         }
-                        if (parsed[fileName][zZ] !~ "^#"FIX"end" && parsed[fileName][zZ] != "#")
-                            __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): doesn't # end")
                         if (zZ > parsed[fileName]["length"])
                             __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): without # end")
+                        else if (parsed[fileName][zZ] !~ "^#"FIX"end" && parsed[fileName][zZ] != "#")
+                            __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): doesn't # end")
                         Index_reset(m)
                     }
                 }
