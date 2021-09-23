@@ -303,6 +303,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
     if ($1 == "#") {
         if ($2 == "include") { # $2 == "using"
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
+            zZ = 0
             if ($3 ~ /^</) {
                 m = substr($3, 2, length($3) - 2)
                 for (n = 1; n <= includeDirs["length"]; ++n) {
@@ -343,8 +344,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
             if (zZ && zZ < preproc[C][O]["length"]) {
                 preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""
                 # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
-                zZ = 0; lz = 0
-                continue
+                lz = 0; continue
             }
             NF = 0
         }
@@ -457,7 +457,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             # NF = 0
         }
         else if ($2 == "pragma") {
-            rendered = Index_pull($0, REFIX, "")
+            rendered = Index_pull($0, REFIX, " ")
             __warning(fileName" Line "z": Unknown "rendered)
             NF = 0
         }
