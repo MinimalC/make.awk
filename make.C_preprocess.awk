@@ -301,18 +301,18 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
         if (!NF) { ++lz; continue }
 
     if ($1 == "#") {
-        if ($2 == "include" || $2 == "using") {
+        if ($2 == "include") { # $2 == "using"
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
             if ($3 ~ /^</) {
                 m = substr($3, 2, length($3) - 2)
                 for (n = 1; n <= includeDirs["length"]; ++n) {
                     f = Path_join(includeDirs[n], m)
                     if (File_exists(f)) {
-                        if ($2 == "using") {
-                            d = Index_pull(get_FileNameNoExt(m), @/[ *|+:$%!?\^\.\-]/, "_")
-if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
-                            C_defines["using_"d]["value"]
-                        }
+                        #if ($2 == "using") {
+                        #    d = Index_pull(get_FileNameNoExt(m), @/[ *|+:$%!?\^\.\-]/, "_")
+                        #    C_defines["using_"d]["value"]
+#if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
+                        #}
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                         zZ = preproc[C][O]["length"]
                         C_preprocess(f, O, C)
@@ -399,14 +399,11 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                             if (parsed[fileName][zZ] ~ /^#/) break
                             m = String_concat(m, FIX"\n"FIX, parsed[fileName][zZ])
                         }
-                        if (parsed[fileName][zZ] !~ "^#"FIX"end" && parsed[fileName][zZ] != "#") {
+                        if (parsed[fileName][zZ] !~ "^#"FIX"end" && parsed[fileName][zZ] != "#")
                             __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): doesn't # end")
-                        }
-                        if (zZ > parsed[fileName]["length"]) {
+                        if (zZ > parsed[fileName]["length"])
                             __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): without # end")
-                            zZ = 0
-                        }
-                        else Index_reset(m)
+                        Index_reset(m)
                     }
                 }
 
