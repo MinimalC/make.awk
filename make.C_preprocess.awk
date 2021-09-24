@@ -328,11 +328,11 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                 m = get_DirectoryName(fileName)
                 f = Path_join(m, substr($3, 2, length($3) - 2))
                 if (File_exists(f)) {
-                    if ($2 == "using") {
-                        d = Index_pull(get_FileNameNoExt(f), @/[ *|+:$%!?\^\.\-]/, "_")
-if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
-                        C_defines["using_"d]["value"]
-                    }
+                    #if ($2 == "using") {
+                    #    d = Index_pull(get_FileNameNoExt(f), @/[ *|+:$%!?\^\.\-]/, "_")
+                    #    C_defines["using_"d]["value"]
+#if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
+                    #}
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                     zZ = preproc[C][O]["length"]
                     C_preprocess(f, O, C)
