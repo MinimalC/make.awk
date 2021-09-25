@@ -3,8 +3,9 @@
 # 2020 - 2021 Hans Riehm
 
 #include "run.awk"
-@include "make.C_parse.awk"
-@include "make.C_preprocess.awk"
+@include "make.C.parse.awk"
+@include "make.C.preprocess.awk"
+@include "make.C.precompile.awk"
 
 function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
@@ -29,25 +30,6 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
 
     precomp["C"]["length"]
     Array_clear(precomp["C"])
-}
-
-function C_precompile(    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,name,o,p,q,r,s,t,u,v,w,x,y,z)
-{
-    if (!preproc["C"]["length"]) return
-
-
-
-    # C_precompile is PROTOTYPE
-
-    # precomp["C"][ precomp["C"]["length"] ] = "#"FIX (++precomp["C"]["length"]) FIX"\"make.awk\""
-
-    for (n = 1; n <= preproc["C"]["length"]; ++n) {
-        name = preproc["C"][n]
-    for (z = 1; z <= preproc["C"][name]["length"]; ++z)
-        precomp["C"][ ++precomp["C"]["length"] ] = preproc["C"][name][z]
-    }
-
-    return 1
 }
 
 function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
@@ -81,9 +63,9 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
 
     options = ""
     options = options" -c -fPIC"
-    if (Compiler == "gcc") options = options" -xc -fpreprocessed"
+    if (C_compiler == "gcc") options = options" -xc -fpreprocessed"
 
-    if (CCompiler_coprocess(options, pre, ".make.o")) return
+    if (C_compiler_coprocess(options, pre, ".make.o")) return
 
     compiled["C"]["length"]
     File_read(compiled["C"], ".make.o", "\n", "\n")
@@ -91,11 +73,11 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
     return 1
 }
 
-function CCompiler_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function C_compiler_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if (typeof(input) == "string" && input) options = options" "input
     else options = options" -"
     if (typeof(output) == "string" && output) options = options" -o "output
-    return __coprocess(Compiler, options, input, output)
+    return __coprocess(C_compiler, options, input, output)
 }
 
 function __gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {

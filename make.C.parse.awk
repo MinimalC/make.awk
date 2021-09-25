@@ -158,7 +158,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "hash" <"string">")
                 Index_append(i++, FIX)
                 continue
             }
-            if (Compiler == "tcc" && $(i + 1) == "c" && $(i + 2) == "d" && $(i + 3) == ">") {
+            if (C_compiler == "tcc" && $(i + 1) == "c" && $(i + 2) == "d" && $(i + 3) == ">") {
                 was = "##"
 if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 Index_remove(i + 2, i + 3)

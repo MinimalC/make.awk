@@ -4,7 +4,7 @@
 
 #include "run.awk"
 #include "make.C.awk"
-@include "make.CDefine_eval.awk"
+@include "make.CDefine.awk"
 
 function uname_machine(    __,output) {
     output["length"]
@@ -68,10 +68,10 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         List_add(includeDirs, "/usr/include/")
         List_add(includeDirs, "/usr/include/"v"-linux-gnu/")
 
-        if (Compiler == "tcc")
+        if (C_compiler == "tcc")
             List_add(includeDirs, "/usr/lib/"v"-linux-gnu/tcc/include/")
         else {
-            if (Compiler != "gcc") __warning("make.awk: Unsupported compiler")
+            if (C_compiler != "gcc") __warning("make.awk: Unsupported C_compiler")
             List_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"gcc_version()"/include/")
         }
 
@@ -97,7 +97,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
     }
 
     Array_create(parsed)
-    if (!parsed[Compiler]["length"]) {
+    if (!parsed[C_compiler]["length"]) {
         Array_clear(input)
         input[++input["length"]] = "# define _GNU_SOURCE 1"
         input[++input["length"]] = "# include <stddef.h>"
@@ -105,14 +105,14 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         input[++input["length"]] = "# include <limits.h>"
 
         Array_clear(output)
-        output["name"] = Compiler
-        CCompiler_coprocess("-xc -dM -E", input, output)
+        output["name"] = C_compiler
+        C_compiler_coprocess("-xc -dM -E", input, output)
         List_sort(output)
-        CCompiler_coprocess("-xc -E", input, output)
+        C_compiler_coprocess("-xc -E", input, output)
 
-        C_parse(Compiler, output)
+        C_parse(C_compiler, output)
     }
-    if (!parsed[Compiler".custom.h"]["length"]) {
+    if (!parsed[C_compiler".custom.h"]["length"]) {
         Array_clear(input)
         input[++input["length"]] = "# undef NULL"
         input[++input["length"]] = "# define NULL  0"
@@ -129,7 +129,7 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
         input[++input["length"]] = "# endif"
         input[++input["length"]] = "# noundefine assert"
 
-        C_parse(Compiler".custom.h", input)
+        C_parse(C_compiler".custom.h", input)
     }
     if (C == "C" && !parsed["."Project".config.h"]["length"]) {
         name = ""
@@ -179,8 +179,8 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     else {
         O = fileName
         if (C == "C") {
-            C_preprocess(Compiler, O, C)
-            C_preprocess(Compiler".custom.h", O, C)
+            C_preprocess(C_compiler, O, C)
+            C_preprocess(C_compiler".custom.h", O, C)
             C_preprocess("."Project".config.h", O, C)
         }
         else if (C == "CSharp") { # TODO
@@ -238,7 +238,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
             f = ++ifExpressions["length"]
             ifExpressions[f]["if"] = Index_pull($0, REFIX, " ")
 
-            w = CDefine_eval($0)
+            w = CDefine_evaluate($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
             if (x) ifExpressions[f]["do"] = 1
 
@@ -258,7 +258,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "
             f = ifExpressions["length"]
             ifExpressions[f]["else if"] = Index_pull($0, REFIX, " ")
 
-            w = CDefine_eval($0)
+            w = CDefine_evaluate($0)
             if (w !~ /^[0-9]+$/) x = 0; else x = w + 0
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             else if (!ifExpressions[f]["do"] && x) ifExpressions[f]["do"] = 1

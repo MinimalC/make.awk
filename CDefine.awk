@@ -1,14 +1,14 @@
 #!/usr/bin/awk -f
 
 @include "run.awk"
-@include "make.CDefine_eval.awk"
+@include "make.CDefine.awk"
 
 function Define_eval(expression,    __,d) {
     if (typeof(REFIX) == "untyped") REFIX = @/\xA0/
     if (typeof(FIX) == "untyped") FIX = "\xA0"
     gsub(/\s+/, FIX, expression)
     for (d in C_defines) if ("value" in C_defines[d]) gsub(/\s+/, FIX, C_defines[d]["value"])
-    return CDefine_eval(expression)
+    return CDefine_evaluate(expression)
 }
 
 BEGIN {

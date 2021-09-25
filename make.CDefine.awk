@@ -4,7 +4,7 @@
 
 #include "run.awk"
 #include "make.C.awk"
-@include "make.C_parse.awk"
+@include "make.C.parse.awk"
 
 function CDefine_apply(i, file,
     __,a,argsL,arguments,b,c,code,d,defineBody,e,f,g,h,hasVarArgs,j,k,l,m,n,name,notapplied,o,p,q,r,rendered,s,t,u,v,w,x,y,z)
@@ -241,7 +241,7 @@ __debug(file["name"](file["z"]?" Line "file["z"]:"")(file["name"]?": ":"")"apply
     return n - notapplied
 }
 
-function CDefine_eval(expression,
+function CDefine_evaluate(expression,
     __, a, arguments, b, c, d, defineBody, e, f, g, h, i, j, k, l, m, n, name, number, o, p, q, r, s, t, u, v, w, x, y, z)
 {
     Index_push(expression, REFIX, FIX)
@@ -290,7 +290,7 @@ function CDefine_eval(expression,
                 m = String_concat(m, FIX, $o)
             }
             Index_removeRange(i + 1, o)
-            x = CDefine_eval(m)
+            x = CDefine_evaluate(m)
             # Index_push(x, REFIX, FIX); n = NF; Index_pop()
             $i = x
             --i # i += n - 1
@@ -314,7 +314,7 @@ function CDefine_eval(expression,
                 f = String_concat(f, FIX, $p)
             }
 if (DEBUG == 4) __debug("QuestionMark: "Index_pull(q, REFIX, " ")" TrueAnswer: "Index_pull(t, REFIX, " ")" FalseAnswer: "Index_pull(f, REFIX, " "))
-            x = CDefine_eval(q)
+            x = CDefine_evaluate(q)
             NF = 1
             if (x) {
                 #Index_push(t, REFIX, FIX); n = NF; Index_pop()

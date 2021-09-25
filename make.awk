@@ -10,7 +10,7 @@ function set_make_project(wert) { Project = wert }
 
 function set_make_debug(wert) { DEBUG = wert }
 
-function set_make_compiler(wert) { Compiler = wert }
+function set_make_C_compiler(wert) { C_compiler = wert }
 
 function set_make_enableComments(wert) { enable_Comments = wert }
 
@@ -31,7 +31,7 @@ function BEGIN_make() {
     Format[3] = "ASM"
     Format["length"] = 3
 
-    Compiler = "gcc"
+    C_compiler = "gcc"
 
     USAGE = "make.awk: Use make.awk project=Program [preprocess] Program.c [precompile] [compile]"
 
