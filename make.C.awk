@@ -7,31 +7,6 @@
 @include "make.C.preprocess.awk"
 @include "make.C.precompile.awk"
 
-function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-
-    C_types["void"]
-    Array_clear(C_types)
-    C_types["void"]["isLiteral"]
-    C_types["unsigned"]["isLiteral"]
-    C_types["signed"]["isLiteral"]
-    C_types["_Bool"]["isLiteral"]
-    C_types["char"]["isLiteral"]
-    C_types["short"]["isLiteral"]
-    C_types["int"]["isLiteral"]
-    C_types["long"]["isLiteral"]
-    C_types["double"]["isLiteral"]
-    C_types["float"]["isLiteral"]
-    C_types["_Float32"]["isLiteral"]
-    C_types["_Float32x"]["isLiteral"]
-    C_types["_Float64"]["isLiteral"]
-    C_types["_Float64x"]["isLiteral"]
-    C_types["_Float128"]["isLiteral"]
-    C_types["__builtin_va_list"]["isLiteral"]
-
-    precomp["C"]["length"]
-    Array_clear(precomp["C"])
-}
-
 function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
 {
     pre["length"]
@@ -45,7 +20,7 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
         if ($n == "¢") { $n = "cent";   Index_reset() }   # U00A2
         if ($n == "£") { $n = "Pound";  Index_reset() }   # U00A3
         if ($n == "¥") { $n = "Yen";    Index_reset() }   # U00A5
-        if ($n == "§") { $n = "PARAGRAF";Index_reset()}   # U00A7
+        if ($n == "§") { $n = "PG";     Index_reset() }   # U00A7
         if ($n == "µ") { $n = "micro";  Index_reset() }   # U00B5
         if ($n == "¸") { $n = "cedi";   Index_reset() }   # U00B8
         if ($n == "π") { $n = "PI";     Index_reset() }   # U03C0
@@ -61,40 +36,39 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
     }
     Index_pop()
 
-    options = ""
-    options = options" -c -fPIC"
-    if (C_compiler == "gcc") options = options" -xc -fpreprocessed"
-
-    if (C_compiler_coprocess(options, pre, ".make.o")) return
+    options = "-fPIC"
 
     compiled["C"]["length"]
-    File_read(compiled["C"], ".make.o", "\n", "\n")
-    File_remove(".make.o", 1)
+    if (C_compiler_coprocess(options, pre, compiled["C"])) return
     return 1
 }
 
-function C_compiler_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    if (typeof(input) == "string" && input) options = options" "input
+function C_compiler_preprocess(final_options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
+    options = "-E"
+    if (input["length"]) {
+        File_printTo(input, ".make.c")
+        options = options" .make.c"
+    }
     else options = options" -"
-    if (typeof(output) == "string" && output) options = options" -o "output
-    return __coprocess(C_compiler, options, input, output)
+    r = __coprocess(C_compiler, options" "final_options, input, output)
+    if (input["length"])
+        File_remove(".make.c", 1)
+    return r
 }
 
-function __gcc_sort_coprocess(options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    if (typeof(input) == "string" && input) options = options" "input
-    else options = options" -"
-    if (typeof(output) == "string" && output) options = options" -o "output
-    command = "gcc -xc "options" | sort"
-    if (typeof(input) == "array")
-        for (i = 1; i <= input["length"]; ++i)
-            print input[i] |& command
-    else print "" |& command
-    close(command, "to")
-    Index_push("", "", "", "\n", "\n")
-    while (0 < y = ( command |& getline ))
-        if (typeof(output) == "array")
-            output[++output["length"]] = $0
-    Index_pop()
-    if (y == -1) { __error("Command doesn't exist: "command); return }
-    return close(command)
+function C_compiler_coprocess(final_options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
+    options = "-c"
+    if (C_compiler == "gcc")
+        options = options" -xc -fpreprocessed"
+    options = options" -o .make.o .make.c"
+    File_printTo(input, ".make.c")
+    report["length"]
+    r = __pipe(C_compiler, options" "final_options, report)
+    File_remove(".make.c", 1)
+    output["length"]
+    if (!r) {
+        File_read(output, ".make.o", "\n", "\n")
+        File_remove(".make.o", 1)
+    }
+    return r
 }

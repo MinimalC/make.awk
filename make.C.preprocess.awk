@@ -18,7 +18,7 @@ function gcc_version(    __,output) {
     return output[1]
 }
 
-function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h,i,input,j,k,l,m,n,name,o,output,p,q,r,s,t,u,v,w,x,y,z)
+function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,j,k,l,m,n,name,o,output,p,q,r,s,t,u,v,w,x,y,z)
 {
     if (!C) C = "C"
 
@@ -106,9 +106,9 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
 
         Array_clear(output)
         output["name"] = C_compiler
-        C_compiler_coprocess("-xc -dM -E", input, output)
+        C_compiler_preprocess("-dM", input, output)
         List_sort(output)
-        C_compiler_coprocess("-xc -E", input, output)
+        C_compiler_preprocess("", input, output)
 
         C_parse(C_compiler, output)
     }
@@ -159,11 +159,6 @@ function C_prepare_preprocess(config, C,    __,a,assert_h,b,c,d,dir,e,f,file,g,h
             output["name"] = dir file
              __warning("make.awk: Using "file)
         }
-    }
-
-    if (C == "CSharp" && !parsed["CLI"]["length"]) {
-        parsed["CLI"]["name"] = "CLI"
-        ++parsed["CLI"]["length"] # TODO
     }
 
     preproc["C"]["length"]

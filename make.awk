@@ -79,8 +79,8 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
     for (n = 1; n <= config["files"]["length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
-        if (!((C = format"_""parse") in FUNCTAB)) { __error("No function "C); continue }
 
+        if (!((C = format"_""parse") in FUNCTAB)) { __error("No function "C); continue }
         parsed[name]["length"]
         @C(name)
     } }
@@ -106,14 +106,14 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
     for (n = 1; n <= config["files"]["length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
+
         if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
         if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         preproc[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: No "C); List_remove(config["files"], n--) }
+        if (!@C(name)) { __error("make.awk: Not preprocessed "C); List_remove(config["files"], n--) }
         else {
             ++o
-            pre["length"]
-            Array_clear(pre)
+            pre["length"]; Array_clear(pre)
             Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
             File_printTo(pre, "."Project (++preprocessed_count[format] == 1 ? "" : preprocessed_count[format])"..."format)
         }
@@ -125,32 +125,34 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 
-    for (f = 1; f <= Format["length"]; ++f) {
+    for (f = Format["length"]; f; --f) {
         format = Format[f]
     for (n = 1; n <= config["files"]["length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
+
         if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-        if (!((c = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "c); continue }
+        if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         preproc[format][name]["length"]
-        if (!@c(name)) { __error("make.awk: Not preprocessed "name); List_remove(config["files"], n--) }
-    } }
-
-    for (f = Format["length"]; f; --f) {
-        format = Format[f]
-        if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
-        if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-
-        precomp[format]["length"]
-        if (!@C()) __error("make.awk: No "C)
+        if (!@C(name)) { __error("make.awk: Not preprocessed "name); List_remove(config["files"], n--); continue }
         else {
             ++o
-            pre["length"]
-            Array_clear(pre)
-            Index_pullArray(pre, precomp[format], REFIX, DEBUG ? DEFIX : " ")
+            pre["length"]; Array_clear(pre)
+            Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+            File_printTo(pre, "."Project (++preprocessed_count[format] == 1 ? "" : preprocessed_count[format])"..."format)
+        }
+
+        if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
+        if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+        precomp[format][name]["length"]
+        if (!@C(name)) { __error("make.awk: Not precompiled "C); continue }
+        else {
+            ++o
+            pre["length"]; Array_clear(pre)
+            Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
             File_printTo(pre, "."Project (++precompiled_count[format] == 1 ? "" : precompiled_count[format])"..."format)
         }
-    }
+    } }
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
 
@@ -160,11 +162,11 @@ function make_compile(config,    __,a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,o,p,q,r,s
 
     for (f = 1; f <= Format["length"]; ++f) {
         format = Format[f]
+
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         if (!precomp[format]["length"]) { __error("make.awk: "C": No "format"_precompile"); continue }
-
         compiled[format]["length"]
-        if (!@C()) __error("make.awk: No "C)
+        if (!@C()) { __error("make.awk: Not compiled "C); continue }
         else {
             ++o
             File_printTo(compiled[format], "."Project (++compiled_count[format] == 1 ? "" : compiled_count[format])"..."format".o", "\n", "\n", 1)
