@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 
-@include "run.awk"
+@include "meta.awk"
 
 BEGIN {
     USAGE = "markup.awk"

@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2021 Hans Riehm
 
-#include "run.awk"
+#include "meta.awk"
 #include "make.C.awk"
 
 function is_CName(name, end) {

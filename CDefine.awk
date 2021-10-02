@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 
-@include "run.awk"
+@include "meta.awk"
 @include "make.CDefine.awk"
 
 function Define_eval(expression,    __,d) {
