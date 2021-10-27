@@ -7,8 +7,6 @@
 
 function CSharp_prepare_preprocess(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
-    C_prepare_preprocess(config, "CSharp")
-
     if (typeof(CSharp_keywords) == "untyped") {
         CSharp_keywords["using"]
         CSharp_keywords["namespace"]

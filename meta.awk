@@ -933,7 +933,7 @@ function __coprocess(command, options, input, output, directory, variables,    _
     if (typeof(directory) == "string" && directory)
         cmd = "cd \""directory"\" ; "cmd
     cmd = cmd" "options
-    if (typeof(input) == "array")
+    if (typeof(input) == "array" && input["length"])
         for (z = 1; z <= input["length"]; ++z)
             print input[z] |& cmd
     else print "" |& cmd

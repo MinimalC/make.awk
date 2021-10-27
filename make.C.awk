@@ -58,8 +58,15 @@ function C_compiler_preprocess(final_options, input, output,    a,b,c,command,d,
 
 function C_compiler_coprocess(final_options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
     options = "-c"
-    if (C_compiler == "gcc")
+    if (C_compiler == "gcc") {
         options = options" -xc -fpreprocessed"
+        if (STD == "META") {
+            options = options" -nodefaultlibs -nostdinc" # -ffreestanding
+            options = options" -fomit-frame-pointer -fno-plt"
+            options = options" -fno-exceptions -fno-unwind-tables -fno-jump-tables"
+            options = options" -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
+        }
+    }
     options = options" -o .make.o .make.c"
     File_printTo(input, ".make.c")
     report["length"]

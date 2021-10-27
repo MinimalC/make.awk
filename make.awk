@@ -10,9 +10,26 @@ function set_make_project(wert) { Project = wert }
 
 function set_make_debug(wert) { DEBUG = wert }
 
-function set_make_C_compiler(wert) { C_compiler = wert }
+function set_make_cc(wert) { C_compiler = wert }
+
+function set_make_nostd(wert) {
+    if (typeof(wert) == "untyped" || typeof(wert) == "number" && wert) STD = "META"
+    else STD = wert
+}
 
 function set_make_enableComments(wert) { enable_Comments = wert }
+
+function uname_machine(    __,output) {
+    output["length"]
+    __command("uname", "-m", output)
+    return output[1]
+}
+
+function reg_query(key,    __,output) {
+    output["length"]
+    __command("reg", "query "key, output)
+    return output[1]
+}
 
 BEGIN { BEGIN_make() }
 
@@ -31,7 +48,18 @@ function BEGIN_make() {
     Format[3] = "ASM"
     Format["length"] = 3
 
-    C_compiler = "gcc"
+    if (typeof(ENVIRON["PROCESSOR_ARCHITECTURE"]) != "unassigned") {
+        PLATFORM = "WINDOWS"
+        ARCHITECTURE = ENVIRON["PROCESSOR_ARCHITECTURE"]
+        C_compiler = "cl"
+    }
+    else {
+        PLATFORM = "LINUX"
+        ARCHITECTURE = uname_machine()
+        C_compiler = "gcc"
+    }
+
+    STD = "ISO"
 
     USAGE = "make.awk: Use make.awk project=Program [preprocess] Program.c [precompile] [compile]"
 

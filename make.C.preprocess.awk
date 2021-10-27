@@ -6,12 +6,6 @@
 #include "make.C.awk"
 @include "make.CDefine.awk"
 
-function uname_machine(    __,output) {
-    output["length"]
-    __command("uname", "-m", output)
-    return output[1]
-}
-
 function gcc_version(    __,output) {
     output["length"]
     __command("gcc", "-dumpversion", output)
@@ -64,15 +58,15 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     List_create(includeDirs)
     # List_clear(includeDirs)
     if (!includeDirs["length"]) {
-        v = uname_machine()
         List_add(includeDirs, "/usr/include/")
-        List_add(includeDirs, "/usr/include/"v"-linux-gnu/")
+        List_add(includeDirs, "/usr/include/"ARCHITECTURE"-linux-gnu/")
 
         if (C_compiler == "tcc")
-            List_add(includeDirs, "/usr/lib/"v"-linux-gnu/tcc/include/")
+            List_add(includeDirs, "/usr/lib/"ARCHITECTURE"-linux-gnu/tcc/include/")
         else {
-            if (C_compiler != "gcc") __warning("make.awk: Unsupported C_compiler")
-            List_add(includeDirs, "/usr/lib/gcc/"v"-linux-gnu/"gcc_version()"/include/")
+            if (C_compiler == "gcc")
+                List_add(includeDirs, "/usr/lib/gcc/"ARCHITECTURE"-linux-gnu/"gcc_version()"/include/")
+            else  __warning("make.awk: Unsupported C_compiler")
         }
 
         for (d = 1; d <= config["directories"]["length"]; ++d)
@@ -99,37 +93,36 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     Array_create(parsed)
     if (!parsed[C_compiler]["length"]) {
         Array_clear(input)
-        input[++input["length"]] = "# define _GNU_SOURCE 1"
-        input[++input["length"]] = "# include <stddef.h>"
-        input[++input["length"]] = "# include <stdint.h>"
-        input[++input["length"]] = "# include <limits.h>"
-
+        if (STD == "ISO") {
+            if (PLATFORM == "LINUX") input[++input["length"]] = "# define _GNU_SOURCE 1"
+            input[++input["length"]] = "# include <stddef.h>"
+            input[++input["length"]] = "# include <stdint.h>"
+            input[++input["length"]] = "# include <limits.h>"
+        }
         Array_clear(output)
         output["name"] = C_compiler
         C_compiler_preprocess("-dM", input, output)
         List_sort(output)
         C_compiler_preprocess("", input, output)
 
-        C_parse(C_compiler, output)
-    }
-    if (!parsed[C_compiler".custom.h"]["length"]) {
-        Array_clear(input)
-        input[++input["length"]] = "# undef NULL"
-        input[++input["length"]] = "# define NULL  0"
-        input[++input["length"]] = "# noundef NULL"
+        if (STD == "ISO") {
+            output[++output["length"]] = "# undef NULL"
+            output[++output["length"]] = "# define NULL  0"
+            output[++output["length"]] = "# noundef NULL"
 
-        input[++input["length"]] = "# if defined ( NDEBUG )"
-        input[++input["length"]] = "# noundefine NDEBUG"
-        input[++input["length"]] = "# define assert( e )"
-        input[++input["length"]] = "# else"
-        input[++input["length"]] = "/* GLIBC 7 assert.h: This prints an \"Assertion failed\" message and aborts. */"\
+            output[++output["length"]] = "# if defined ( NDEBUG )"
+            output[++output["length"]] = "# noundefine NDEBUG"
+            output[++output["length"]] = "# define assert( e )"
+            output[++output["length"]] = "# else"
+            output[++output["length"]] = "/* GLIBC 7 assert.h: This prints an \"Assertion failed\" message and aborts. */"\
     " extern void  __assert_fail ( const char  * __assertion, const char  * __file, unsigned int  __line, const char  * __function )"\
-    " __attribute__ (( __nothrow__ , __leaf__ )) __attribute__ (( __noreturn__ )) ;"
-        input[++input["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
-        input[++input["length"]] = "# endif"
-        input[++input["length"]] = "# noundefine assert"
+    (C_compiler == "gcc"?" __attribute__ (( __nothrow__ , __leaf__ )) __attribute__ (( __noreturn__ ))":"") ";"
+    output[++output["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
+            output[++output["length"]] = "# endif"
+            output[++output["length"]] = "# noundefine assert"
+        }
 
-        C_parse(C_compiler".custom.h", input)
+        C_parse(C_compiler, output)
     }
     if (C == "C" && !parsed["."Project".config.h"]["length"]) {
         name = ""
@@ -175,8 +168,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         O = fileName
         if (C == "C") {
             C_preprocess(C_compiler, O, C)
-            C_preprocess(C_compiler".custom.h", O, C)
-            C_preprocess("."Project".config.h", O, C)
+            if (STD == "ISO") C_preprocess("."Project".config.h", O, C)
         }
         else if (C == "CSharp") { # TODO
             C_preprocess("CLI", O, C)
@@ -187,16 +179,17 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     if (!(fileName in parsed)) if (!C_parse(fileName)) return
     if (!parsed[fileName]["length"]) return
 
-    Index_push("", REFIX, FIX, "\0", "\n")
-
     preproc[C][O]["length"]
     if (!original) if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["length"] ] = O
 
-    preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX 1 FIX"\""fileName"\""
+    preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX"1"FIX"\""fileName"\""
     # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
 
     C_defines["__FILE__"]["value"] = "\""fileName"\""
 
+    ifExpressions["length"]
+
+    Index_push("", REFIX, FIX, "\0", "\n")
     for (z = 1; z <= parsed[fileName]["length"]; ++z) {
         Index_reset(parsed[fileName][z])
 
@@ -394,10 +387,15 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                             if (parsed[fileName][zZ] ~ /^#/) break
                             m = String_concat(m, FIX"\n"FIX, parsed[fileName][zZ])
                         }
-                        if (zZ > parsed[fileName]["length"])
+                        if (zZ > parsed[fileName]["length"]) {
                             __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): without # end")
-                        else if (parsed[fileName][zZ] !~ "^#"FIX"end" && parsed[fileName][zZ] != "#")
-                            __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): doesn't # end")
+                            --zZ
+                        }
+                        else if (parsed[fileName][zZ] !~ "^#"FIX"end" && parsed[fileName][zZ] != "#") {
+                            rendered = Index_pull(parsed[fileName][zZ], REFIX, " ")
+                            __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): doesn't # end, it is "rendered)
+                            --zZ
+                        }
                         Index_reset(m)
                     }
                 }
@@ -507,7 +505,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         preproc[C][O][ ++preproc[C][O]["length"] ] = $0
     }
     Index_pop()
-    if ("length" in ifExpressions && ifExpressions["length"]) {
+    if (ifExpressions["length"]) {
         m = ""; for (n = 1; n <= ifExpressions["length"]; ++n) m = String_concat(m, " ", "# endif "ifExpressions[n]["if"])
         __warning(fileName" Line "z": Missing "m)
     }
