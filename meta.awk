@@ -51,10 +51,8 @@ function END_meta() {
     if (Index["length"]) __error("meta.awk: More Index_push() than Index_pop()")
 }
 
-function meta_ARGC_ARGV(config) {
-
-    ARGC_ARGV_debug()
-}
+function meta_ARGV_ARGC(config) { ARGC_ARGV_debug() }
+function meta_ARGC_ARGV(config) { ARGC_ARGV_debug() }
 
 function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
     message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -323,7 +321,7 @@ function __BEGIN(controller, action, usage,
             ARGV[i] = ""; continue
         }
         if (ARGV[i]) {
-            config["names"][ARGV[i]]
+            config["names"][ ++config["names"]["length"] ] = ARGV[i]
             # __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
             ARGV[i] = ""
         }
