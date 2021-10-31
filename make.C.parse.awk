@@ -7,7 +7,7 @@
 
 function is_CName(name, end) {
 
-    if (end ? name ~ /[a-zA-Z_0-9]/ : name ~ /[a-zA-Z_]/) return 1
+    if (end ? name ~ /[a-zA-Z$_0-9]/ : name ~ /[a-zA-Z$_]/) return 1
 
     if (name ~ /[¢£¥§µ]/) return 1      # U00A2 U00A3 U00A5 U00A7 U00B5
 

@@ -6,6 +6,9 @@
 @include "make.C.awk"
 @include "make.CSharp.awk"
 
+# HINTS:
+# la *.c .*.c 2>/dev/null | ./.awk '{ if ($1 !~ /\.auto/) print "# include \""$1"\"" }'
+
 function set_make_project(wert) { Project = wert }
 
 function set_make_debug(wert) { DEBUG = wert }
@@ -25,6 +28,12 @@ function uname_machine(    __,output) {
     return output[1]
 }
 
+function uname_operatingSystem(    __,output) {
+    output["length"]
+    __command("uname", "-o", output)
+    return output[1]
+}
+
 function reg_query(key,    __,output) {
     output["length"]
     __command("reg", "query "key, output)
@@ -36,7 +45,7 @@ BEGIN { BEGIN_make() }
 function BEGIN_make() {
 
     REFIX = @/\x01/
-    FIX = "\x01"
+      FIX = "\x01"
     DEFIX = "`"
 
     Format["h"] = "C"
@@ -48,20 +57,31 @@ function BEGIN_make() {
     Format[3] = "ASM"
     Format["length"] = 3
 
-    if (typeof(ENVIRON["PROCESSOR_ARCHITECTURE"]) != "unassigned") {
-        PLATFORM = "WINDOWS"
+    STD = "ISO"
+
+    if ("PROCESSOR_ARCHITECTURE" in ENVIRON) {
+        PLATFORM = "Windows"
         ARCHITECTURE = ENVIRON["PROCESSOR_ARCHITECTURE"]
         C_compiler = "cl"
     }
     else {
-        PLATFORM = "LINUX"
+        PLATFORM = uname_operatingSystem() # "GNU/Linux"
         ARCHITECTURE = uname_machine()
         C_compiler = "gcc"
     }
 
-    STD = "ISO"
-
-    USAGE = "make.awk: Use make.awk project=Program [preprocess] Program.c [precompile] [compile]"
+    USAGE =\
+    "Usage:\n"\
+"    make.awk project=Program [options] [preprocess] [precompile] Program.c [compile]\n"\
+    "\n"\
+    "Options:\n"\
+    "    project=Name for a custom Project\n"\
+    "    cc=customcc for a custom C_compiler\n"\
+    "    +nostd for a custom standard, default is ISO\n"\
+    "\n"\
+    "C_preprocess'ing:\n"\
+    "    +enableComments for not removing comments\n"\
+    "    -DNDEBUG or +DDEBUG for boolean true or false or DDEBUG=3 for the value 3"
 
     __BEGIN("compile")
 }
@@ -123,9 +143,9 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
     File_printTo(pre, "."Project"...C")
 }
 
-function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
+function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
 
-    # config["next"]
+    config["next"]
     if (!config["files"]["length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(config["files"][1])
 
@@ -134,23 +154,27 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
     for (n = 1; n <= config["files"]["length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
+        short = get_FileNameNoExt(name)
+        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
+        if (Project == short) short = ""
 
         if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
         if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         preproc[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: Not preprocessed "C); List_remove(config["files"], n--) }
+        if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--) }
         else {
             ++o
             pre["length"]; Array_clear(pre)
             Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, "."Project (++preprocessed_count[format] == 1 ? "" : preprocessed_count[format])"..."format)
+            File_printTo(pre, "."Project (!short?"":"."short)"..."format)
         }
     } }
     if (!o) { __error("make.awk: Nothing preprocessed"); return }
 }
 
-function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,t,u,v,w,x,y,z) {
+function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
 
+    config["next"]
     if (!Project) { __error("make.awk: Project undefined"); return }
 
     for (f = Format["length"]; f; --f) {
@@ -158,48 +182,66 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
     for (n = 1; n <= config["files"]["length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
+        short = get_FileNameNoExt(name)
+        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
+        if (Project == short) short = ""
 
-        if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-        if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        preproc[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: Not preprocessed "name); List_remove(config["files"], n--); continue }
-        else {
-            ++o
-            pre["length"]; Array_clear(pre)
-            Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, "."Project (++preprocessed_count[format] == 1 ? "" : preprocessed_count[format])"..."format)
+        if (!preproc[format][name]["length"]) {
+            if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
+            if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
+            else {
+                ++o
+                pre["length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+            }
         }
 
         if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
         if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         precomp[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: Not precompiled "C); continue }
+        if (!@C(name)) { __error("make.awk: No "C" "name); continue }
         else {
             ++o
             pre["length"]; Array_clear(pre)
             Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, "."Project (++precompiled_count[format] == 1 ? "" : precompiled_count[format])"..."format)
+            File_printTo(pre, "."Project (!short?"":"."short)"..."format)
         }
     } }
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
 
-function make_compile(config,    __,a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function make_compile(config,    __,a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,name,o,p,q,r,s,short,t,u,v,w,x,y,z) {
 
     if (!Project) { __error("make.awk: Project undefined"); return }
 
     for (f = 1; f <= Format["length"]; ++f) {
         format = Format[f]
+    for (n = 1; n <= config["files"]["length"]; ++n) {
+        name = config["files"][n]
+        if (format != Format[get_FileNameExt(name)]) continue
+        short = get_FileNameNoExt(name)
+        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
+        if (Project == short) short = ""
 
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        if (!precomp[format]["length"]) { __error("make.awk: "C": No "format"_precompile"); continue }
-        compiled[format]["length"]
-        if (!@C()) { __error("make.awk: Not compiled "C); continue }
+        compiled[format][name]["length"]
+        if (!@C(name)) { __error("make.awk: No "C" "name); continue }
         else {
             ++o
-            File_printTo(compiled[format], "."Project (++compiled_count[format] == 1 ? "" : compiled_count[format])"..."format".o", "\n", "\n", 1)
+            File_printTo(compiled[format][name], "."Project (!short?"":"."short)"..."format".o", "\n", "\n", 1)
         }
-    }
+    } }
     if (!o) { __error("make.awk: Nothing compiled"); return }
 }
 
+function make_library(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+
+
+}
+
+function make_executable(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+
+
+}

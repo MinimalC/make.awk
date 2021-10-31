@@ -7,14 +7,14 @@
 @include "make.C.preprocess.awk"
 @include "make.C.precompile.awk"
 
-function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
+function C_compile(name,    a,b,c,n,o,options,p,pre,x,y,z)
 {
     pre["length"]
-    precomp["C"]["length"]
+    precomp["C"][name]["length"]
 #    Index_pullArray(pre, precomp["C"], REFIX, " ")
     Index_push("", "", "")
-    for (z = 1; z <= precomp["C"]["length"]; ++z) {
-        Index_reset(precomp["C"][z])
+    for (z = 1; z <= precomp["C"][name]["length"]; ++z) {
+        Index_reset(precomp["C"][name][z])
     for (n = 1; n <= NF; ++n) {
         if ($n ~ REFIX){ $n = " ";      Index_reset() }   # U0001 to U0020
         if ($n == "¢") { $n = "cent";   Index_reset() }   # U00A2
@@ -38,8 +38,8 @@ function C_compile(    a,b,c,n,o,options,p,pre,x,y,z)
 
     options = "-fPIC"
 
-    compiled["C"]["length"]
-    if (C_compiler_coprocess(options, pre, compiled["C"])) return
+    compiled["C"][name]["length"]
+    if (C_compiler_coprocess(options, pre, compiled["C"][name])) return
     return 1
 }
 

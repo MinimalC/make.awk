@@ -6,7 +6,7 @@
 
 BEGIN { BEGIN_meta() }
 
-function BEGIN_meta() {
+function BEGIN_meta(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,workingDir) {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
@@ -18,7 +18,30 @@ function BEGIN_meta() {
     # else MAX_INTEGER = 2 ^ 15  # if (__HEX(2 ^ 15) == "8000") # awk on 16bit ?
     # else MAX_INTEGER = 2 ^ 7 # if (__HEX(2 ^ 7) == "80")  # awk on 8bit :-)
 
-    if (PROCINFO["argv"][1] == "-f") if (get_FileNameNoExt(PROCINFO["argv"][2]) == "meta") __BEGIN()
+    meta_USAGE = "Use awk -f meta.awk Project.awk [command] [Directory] [File.name]\n"\
+                 "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
+
+    if (PROCINFO["argv"][1] == "-f" && get_FileNameNoExt(PROCINFO["argv"][2]) == "meta") {
+        if (!("AWKPATH" in ENVIRON) || ENVIRON["AWKPATH"] == ".:/usr/local/share/awk") {
+            if (ARGV_length() == 0) { __error(meta_USAGE); exit }
+            argi = 1; while ((f = "meta_"ARGV[argi]) in FUNCTAB) { @f(); ++argi }
+            if (ARGV[argi]) {
+                runDir = ENVIRON["OLDPWD"]"/"
+                file = runDir ARGV[argi]; if (!File_exists(file)) file = ""
+                if (!file) file = ARGV[argi]; if (!File_exists(file)) file = ""
+                if (!file) { __error("meta.awk: File or Function "ARGV[argi]" doesn't exist"); exit }
+                else {
+                    includeDir = get_DirectoryName(file)
+                    workingDir = ENVIRON["PWD"]"/"
+                    for (o = argi; o <= ARGV_length(); ++o) options = options" "ARGV[o]
+                    output["length"]; Array_clear(output)
+                    r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!runDir?"":":"runDir))
+                    File_printTo(output, "/dev/stdout")
+                    exit r
+                }
+            } else { __error(meta_USAGE); exit }
+        } else __BEGIN()
+    }
 }
 
 END { END_meta() }
@@ -160,10 +183,16 @@ function File_remove(fileName, force) {
     return 0
 }
 
-function get_FileName(pathName,    __,fileName,path) {
+function get_FileNameArray(file, name,  __,path) {
+    path["length"] = split(name, path, "/")
+    file["length"] = split(path[path["length"]], file, ".")
+    return file["length"]
+}
+
+function get_FileName(pathName,    __,path) {
     path["length"] = split(pathName, path, "/")
     if (path[path["length"]] == "") List_remove(path, path["length"])
-    return fileName = path[path["length"]]
+    return path[path["length"]]
 }
 
 function get_FileNameExt(pathName,    __,file,fileExt,path) {
@@ -240,39 +269,17 @@ function __BEGIN(controller, action, usage,
         controller = ""
     }
     if (!usage) {
-        if (typeof(USAGE) != "untyped" && USAGE) usage = USAGE
-        else usage = "Use awk -f meta.awk Project.awk [command] [Directory] [File.name]\n"\
-                     "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
+        if ("USAGE" in SYMTAB && SYMTAB["USAGE"]) usage = SYMTAB["USAGE"]
+        else usage = meta_USAGE
     }
     if (!controller) {
         if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
         else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
-        if (controller == "meta") {
-            runDir = ENVIRON["OLDPWD"]"/"
-            if (ARGV_length() == 0) { __error(usage); exit }
-            if ("meta_"ARGV[1] in FUNCTAB) ;
-            else {
-                file = runDir ARGV[1]; if (!File_exists(file)) file = ""
-                if (!file) file = ARGV[1]; if (!File_exists(file)) file = ""
-                if (file) {
-                    includeDir = get_DirectoryName(file)
-                    workingDir = ENVIRON["PWD"]"/"
-                    for (o = 2; o <= ARGV_length(); ++o) options = options" "ARGV[o]
-                    output["length"]; Array_clear(output)
-                    r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!runDir?"":":"runDir))
-                    File_printTo(output, "/dev/stdout")
-                    exit r
-                }
-                else { __error("meta.awk: File or Function "ARGV[1]" doesn't exist"); exit }
-            }
-        }
         if (!controller) { __error(usage); exit }
     }
     if (action) { default = action; action = "" }
 
-    config["parameters"]["length"]
-    config["directories"]["length"]
-    config["files"]["length"]
+    delete config
     for (i = 1; i <= ARGV_length(); ++i) {
         if (ARGV[i] ~ /^\s*$/) continue
         if (controller"_"ARGV[i] in FUNCTAB) {
@@ -283,25 +290,28 @@ function __BEGIN(controller, action, usage,
             action = ARGV[i]
             ARGV[i] = ""; continue
         }
-        paramName = ""
+        paramName = paramWert = ""
         if (ARGV[i] ~ /^.*=/) {
             paramWert = index(ARGV[i], "=")
             paramName = substr(ARGV[i], 1, paramWert - 1)
             paramWert = substr(ARGV[i], paramWert + 1)
         } else
-        if (ARGV[i] ~ /^\+/) {
+        if (ARGV[i] ~ /^\+/ || ARGV[i] ~ /^-/) {
+            paramWert = substr(ARGV[i], 1, 1)
             paramName = substr(ARGV[i], 2)
-            paramWert = 1
+            paramWert = paramWert == "+" ? 1 : 0
         } else
-        if (ARGV[i] ~ /^-/) {
-            paramName = substr(ARGV[i], 2)
-            paramWert = 0
+        if (ARGV[i] ~ /\+$/ || ARGV[i] ~ /-$/) {
+            l = length(ARGV[i])
+            paramWert = substr(ARGV[i], l, 1)
+            paramName = substr(ARGV[i], 1, l - 1)
+            paramWert = paramWert == "+" ? 1 : 0
         }
         if (paramName) {
           # if (paramName == "debug") DEBUG = paramWert; else
             if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
             else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
-            else config["parameters"][paramName] = paramWert
+            else config["names"][paramName] = paramWert
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {
@@ -312,8 +322,11 @@ function __BEGIN(controller, action, usage,
             config["files"][++config["files"]["length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
-        __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
-        ARGV[i] = ""
+        if (ARGV[i]) {
+            config["names"][ARGV[i]]
+            # __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
+            ARGV[i] = ""
+        }
     }
     if (!action) {
         if (typeof(ACTION) != "untyped" && ACTION) action = ACTION
@@ -327,7 +340,7 @@ function __BEGIN(controller, action, usage,
     exit 1
 }
 
-function Array_create(array) {
+function Array_create(array,    __,at) {
     if ((at = typeof(array)) == "untyped") ;
     else if ((at) != "array") { __error("Array_create: array is typeof "at); return }
     if (!array["length"]) delete array["length"]
@@ -438,17 +451,22 @@ function List_remove(array, i,    __,at,it,l,n) {
 
 function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
     if ((at = typeof(array)) == "untyped" || at == "unassigned") return
+    else if (at != "array") { __error("Array_printTo: array is typeof "at); return }
+    if (!length(array)) return
     if ((lt = typeof(level)) == "number") t = String_repeat("\t", level)
-    if (at != "array") { __error("Array_printTo: array is typeof "at); return }
-    if (lt != "number" && lt != "untyped") { __error("Array_printTo: level is typeof "lt); return }
+    else if (lt != "untyped") { __error("Array_printTo: level is typeof "lt); return }
     if (typeof(to) == "untyped") to = "/dev/stdout"
 
     for (i in array)
         if ((it = typeof(array[i])) == "unassigned")
-            print t i > to
+            print t i "." > to
         else if (it == "array") {
-            print t i ": " > to
-            Array_printTo(array[i], to, level + 1)
+            if (!length(array[i]))
+                print t i ": (empty)" > to
+            else {
+                print t i ": " > to
+                Array_printTo(array[i], to, level + 1)
+            }
         } else
             print t i ": " array[i] > to
 }
@@ -522,7 +540,7 @@ function String_replace(string, fs, ofs, rs, ors,   __,r) {
 }
 
 function String_split(array, string, sepp) {
-    array["length"] = split(string, array, sepp)
+    return array["length"] = split(string, array, sepp)
 }
 
 function String_join(array, ofs,    __,at,i,r) {
@@ -866,7 +884,7 @@ function File_debug(file, rs, ors, noLastORS) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) File_printTo(file, "/dev/stderr", rs, ors, noLastORS)
 }
 
-function String_read(file, string, rs,    __,i,splits,x,z) {
+function File_readString(file, string, rs,    __,i,splits,x,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     splits["length"] = split(string, splits, rs)
     x = z = file["length"]

@@ -83,11 +83,11 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     }
 
     Array_clear(C_defines)
-    config["parameters"]["length"]
-    for (d in config["parameters"]) {
-        if (d == "length" || d ~ /^[0-9]+$/) continue
+    config["names"]["0"]
+    for (d in config["names"]) {
+        if (d ~ /^[0-9]+$/) continue
         if (d !~ /^D.+/) continue
-        C_defines[c = substr(d, 2)]["value"] = config["parameters"][d]
+        C_defines[c = substr(d, 2)]["value"] = config["names"][d]
     }
 
     Array_create(parsed)
@@ -135,7 +135,7 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
             name = ""
         }
         if (name == Project".config.awk") __warning("make.awk: Using "name) # run_awk(Project".config.awk", "configure_"Project, config)
-        else if (!name) __warning("make.awk: "Project".config.awk or configure shell script not found")
+        else if (!name) __warning("make.awk: Use ./configure to create config.h")
         #else __warning("make.awk: Using "name)
 #if (DEBUG) if (output["length"]) File_printTo(output, "/dev/stderr")
 
@@ -150,7 +150,8 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         } else {
             C_parse(dir file, output)
             output["name"] = dir file
-             __warning("make.awk: Using "file)
+            __warning("make.awk: Using "file)
+            C_defines["HAVE_CONFIG_H"]["value"]
         }
     }
 
@@ -168,7 +169,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         O = fileName
         if (C == "C") {
             C_preprocess(C_compiler, O, C)
-            if (STD == "ISO") C_preprocess("."Project".config.h", O, C)
+            # if (STD == "ISO") C_preprocess("."Project".config.h", O, C)
         }
         else if (C == "CSharp") { # TODO
             C_preprocess("CLI", O, C)
@@ -450,7 +451,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             # NF = 0
         }
         else if ($2 == "pragma") {
-            rendered = Index_pull($0, REFIX, " ")
+            rendered = Index_pull($0, REFIX, "")
             __warning(fileName" Line "z": Unknown "rendered)
             NF = 0
         }
