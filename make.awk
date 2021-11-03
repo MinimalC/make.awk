@@ -15,6 +15,10 @@ function set_make_debug(wert) { DEBUG = wert }
 
 function set_make_cc(wert) { C_compiler = wert }
 
+function set_make_ld(wert) { C_linker = wert }
+
+function set_make_shared(wert) { C_link_shared = wert }
+
 function set_make_nostd(wert) {
     if (typeof(wert) == "untyped" || typeof(wert) == "number" && wert) STD = "META"
     else STD = wert
@@ -63,11 +67,13 @@ function BEGIN_make() {
         PLATFORM = "Windows"
         ARCHITECTURE = ENVIRON["PROCESSOR_ARCHITECTURE"]
         C_compiler = "cl"
+        C_linker = "link"
     }
     else {
         PLATFORM = uname_operatingSystem() # "GNU/Linux"
         ARCHITECTURE = uname_machine()
         C_compiler = "gcc"
+        C_linker = "gcc"
     }
 
     USAGE =\
@@ -158,15 +164,17 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
         if (Project == short) short = ""
 
-        if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-        if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        preproc[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--) }
-        else {
-            ++o
-            pre["length"]; Array_clear(pre)
-            Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+        if (!preproc[format][name]["length"]) {
+            if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
+            if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            preproc[format][name]["length"]
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--) }
+            else {
+                pre["length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+                ++o
+            }
         }
     } }
     if (!o) { __error("make.awk: Nothing preprocessed"); return }
@@ -191,29 +199,31 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
             else {
-                ++o
                 pre["length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, "."Project (!short?"":"."short)"..."format)
             }
         }
 
-        if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
-        if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        precomp[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: No "C" "name); continue }
-        else {
-            ++o
-            pre["length"]; Array_clear(pre)
-            Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+        if (!precomp[format][name]["length"]) {
+            if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
+            if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            precomp[format][name]["length"]
+            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            else {
+                pre["length"]; Array_clear(pre)
+                Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+                ++o
+            }
         }
     } }
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
 
-function make_compile(config,    __,a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,name,o,p,q,r,s,short,t,u,v,w,x,y,z) {
+function make_compile(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
 
+    config["next"]
     if (!Project) { __error("make.awk: Project undefined"); return }
 
     for (f = 1; f <= Format["length"]; ++f) {
@@ -225,23 +235,134 @@ function make_compile(config,    __,a,b,c,C,d,e,f,format,g,h,i,k,l,m,n,name,o,p,
         if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
         if (Project == short) short = ""
 
-        if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        compiled[format][name]["length"]
-        if (!@C(name)) { __error("make.awk: No "C" "name); continue }
-        else {
-            ++o
-            File_printTo(compiled[format][name], "."Project (!short?"":"."short)"..."format".o", "\n", "\n", 1)
+        if (!preproc[format][name]["length"]) {
+            if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
+            if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
+            else {
+                pre["length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+            }
+        }
+
+        if (!precomp[format][name]["length"]) {
+            if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
+            if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            precomp[format][name]["length"]
+            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            else {
+                pre["length"]; Array_clear(pre)
+                Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+            }
+        }
+
+        if (!compiled[format][name]["length"]) {
+            if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            compiled[format][name]["length"]
+            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            else if (compiled[format][name]["length"]) {
+                compiled[format][name]["shortName"] = "."Project (!short?"":"."short)"..."format".S"
+                File_printTo(compiled[format][name], compiled[format][name]["shortName"], "\n", "\n", 1)
+                compiled[format][ ++compiled[format]["length"] ] = name
+                ++o
+            }
         }
     } }
     if (!o) { __error("make.awk: Nothing compiled"); return }
 }
 
-function make_library(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function make_library(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,j,k,l,m,n,name,names,o,options,p,q,r,s,short,t,u,unseen,v,w,x,y,z) {
+Array_debug(config)
 
+    if (!compiled["ASM"]["length"]) return
 
+    for (n = 1; n <= compiled["ASM"]["length"]; ++n) {
+        name = compiled["ASM"][n]
+        names = String_concat(names, " ", compiled["ASM"][name]["shortName"])
+    }
+    if (names) {
+
+        if (C_link_shared) options = options" -shared"
+        if (C_linker == "gcc") options = options" -fPIC"
+        else if (C_linker == "ld") options = options" -pie"
+
+        options = options" "names" -o ."Project"...so"
+
+        unseen["length"]
+        __pipe(C_linker, options, unseen)
+File_debug(unseen)
+    }
 }
 
-function make_executable(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function make_executable(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,j,k,l,m,n,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
+Array_debug(config)
 
+    for (f = 1; f <= Format["length"]; ++f) {
+        format = Format[f]
+        if (!((C = format"_linkExecutable") in FUNCTAB)) continue
+    for (n = 1; n <= config["files"]["length"]; ++n) {
+        name = config["files"][n]
+        if (format != Format[get_FileNameExt(name)]) continue
+        short = get_FileNameNoExt(name)
+        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
+        if (Project == short) short = ""
 
+        if (!preproc[format][name]["length"]) {
+            if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
+            if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
+            else {
+                pre["length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+            }
+        }
+
+        if (!precomp[format][name]["length"]) {
+            if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
+            if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            precomp[format][name]["length"]
+            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            else {
+                pre["length"]; Array_clear(pre)
+                Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, "."Project (!short?"":"."short)"..."format)
+            }
+        }
+
+        if (!compiled[format][name]["length"]) {
+            if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
+            compiled[format][name]["length"]
+            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            else {
+                fileName = "."Project (!short?"":"."short)"..."format".o"
+                File_printTo(compiled[format][name], fileName, "\n", "\n", 1)
+                ++o
+            }
+        }
+
+        if (compiled["ASM"][name]["length"]) {
+            fileName = "."Project (!short?"":"."short)"..."format".o"
+            File_printTo(compiled["ASM"][name], fileName, "\n", "\n", 1)
+
+            if (C_linker == "gcc") options = options" -fPIE"
+            else if (C_linker == "ld") options = options" -pie"
+
+            names = ""
+            if (!C_link_shared) {
+                for (s = 1; s <= compiled["ASM"]["length"]; ++s)
+                    names = String_concat(names, " ", compiled["ASM"][s]["shortName"])
+                names = Index_pull(compiled["ASM"]["fileNames"], "", "", "\n", " ")
+            }
+
+            options = options" "names" "fileName" -o ."Project
+
+            unseen["length"]
+            __pipe(C_linker, options, unseen)
+File_debug(unseen)
+            ++o
+        }
+    } }
 }

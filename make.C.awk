@@ -7,10 +7,11 @@
 @include "make.C.preprocess.awk"
 @include "make.C.precompile.awk"
 
-function C_compile(name,    a,b,c,n,o,options,p,pre,x,y,z)
+function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
 {
+    if (!(name in precomp["C"]) || !precomp["C"][name]["length"]) return
+
     pre["length"]
-    precomp["C"][name]["length"]
 #    Index_pullArray(pre, precomp["C"], REFIX, " ")
     Index_push("", "", "")
     for (z = 1; z <= precomp["C"][name]["length"]; ++z) {
@@ -38,36 +39,39 @@ function C_compile(name,    a,b,c,n,o,options,p,pre,x,y,z)
 
     options = "-fPIC"
 
-    compiled["C"][name]["length"]
-    if (C_compiler_coprocess(options, pre, compiled["C"][name])) return
+    language = "C"
+    if (C_compiler == "tcc") language = "ASM"
+
+    compiled[language][name]["length"]
+    if (C_compiler_coprocess(options, pre, compiled[language][name])) return
     return 1
 }
 
 function C_compiler_preprocess(final_options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
     options = "-E"
-    if (input["length"]) {
-        File_printTo(input, ".make.c")
-        options = options" .make.c"
-    }
-    else options = options" -"
+    input["length"]
+    File_printTo(input, ".make.c")
+    options = options" .make.c"
+
     r = __coprocess(C_compiler, options" "final_options, input, output)
-    if (input["length"])
-        File_remove(".make.c", 1)
+    File_remove(".make.c", 1)
     return r
 }
 
-function C_compiler_coprocess(final_options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
-    options = "-c"
+function C_compiler_coprocess(final_options, input, output, language,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
+    if (!language || language == "C") options = "-S"
+    else if (language == "ASM") options = "-c"
+    else __warning("make.awk: C_compiler_coprocess: Unknown Language")
     if (C_compiler == "gcc") {
         options = options" -xc -fpreprocessed"
         if (STD == "META") {
-            options = options" -nodefaultlibs -nostdinc" # -ffreestanding
-            options = options" -fomit-frame-pointer -fno-plt"
-            options = options" -fno-exceptions -fno-unwind-tables -fno-jump-tables"
-            options = options" -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
+            options = options" -nodefaultlibs -nostdlib -nostdinc" # -ffreestanding
+            options = options" -fno-jump-tables -fomit-frame-pointer" # -fno-plt
+            options = options" -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
         }
     }
     options = options" -o .make.o .make.c"
+    input["length"]
     File_printTo(input, ".make.c")
     report["length"]
     r = __pipe(C_compiler, options" "final_options, report)

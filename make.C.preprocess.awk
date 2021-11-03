@@ -83,9 +83,9 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     }
 
     Array_clear(C_defines)
-    config["names"]["0"]
+    config["names"]["length"]
     for (d in config["names"]) {
-        if (d ~ /^[0-9]+$/) continue
+        if (d == "length" || d ~ /^[0-9]+$/) continue
         if (d !~ /^D.+/) continue
         C_defines[c = substr(d, 2)]["value"] = config["names"][d]
     }
@@ -167,18 +167,11 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     if (original) O = original
     else {
         O = fileName
-        if (C == "C") {
-            C_preprocess(C_compiler, O, C)
-            # if (STD == "ISO") C_preprocess("."Project".config.h", O, C)
-        }
-        else if (C == "CSharp") { # TODO
-            C_preprocess("CLI", O, C)
-        }
-        else __error("make.awk: C_preprocess: Unknown "C)
+        if (C == "C") C_preprocess(C_compiler, O, C)
+        else __warning("make.awk: C_preprocess: Unknown "C)
     }
 
-    if (!(fileName in parsed)) if (!C_parse(fileName)) return
-    if (!parsed[fileName]["length"]) return
+    if (!(fileName in parsed) && (!C_parse(fileName) || !parsed[fileName]["length"])) return
 
     preproc[C][O]["length"]
     if (!original) if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["length"] ] = O

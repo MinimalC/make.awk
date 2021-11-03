@@ -31,8 +31,7 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
 
 function C_precompile(name,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 {
-    if (!preproc["C"][name]["length"]) return
-
+    if (!(name in preproc["C"]) || !preproc["C"][name]["length"]) return
 
     # C_precompile is PROTOTYPE
 

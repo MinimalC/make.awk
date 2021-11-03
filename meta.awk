@@ -457,7 +457,7 @@ function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
 
     for (i in array)
         if ((it = typeof(array[i])) == "unassigned")
-            print t i "." > to
+            print t i > to
         else if (it == "array") {
             if (!length(array[i]))
                 print t i ": (empty)" > to
@@ -850,7 +850,8 @@ function File_printTo(file, to, rs, ors, noLastORS,    __,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    while (++z <= file["length"]) {
+    if (!file["length"]) printf "" > to
+    else while (++z <= file["length"]) {
         if (noLastORS && z == file["length"]) { printf "%s", file[z] > to; break }
         print file[z] > to
     }
@@ -861,7 +862,8 @@ function File_printFTo(file, to, format, rs, ors, noLastORS,    __,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    while (++z <= file["length"]) {
+    if (!file["length"]) printf "" > to
+    else while (++z <= file["length"]) {
         if (noLastORS && z == file["length"]) { printf format, file[z] > to; break }
         printf format, file[z] > to
     }
