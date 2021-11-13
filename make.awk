@@ -263,7 +263,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,k,l,m,n,
             compiled[format][name]["length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else if (compiled[format][name]["length"]) {
-                compiled[format][name]["shortName"] = "."Project (!short?"":"."short)"..."format".S"
+                compiled[format][name]["shortName"] = "."Project (!short?"":"."short)"..."format".o"
                 File_printTo(compiled[format][name], compiled[format][name]["shortName"], "\n", "\n", 1)
                 compiled[format][ ++compiled[format]["length"] ] = name
                 ++o
@@ -276,11 +276,9 @@ function make_compile(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,k,l,m,n,
 function make_library(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,j,k,l,m,n,name,names,o,options,p,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 Array_debug(config)
 
-    if (!compiled["ASM"]["length"]) return
-
-    for (n = 1; n <= compiled["ASM"]["length"]; ++n) {
-        name = compiled["ASM"][n]
-        names = String_concat(names, " ", compiled["ASM"][name]["shortName"])
+    for (n = 1; n <= compiled["C"]["length"]; ++n) {
+        name = compiled["C"][n]
+        names = String_concat(names, " ", compiled["C"][name]["shortName"])
     }
     if (names) {
 
@@ -288,7 +286,7 @@ Array_debug(config)
         if (C_linker == "gcc") options = options" -fPIC"
         else if (C_linker == "ld") options = options" -pie"
 
-        options = options" "names" -o ."Project"...so"
+        options = options" "names" -o ."Project"..."(!C_link_shared?"a":"so")
 
         unseen["length"]
         __pipe(C_linker, options, unseen)
@@ -343,18 +341,19 @@ Array_debug(config)
             }
         }
 
-        if (compiled["ASM"][name]["length"]) {
+        if (compiled[format][name]["length"]) {
             fileName = "."Project (!short?"":"."short)"..."format".o"
-            File_printTo(compiled["ASM"][name], fileName, "\n", "\n", 1)
+            # File_printTo(compiled[format][name], fileName, "\n", "\n", 1)
 
             if (C_linker == "gcc") options = options" -fPIE"
             else if (C_linker == "ld") options = options" -pie"
 
             names = ""
             if (!C_link_shared) {
-                for (s = 1; s <= compiled["ASM"]["length"]; ++s)
-                    names = String_concat(names, " ", compiled["ASM"][s]["shortName"])
-                names = Index_pull(compiled["ASM"]["fileNames"], "", "", "\n", " ")
+                for (s = 1; s <= compiled[format]["length"]; ++s) {
+                    name = compiled[format][s]
+                    names = String_concat(names, " ", compiled[format][name]["shortName"])
+                }
             }
 
             options = options" "names" "fileName" -o ."Project

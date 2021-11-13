@@ -40,7 +40,7 @@ function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
     options = "-fPIC"
 
     language = "C"
-    if (C_compiler == "tcc") language = "ASM"
+    #if (C_compiler == "tcc") language = "ASM"
 
     compiled[language][name]["length"]
     if (C_compiler_coprocess(options, pre, compiled[language][name])) return
@@ -59,9 +59,10 @@ function C_compiler_preprocess(final_options, input, output,    a,b,c,command,d,
 }
 
 function C_compiler_coprocess(final_options, input, output, language,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
-    if (!language || language == "C") options = "-S"
-    else if (language == "ASM") options = "-c"
-    else __warning("make.awk: C_compiler_coprocess: Unknown Language")
+    #if (!language || language == "C") options = "-S"
+    #else if (language == "ASM")
+    options = "-c"
+    #else __warning("make.awk: C_compiler_coprocess: Unknown Language")
     if (C_compiler == "gcc") {
         options = options" -xc -fpreprocessed"
         if (STD == "META") {
