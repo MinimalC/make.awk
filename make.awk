@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-@include "meta.awk"
+@include "run.awk"
 @include "make.C.awk"
 @include "make.CSharp.awk"
 
@@ -330,6 +330,7 @@ Array_debug(config)
             }
         }
 
+
         if (!compiled[format][name]["length"]) {
             if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
             compiled[format][name]["length"]
@@ -341,27 +342,34 @@ Array_debug(config)
             }
         }
 
-        if (compiled[format][name]["length"]) {
-            fileName = "."Project (!short?"":"."short)"..."format".o"
-            # File_printTo(compiled[format][name], fileName, "\n", "\n", 1)
+        options = options" -o ."Project
 
-            if (C_linker == "gcc") options = options" -fPIE"
-            else if (C_linker == "ld") options = options" -pie"
+        # if (C_linker == "gcc") options = options" -fPIE"
+        # else if (C_linker == "ld") options = options" -pie"
 
-            names = ""
-            if (!C_link_shared) {
-                for (s = 1; s <= compiled[format]["length"]; ++s) {
-                    name = compiled[format][s]
-                    names = String_concat(names, " ", compiled[format][name]["shortName"])
-                }
-            }
-
-            options = options" "names" "fileName" -o ."Project
-
-            unseen["length"]
-            __pipe(C_linker, options, unseen)
-File_debug(unseen)
-            ++o
+        if (C_link_shared) {
+            options = options" -shared"
         }
+        else {
+            options = options" -static-pie"
+            names = ""
+            for (s = 1; s <= compiled[format]["length"]; ++s) {
+                name = compiled[format][s]
+                names = String_concat(names, " ", compiled[format][name]["shortName"])
+            }
+            if (names)
+                options = options" "names
+        }
+
+        if (compiled[format][name]["length"])
+            options = options" "fileName
+
+        if (STD == "ISO")
+            options = options" -lm"
+
+        unseen["length"]
+        __pipe(C_linker, options, unseen)
+File_debug(unseen)
+        ++o
     } }
 }

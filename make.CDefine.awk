@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2020 Hans Riehm
 
-#include "meta.awk"
+#include "run.awk"
 #include "make.C.awk"
 @include "make.C.parse.awk"
 
@@ -515,4 +515,3 @@ if (DEBUG == 4) __debug("or: "Index_pull($0, REFIX, " "))
 #if (DEBUG == 4) __debug("Expression: "r)
     return r
 }
-

@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 
-@include "meta.awk"
+@include "run.awk"
 @include "make.CDefine.awk"
 
 function Define_eval(expression,    __,d) {
@@ -77,4 +77,3 @@ BEGIN {
 
     exit
 }
-

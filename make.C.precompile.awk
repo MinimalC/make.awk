@@ -2,7 +2,7 @@
 # Gemeinfrei. Public Domain.
 # 2021 Hans Riehm
 
-#include "meta.awk"
+#include "run.awk"
 #include "make.C.awk"
 
 function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
