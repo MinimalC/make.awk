@@ -283,7 +283,7 @@ function __BEGIN(controller, action, usage,
         if (controller"_"ARGV[i] in FUNCTAB) {
             if (i > 1 && action) {
                 if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-                @make(config); if ("next" in config) delete config["next"]; else Array_clear(config)
+                @make(config); if ("next" in config) delete config["next"]; else delete config # Array_clear(config)
             }
             action = ARGV[i]
             ARGV[i] = ""; continue

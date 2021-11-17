@@ -221,7 +221,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
 
-function make_compile(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
+function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
 
     config["next"]
     if (!Project) { __error("make.awk: Project undefined"); return }
@@ -263,8 +263,8 @@ function make_compile(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,k,l,m,n,
             compiled[format][name]["length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else if (compiled[format][name]["length"]) {
-                compiled[format][name]["shortName"] = "."Project (!short?"":"."short)"..."format".o"
-                File_printTo(compiled[format][name], compiled[format][name]["shortName"], "\n", "\n", 1)
+                file = compiled[format][name]["file"] = "."Project (!short?"":"."short)"..."format".o"
+                File_printTo(compiled[format][name], file, "\n", "\n", 1)
                 compiled[format][ ++compiled[format]["length"] ] = name
                 ++o
             }
@@ -276,30 +276,50 @@ function make_compile(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,k,l,m,n,
 function make_library(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,j,k,l,m,n,name,names,o,options,p,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 Array_debug(config)
 
-    for (n = 1; n <= compiled["C"]["length"]; ++n) {
-        name = compiled["C"][n]
-        names = String_concat(names, " ", compiled["C"][name]["shortName"])
+    format = "C"
+    names = ""
+    for (s = 1; s <= compiled[format]["length"]; ++s) {
+        name = compiled[format][s]
+        names = String_concat(names, " ", compiled[format][name]["file"])
     }
     if (names) {
+        if (C_link_shared) {
+            options = options" -shared"
+            options = options" "names
 
-        if (C_link_shared) options = options" -shared"
-        if (C_linker == "gcc") options = options" -fPIC"
-        else if (C_linker == "ld") options = options" -pie"
+            if (STD == "ISO") {
+                options = options" -lm"
+                options = options" -ldl"
+            }
 
-        options = options" "names" -o ."Project"..."(!C_link_shared?"a":"so")
+            options = options" -o lib"Project".so"
 
-        unseen["length"]
-        __pipe(C_linker, options, unseen)
+__debug("C_link_library: "C_linker" "options)
+            unseen["length"]
+            __pipe(C_linker, options, unseen)
 File_debug(unseen)
+            ++o
+        }
+        else {
+            options = options" rcs lib"Project".a"
+            options = options" "names
+
+__debug("C_static_library: ar "options)
+            unseen["length"]
+            __pipe("ar", options, unseen)
+File_debug(unseen)
+            ++o
+        }
     }
+    if (!o) { __error("make.awk: No Library built"); return }
 }
 
-function make_executable(config,    __,a,b,c,C,d,e,f,fileName,format,g,h,i,j,k,l,m,n,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
+function make_executable(config,    __,a,b,c,C,d,e,empty,f,fileName,format,g,h,i,j,k,l,m,n,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 Array_debug(config)
 
     for (f = 1; f <= Format["length"]; ++f) {
         format = Format[f]
-        if (!((C = format"_linkExecutable") in FUNCTAB)) continue
+        # if (!((C = format"_linkExecutable") in FUNCTAB)) continue
     for (n = 1; n <= config["files"]["length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
@@ -330,46 +350,43 @@ Array_debug(config)
             }
         }
 
-
         if (!compiled[format][name]["length"]) {
             if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
             compiled[format][name]["length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else {
-                fileName = "."Project (!short?"":"."short)"..."format".o"
+                fileName = compiled[format][name]["file"] = "."Project (!short?"":"."short)"..."format".o"
                 File_printTo(compiled[format][name], fileName, "\n", "\n", 1)
-                ++o
             }
         }
-
-        options = options" -o ."Project
-
-        # if (C_linker == "gcc") options = options" -fPIE"
-        # else if (C_linker == "ld") options = options" -pie"
-
-        if (C_link_shared) {
-            options = options" -shared"
-        }
-        else {
-            options = options" -static-pie"
-            names = ""
-            for (s = 1; s <= compiled[format]["length"]; ++s) {
-                name = compiled[format][s]
-                names = String_concat(names, " ", compiled[format][name]["shortName"])
-            }
-            if (names)
-                options = options" "names
-        }
-
-        if (compiled[format][name]["length"])
-            options = options" "fileName
-
-        if (STD == "ISO")
-            options = options" -lm"
-
-        unseen["length"]
-        __pipe(C_linker, options, unseen)
-File_debug(unseen)
-        ++o
     } }
+
+
+    if (C_link_shared)
+         options = options" -shared -pie"
+    else options = options" -static"
+
+    format = "C"
+    for (n = 1; n <= config["files"]["length"]; ++n) {
+        name = config["files"][n]
+        fileName = compiled[format][name]["file"]
+        options = options" "fileName
+    }
+
+    options = options" -L. -l"Project
+
+    if (STD == "ISO") {
+        options = options" -lm"
+        if (C_link_shared)
+            options = options" -ldl"
+    }
+
+    options = options" -o "Project
+
+__debug("C_link_executable: "C_linker" "options)
+    unseen["length"]
+    __pipe(C_linker, options, unseen)
+File_debug(unseen)
+
+    # ++o if (!o) { __error("make.awk: No Executable linked"); return }
 }

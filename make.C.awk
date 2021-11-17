@@ -37,7 +37,7 @@ function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
     }
     Index_pop()
 
-    options = "-fPIC"
+    if (C_link_shared) options = "-fPIC"
 
     language = "C"
     #if (C_compiler == "tcc") language = "ASM"
