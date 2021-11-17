@@ -287,10 +287,8 @@ Array_debug(config)
             options = options" -shared"
             options = options" "names
 
-            if (STD == "ISO") {
-                options = options" -lm"
-                options = options" -ldl"
-            }
+            if (STD == "ISO")
+                options = options" -lm -ldl -pthread"
 
             options = options" -o lib"Project".so"
 
@@ -373,13 +371,10 @@ Array_debug(config)
         options = options" "fileName
     }
 
-    options = options" -L. -l"Project
+    options = options" -L. -l:lib"Project"."(!C_link_shared?"a":"so")
 
-    if (STD == "ISO") {
-        options = options" -lm"
-        if (C_link_shared)
-            options = options" -ldl"
-    }
+    if (STD == "ISO")
+        options = options" -lm -ldl -pthread"
 
     options = options" -o "Project
 
