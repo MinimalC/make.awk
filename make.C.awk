@@ -50,11 +50,11 @@ function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
 function C_compiler_preprocess(final_options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
     options = "-E"
     input["length"]
-    File_printTo(input, ".make.c")
-    options = options" .make.c"
+    File_printTo(input, TEMP_DIRECTORY".make.c")
+    options = options" "TEMP_DIRECTORY".make.c"
 
     r = __coprocess(C_compiler, options" "final_options, input, output)
-    File_remove(".make.c", 1)
+    File_remove(TEMP_DIRECTORY".make.c", 1)
     return r
 }
 
@@ -71,16 +71,16 @@ function C_compiler_coprocess(final_options, input, output, language,    a,b,c,c
             options = options" -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
         }
     }
-    options = options" -o .make.o .make.c"
+    options = options" -o "TEMP_DIRECTORY".make.o "TEMP_DIRECTORY".make.c"
     input["length"]
-    File_printTo(input, ".make.c")
+    File_printTo(input, TEMP_DIRECTORY".make.c")
     report["length"]
     r = __pipe(C_compiler, options" "final_options, report)
-    File_remove(".make.c", 1)
+    File_remove(TEMP_DIRECTORY".make.c", 1)
     output["length"]
     if (!r) {
-        File_read(output, ".make.o", "\n", "\n")
-        File_remove(".make.o", 1)
+        File_read(output, TEMP_DIRECTORY".make.o", "\n", "\n")
+        File_remove(TEMP_DIRECTORY".make.o", 1)
     }
     return r
 }

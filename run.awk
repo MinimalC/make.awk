@@ -4,9 +4,9 @@
 
 #include "run.awk"
 
-BEGIN { BEGIN_meta() }
+BEGIN { BEGIN_run() }
 
-function BEGIN_meta(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,workingDir) {
+function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,workingDir) {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
@@ -18,13 +18,13 @@ function BEGIN_meta(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,
     # else MAX_INTEGER = 2 ^ 15  # if (__HEX(2 ^ 15) == "8000") # awk on 16bit ?
     # else MAX_INTEGER = 2 ^ 7 # if (__HEX(2 ^ 7) == "80")  # awk on 8bit :-)
 
-    meta_USAGE = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
+    run_USAGE = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
                  "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
 
-    if (PROCINFO["argv"][1] == "-f" && get_FileNameNoExt(PROCINFO["argv"][2]) == "meta") {
+    if (PROCINFO["argv"][1] == "-f" && get_FileNameNoExt(PROCINFO["argv"][2]) == "run") {
         if (!("AWKPATH" in ENVIRON) || ENVIRON["AWKPATH"] == ".:/usr/local/share/awk") {
-            if (ARGV_length() == 0) { __error(meta_USAGE); exit }
-            argi = 1; while ((f = "meta_"ARGV[argi]) in FUNCTAB) { @f(); ++argi }
+            if (ARGV_length() == 0) { __error(run_USAGE); exit }
+            argi = 1; while ((f = "run_"ARGV[argi]) in FUNCTAB) { @f(); ++argi }
             if (ARGV[argi]) {
                 runDir = ENVIRON["OLDPWD"]"/"
                 file = runDir ARGV[argi]; if (!File_exists(file)) file = ""
@@ -39,53 +39,52 @@ function BEGIN_meta(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,
                     File_printTo(output, "/dev/stdout")
                     exit r
                 }
-            } else { __error(meta_USAGE); exit }
+            } else { __error(run_USAGE); exit }
         } else __BEGIN()
     }
 }
 
-END { END_meta() }
+END { END_run() }
 
-function END_meta() {
+function END_run() {
     # no if (ERRORS) exit 0; else exit 1
     if (Index["length"]) __error("run.awk: More Index_push() than Index_pop()")
 }
 
-function meta_ARGV_ARGC(config) { ARGC_ARGV_debug() }
-function meta_ARGC_ARGV(config) { ARGC_ARGV_debug() }
+function run_ARGV_ARGC(config) { ARGC_ARGV_debug() }
+function run_ARGC_ARGV(config) { ARGC_ARGV_debug() }
 
-function __printTo(to, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
-    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
-    print message > to
+function __printTo(to,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    print "" a b c d e f g h i j k l m n o p q r s t u v w x y z > to
 }
 
-function __printFTo(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
-    message = "" a b c d e f g h i j k l m n o p q r s t u v w x y z
-    printf format, message > to
+function __printFTo(to,format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    printf format, "" a b c d e f g h i j k l m n o p q r s t u v w x y z > to
 }
 
-function __print(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
-    __printTo("/dev/stdout", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+function __print(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    __printTo("/dev/stdout",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
 
-function __warning(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
-    __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+function __warning(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    __printTo("/dev/stderr",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
 
-function __error(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
-    if (typeof(ERRORS) == "untyped" || typeof(ERRORS) == "number") ++ERRORS
+function __error(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    ERRORS
+    if (typeof(ERRORS) == "unassigned" || typeof(ERRORS) == "number") ++ERRORS
     else __warning("__error: ERRORS should be number")
-    __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+    __printTo("/dev/stderr",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
 
-function __debug(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
+function __debug(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
-        __printTo("/dev/stderr", a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+        __printTo("/dev/stderr",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
 
-function __debugF(to, format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,   __,message) {
+function __debugF(to,format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
-        __printFTo("/dev/stderr", format, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+        __printFTo("/dev/stderr",format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
 
 function ENVIRON_debug() {
@@ -144,7 +143,26 @@ function Directory_exists(directory) {
 
 function create_Directory(directory) {
     if (!directory) { __error("create_Directory: no directory"); return }
-    if (!system("mkdir -r '"directory"'")) return 1
+    if (!system("mkdir -p '"directory"'")) return 1
+}
+
+function remove_Directory(directory) {
+    if (!directory) { __error("remove_Directory: no directory"); return }
+    if (!system("rm -r '"directory"'")) return 1
+}
+
+function createTemp_Directory(prefix) {
+    if (typeof(prefix) == "untyped") { __error("createTemp_Directory: no prefix"); return }
+    TEMP_DIRECTORY = prefix
+    # someone should add random data
+    if (!String_endsWith(TEMP_DIRECTORY, "/")) TEMP_DIRECTORY = TEMP_DIRECTORY"/"
+    if (!Directory_exists(TEMP_DIRECTORY)) create_Directory(TEMP_DIRECTORY)
+}
+
+function removeTemp_Directory() {
+    TEMP_DIRECTORY
+    if (typeof(TEMP_DIRECTORY) == "unassigned") { __error("removeTemp_Directory: no TEMP_DIRECTORY"); return }
+    if (Directory_exists(TEMP_DIRECTORY)) remove_Directory(TEMP_DIRECTORY)
 }
 
 function create_SymbolicLink(directory, target) {
@@ -268,7 +286,7 @@ function __BEGIN(controller, action, usage,
     }
     if (!usage) {
         if ("USAGE" in SYMTAB && SYMTAB["USAGE"]) usage = SYMTAB["USAGE"]
-        else usage = meta_USAGE
+        else usage = run_USAGE
     }
     if (!controller) {
         if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
