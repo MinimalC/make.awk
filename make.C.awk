@@ -9,12 +9,12 @@
 
 function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
 {
-    if (!(name in precomp["C"]) || !precomp["C"][name]["length"]) return
+    if (!(name in precomp["C"]) || !precomp["C"][name]["0length"]) return
 
-    pre["length"]
+    pre["0length"]
 #    Index_pullArray(pre, precomp["C"], REFIX, " ")
     Index_push("", "", "")
-    for (z = 1; z <= precomp["C"][name]["length"]; ++z) {
+    for (z = 1; z <= precomp["C"][name]["0length"]; ++z) {
         Index_reset(precomp["C"][name][z])
     for (n = 1; n <= NF; ++n) {
         if ($n ~ REFIX){ $n = " ";      Index_reset() }   # U0001 to U0020
@@ -33,7 +33,7 @@ function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
             $n = "X"__HEX(Char_codepoint($n)); Index_reset()
         }
     }
-        pre[ ++pre["length"] ] = $0
+        pre[ ++pre["0length"] ] = $0
     }
     Index_pop()
 
@@ -42,14 +42,14 @@ function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
     language = "C"
     #if (C_compiler == "tcc") language = "ASM"
 
-    compiled[language][name]["length"]
+    compiled[language][name]["0length"]
     if (C_compiler_coprocess(options, pre, compiled[language][name])) return
     return 1
 }
 
 function C_compiler_preprocess(final_options, input, output,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
     options = "-E"
-    input["length"]
+    input["0length"]
     File_printTo(input, TEMP_DIRECTORY".make.c")
     options = options" "TEMP_DIRECTORY".make.c"
 
@@ -72,12 +72,12 @@ function C_compiler_coprocess(final_options, input, output, language,    a,b,c,c
         }
     }
     options = options" -o "TEMP_DIRECTORY".make.o "TEMP_DIRECTORY".make.c"
-    input["length"]
+    input["0length"]
     File_printTo(input, TEMP_DIRECTORY".make.c")
-    report["length"]
+    report["0length"]
     r = __pipe(C_compiler, options" "final_options, report)
     File_remove(TEMP_DIRECTORY".make.c", 1)
-    output["length"]
+    output["0length"]
     if (!r) {
         File_read(output, TEMP_DIRECTORY".make.o", "\n", "\n")
         File_remove(TEMP_DIRECTORY".make.o", 1)

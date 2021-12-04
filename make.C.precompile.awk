@@ -26,18 +26,18 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
         C_types["__builtin_va_list"]["isLiteral"]
     }
 
-    precomp["C"]["length"]
+    precomp["C"]["0length"]
 }
 
 function C_precompile(name,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 {
-    if (!(name in preproc["C"]) || !preproc["C"][name]["length"]) return
+    if (!(name in preproc["C"]) || !preproc["C"][name]["0length"]) return
 
     # C_precompile is PROTOTYPE
 
 
-    for (z = 1; z <= preproc["C"][name]["length"]; ++z)
-        precomp["C"][name][ ++precomp["C"][name]["length"] ] = preproc["C"][name][z]
+    for (z = 1; z <= preproc["C"][name]["0length"]; ++z)
+        precomp["C"][name][ ++precomp["C"][name]["0length"] ] = preproc["C"][name][z]
 
     return 1
 }

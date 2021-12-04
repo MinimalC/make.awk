@@ -27,19 +27,19 @@ function set_make_nostd(wert) {
 function set_make_enableComments(wert) { enable_Comments = wert }
 
 function uname_machine(    __,output) {
-    output["length"]
+    output["0length"]
     __command("uname", "-m", output)
     return output[1]
 }
 
 function uname_operatingSystem(    __,output) {
-    output["length"]
+    output["0length"]
     __command("uname", "-o", output)
     return output[1]
 }
 
 function reg_query(key,    __,output) {
-    output["length"]
+    output["0length"]
     __command("reg", "query "key, output)
     return output[1]
 }
@@ -59,7 +59,7 @@ function BEGIN_make() {
     Format[1] = "CSharp"
     Format[2] = "C"
     Format[3] = "ASM"
-    Format["length"] = 3
+    Format["0length"] = 3
 
     STD = "ISO"
 
@@ -126,27 +126,27 @@ function make_ARGV_ARGC(config) { RUN_ARGC_ARGV = 1 }
 
 function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
 
-    if (!config["files"]["length"]) { __error(USAGE); return }
+    if (!config["files"]["0length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(config["files"][1])
     #if (!prepared) make_prepare(config)
 
-    for (f = 1; f <= Format["length"]; ++f) {
+    for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
         if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-    for (n = 1; n <= config["files"]["length"]; ++n) {
+    for (n = 1; n <= config["files"]["0length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
 
         if (!((C = format"_""parse") in FUNCTAB)) { __error("No function "C); continue }
-        parsed[name]["length"]
+        parsed[name]["0length"]
         @C(name)
     } }
 
-    pre["length"]
+    pre["0length"]
     for (n in parsed) {
-        if (n == "length" || n ~ /^[0-9]/) continue
+        if (n ~ /^[0-9]/) continue
         if (typeof(parsed[n]) != "array") continue
-        if (!parsed[n]["length"]) continue
+        if (!parsed[n]["0length"]) continue
         Index_pullArray(pre, parsed[n], REFIX, DEBUG ? DEFIX : " ")
     }
     File_printTo(pre, TEMP_DIRECTORY Project"...C")
@@ -155,25 +155,25 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
 function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
 
     config["next"]
-    if (!config["files"]["length"]) { __error(USAGE); return }
+    if (!config["files"]["0length"]) { __error(USAGE); return }
     if (!Project) Project = get_FileNameNoExt(config["files"][1])
 
-    for (f = 1; f <= Format["length"]; ++f) {
+    for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
-    for (n = 1; n <= config["files"]["length"]; ++n) {
+    for (n = 1; n <= config["files"]["0length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
         if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
         if (Project == short) short = ""
 
-        if (!preproc[format][name]["length"]) {
+        if (!preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
             if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-            preproc[format][name]["length"]
+            preproc[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--) }
             else {
-                pre["length"]; Array_clear(pre)
+                pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
                 ++o
@@ -188,33 +188,33 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
     config["next"]
     if (!Project) { __error("make.awk: Project undefined"); return }
 
-    for (f = Format["length"]; f; --f) {
+    for (f = Format["0length"]; f; --f) {
         format = Format[f]
-    for (n = 1; n <= config["files"]["length"]; ++n) {
+    for (n = 1; n <= config["files"]["0length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
         if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
         if (Project == short) short = ""
 
-        if (!preproc[format][name]["length"]) {
+        if (!preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
             if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
             else {
-                pre["length"]; Array_clear(pre)
+                pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
             }
         }
 
-        if (!precomp[format][name]["length"]) {
+        if (!precomp[format][name]["0length"]) {
             if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
             if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-            precomp[format][name]["length"]
+            precomp[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else {
-                pre["length"]; Array_clear(pre)
+                pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
                 ++o
@@ -229,46 +229,46 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
     config["next"]
     if (!Project) { __error("make.awk: Project undefined"); return }
 
-    for (f = 1; f <= Format["length"]; ++f) {
+    for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
-    for (n = 1; n <= config["files"]["length"]; ++n) {
+    for (n = 1; n <= config["files"]["0length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
         if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
         if (Project == short) short = ""
 
-        if (!preproc[format][name]["length"]) {
+        if (!preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
             if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
             else {
-                pre["length"]; Array_clear(pre)
+                pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
             }
         }
 
-        if (!precomp[format][name]["length"]) {
+        if (!precomp[format][name]["0length"]) {
             if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
             if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-            precomp[format][name]["length"]
+            precomp[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else {
-                pre["length"]; Array_clear(pre)
+                pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
             }
         }
 
-        if (!compiled[format][name]["length"]) {
+        if (!compiled[format][name]["0length"]) {
             if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-            compiled[format][name]["length"]
+            compiled[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
-            else if (compiled[format][name]["length"]) {
+            else if (compiled[format][name]["0length"]) {
                 file = compiled[format][name]["file"] = TEMP_DIRECTORY Project (!short?"":"."short)"..."format".o"
                 File_printTo(compiled[format][name], file, "\n", "\n", 1)
-                compiled[format][ ++compiled[format]["length"] ] = name
+                compiled[format][ ++compiled[format]["0length"] ] = name
                 ++o
             }
         }
@@ -281,7 +281,7 @@ Array_debug(config)
 
     format = "C"
     names = ""
-    for (s = 1; s <= compiled[format]["length"]; ++s) {
+    for (s = 1; s <= compiled[format]["0length"]; ++s) {
         name = compiled[format][s]
         names = String_concat(names, " ", compiled[format][name]["file"])
     }
@@ -296,7 +296,7 @@ Array_debug(config)
             options = options" -o "TEMP_DIRECTORY"lib"Project".so"
 
 __debug("C_link_library: "C_linker" "options)
-            unseen["length"]
+            unseen["0length"]
             __pipe(C_linker, options, unseen)
 File_debug(unseen)
             ++o
@@ -306,7 +306,7 @@ File_debug(unseen)
             options = options" "names
 
 __debug("C_static_library: ar "options)
-            unseen["length"]
+            unseen["0length"]
             __pipe("ar", options, unseen)
 File_debug(unseen)
             ++o
@@ -318,42 +318,42 @@ File_debug(unseen)
 function make_executable(config,    __,a,b,c,C,d,e,empty,f,fileName,format,g,h,i,j,k,l,m,n,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 Array_debug(config)
 
-    for (f = 1; f <= Format["length"]; ++f) {
+    for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
         # if (!((C = format"_linkExecutable") in FUNCTAB)) continue
-    for (n = 1; n <= config["files"]["length"]; ++n) {
+    for (n = 1; n <= config["files"]["0length"]; ++n) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
         if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
         if (Project == short) short = ""
 
-        if (!preproc[format][name]["length"]) {
+        if (!preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
             if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
             else {
-                pre["length"]; Array_clear(pre)
+                pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
             }
         }
 
-        if (!precomp[format][name]["length"]) {
+        if (!precomp[format][name]["0length"]) {
             if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
             if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-            precomp[format][name]["length"]
+            precomp[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else {
-                pre["length"]; Array_clear(pre)
+                pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
             }
         }
 
-        if (!compiled[format][name]["length"]) {
+        if (!compiled[format][name]["0length"]) {
             if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-            compiled[format][name]["length"]
+            compiled[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else {
                 fileName = compiled[format][name]["file"] = TEMP_DIRECTORY Project (!short?"":"."short)"..."format".o"
@@ -368,7 +368,7 @@ Array_debug(config)
     else options = options" -static"
 
     format = "C"
-    for (n = 1; n <= config["files"]["length"]; ++n) {
+    for (n = 1; n <= config["files"]["0length"]; ++n) {
         name = config["files"][n]
         fileName = compiled[format][name]["file"]
         options = options" "fileName
@@ -382,7 +382,7 @@ Array_debug(config)
     options = options" -o "TEMP_DIRECTORY Project
 
 __debug("C_link_executable: "C_linker" "options)
-    unseen["length"]
+    unseen["0length"]
     __pipe(C_linker, options, unseen)
 File_debug(unseen)
 

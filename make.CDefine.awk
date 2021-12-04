@@ -14,16 +14,16 @@ function CDefine_apply(i, file,
 
     name = $i
     defineBody = C_defines[name]["value"]
-    arguments["length"]
+    arguments["0length"]
 
     if ("arguments" in C_defines[name]) {
         # define expression( arg1 , arg2 ) body
-        argsL = C_defines[name]["arguments"]["length"]
+        argsL = C_defines[name]["arguments"]["0length"]
         o = i; m = ""; n = 0; p = 0
         while (++o) {
             if (o > NF) {
-                if (typeof(file["I"]) == "number" && file["I"] == Index["length"]) {
-                    if (file["z"] + 1 > file["length"]) break
+                if (typeof(file["I"]) == "number" && file["I"] == Index["0length"]) {
+                    if (file["z"] + 1 > file["0length"]) break
                     if (file[file["z"] + 1] ~ /^#/) break
                     Index_append(NF, file[++file["z"]])
                     for (j = o; j <= NF; ++j) if ($j ~ /^\s*$/) Index_remove(j--) # clean
@@ -40,9 +40,9 @@ function CDefine_apply(i, file,
             }
             if (!p && ($o == "," || $o == ")")) {
                 if (argsL || n) {
-                    a = ++arguments["length"]
+                    a = ++arguments["0length"]
                     arguments[a]["value"] = m
-                    arguments[a]["length"] = n
+                    arguments[a]["0length"] = n
                     m = ""; n = 0
                 }
                 if ($o == ",") continue
@@ -63,20 +63,20 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": not using "name)
         }
         else Index_removeRange(i + 1, o)
 if (DEBUG == 3) {
-rendered = ""; for (a = 1; a <= arguments["length"]; ++a) rendered = rendered ( a > 1 ? " , " : "" ) arguments[a]["value"]
+rendered = ""; for (a = 1; a <= arguments["0length"]; ++a) rendered = rendered ( a > 1 ? " , " : "" ) arguments[a]["value"]
 __debug(file["name"]" Line "file["z"]": using "name"  ( "C_defines[name]["arguments"]["text"]" )  ( "rendered" )")
 }
         hasVarArgs = C_defines[name]["arguments"][argsL] == "..."
         if (hasVarArgs) {
-            if (arguments["length"] < (argsL - 1))
-                __error(file["name"]" Line "file["z"]": define "name": Not enough arguments") # ("arguments["length"]" insteadof "argsL") "m)
+            if (arguments["0length"] < (argsL - 1))
+                __error(file["name"]" Line "file["z"]": define "name": Not enough arguments") # ("arguments["0length"]" insteadof "argsL") "m)
         } else {
-            if (arguments["length"] < argsL)
-                __error(file["name"]" Line "file["z"]": define "name": Not enough arguments") # ("arguments["length"]" insteadof "argsL") "m)
-            else if (arguments["length"] > argsL)
+            if (arguments["0length"] < argsL)
+                __error(file["name"]" Line "file["z"]": define "name": Not enough arguments") # ("arguments["0length"]" insteadof "argsL") "m)
+            else if (arguments["0length"] > argsL)
                 __error(file["name"]" Line "file["z"]": define "name": Too many arguments")
         }
-        for (n = 1; n <= arguments["length"]; ++n) {
+        for (n = 1; n <= arguments["0length"]; ++n) {
             Index_push(arguments[n]["value"], REFIX, FIX)
             for (j = 1; j <= NF; ++j) {
                 if ($j in C_defines) {
@@ -93,7 +93,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
                     j += m - 1
                 }
             }
-            arguments[n]["length"] = NF
+            arguments[n]["0length"] = NF
             arguments[n]["value"] = Index_pop()
         }
         Index_push(defineBody, REFIX, FIX)
@@ -108,9 +108,9 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
                             Index_remove(o + 1); __warning(file["name"]" Line "file["z"]": Not concatenating variable arguments")
                         }
                         code = ""; a = 0
-                        for (c = argsL; c <= arguments["length"]; ++c) {
+                        for (c = argsL; c <= arguments["0length"]; ++c) {
                             code = String_concat(code, FIX","FIX, arguments[c]["value"])
-                            a += arguments[c]["length"]
+                            a += arguments[c]["0length"]
                             if (c > argsL) ++a
                         }
                         if ($(o - 1) == "#") {
@@ -140,8 +140,8 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
                     break
                 }
                 if ($o == C_defines[name]["arguments"][n]) {
-                    if (n in arguments && arguments[n]["length"]) {
-                        if (arguments[n]["length"] > 1 && $(o - 1) == "#") {
+                    if (n in arguments && arguments[n]["0length"]) {
+                        if (arguments[n]["0length"] > 1 && $(o - 1) == "#") {
                             Index_push(arguments[n]["value"], "", "")
                             for (s = 1; s <= NF; ++s) {
                                 if ($s ~ REFIX) { $s = " "; continue }
@@ -152,7 +152,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
                         }
                         else {
                             $o = arguments[n]["value"]
-                            o += arguments[n]["length"]
+                            o += arguments[n]["0length"]
                             Index_reset()
                         }
                     }

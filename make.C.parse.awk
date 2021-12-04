@@ -21,11 +21,11 @@ function C_parse(fileName, input,
     __,a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
 {
 if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
-    if ( !input["length"] ) if (!fileName || !File_read(input, fileName)) return
+    if ( !input["0length"] ) if (!fileName || !File_read(input, fileName)) return
     parsed[fileName]["name"] = fileName
 
     Index_push("", "", "", "\0", "\n")
-for (z = 1; z <= input["length"]; ++z) {
+for (z = 1; z <= input["0length"]; ++z) {
     Index_reset(input[z])
 
     was = "newline"
@@ -37,7 +37,7 @@ for (z = 1; z <= input["length"]; ++z) {
                 was = "comment"; comments = 1; n = i + 1
                 while (++n) {
                     if (n > NF) {
-                        if (++z <= input["length"]) { Index_append(NF, "\n"); Index_append(NF, input[z]); --n; continue }
+                        if (++z <= input["0length"]) { Index_append(NF, "\n"); Index_append(NF, input[z]); --n; continue }
                         break
                     }
                     if (n > i + 2 && $(n - 1) == "/" && $n == "*") {
@@ -61,7 +61,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
             if ($(i + 1) == "/") {
                 was = "comment"
                 $(++i) = "*"
-                while ($NF == "\\") { Index_remove(NF); if (++z <= input["length"]) Index_append(NF, input[z]) }
+                while ($NF == "\\") { Index_remove(NF); if (++z <= input["0length"]) Index_append(NF, input[z]) }
                 Index_append(NF, "*/")
 if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
                 i = NF
@@ -73,7 +73,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
             continue
         }
         if ($i == "\\") {
-            if (i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+            if (i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
             if ($(i + 1) == "n") {
                 __warning(fileName": Line "z": Stray \\n")
                 Index_remove(i, i + 1); --i
@@ -123,7 +123,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
             string = ""
             n = i; while (++n <= NF) {
                 if ($n == "\\") {
-                    if (n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if (n == NF) { Index_remove(n--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     string = string"\\"$(n + 1)
                     ++n; continue
                 }
@@ -131,7 +131,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
                 string = string $n
                 if (n == NF) {
                     # $(++NF) = "\\"; $(++NF) = "n"; n += 2
-                    # if (++z <= input["length"]) Index_append(NF, input[z])
+                    # if (++z <= input["0length"]) Index_append(NF, input[z])
                     # continue
                     $(++NF) = "\""
                     __warning(fileName": Line "z": String \" without ending \"")
@@ -149,7 +149,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
                 string = ""
                 n = i; while (++n <= NF) {
                     if ($n == "\\") {
-                        if (n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                        if (n == NF) { Index_remove(n--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                         string = string"\\"$(n++)
                         continue
                     }
@@ -180,7 +180,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             string = ""
             n = i; while (++n <= NF) {
                 if ($n == "\\") {
-                    if (n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if (n == NF) { Index_remove(n--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     string = string"\\"$(n++)
                     continue
                 }
@@ -276,12 +276,12 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 i += 2
                 zahl = "0x"
                 while (++i <= NF) {
-                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     if ($i ~ /[0-9a-fA-F]/) { zahl = zahl $i; continue }
                     --i; break
                 }
                 while (++i <= NF) {
-                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     if ($i ~ /[ulUL]/) { zahl = zahl $i; continue }
                     --i; break
                 }
@@ -293,13 +293,13 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             }
             zahl = $i
             while (++i <= NF) {
-                if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                 if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                 --i; break
             }
             if ($(i + 1) ~ /[uUlL]/) {
                 while (++i <= NF) {
-                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     if ($i ~ /[uUlL]/) { zahl = zahl $i; continue }
                     --i; break
                 }
@@ -313,7 +313,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 ++i; zahl = zahl $i
                 # lies das Fragment
                 while (++i <= NF) {
-                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                     --i; break
                 }
@@ -323,14 +323,14 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 if ($(i + 1) ~ /[+-]/) { ++i; zahl = zahl $i }
                 # lies den Exponent
                 while (++i <= NF) {
-                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                     --i; break
                 }
             }
             if ($(i + 1) ~ /[fFlLdD]/) {
                 while (++i <= NF) {
-                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                    if ($i == "\\" && i == NF) { Index_remove(i--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                     if ($i ~ /[fFlLdD]/) { zahl = zahl $i; continue }
                     if ($i ~ /[0-9]/) { zahl = zahl $i; continue }
                     --i; break
@@ -346,7 +346,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
         if (is_CName($i)) {
             name = $i
             n = i; while (++n <= NF) {
-                if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= input["length"]) Index_append(NF, input[z]); continue }
+                if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                 if (is_CName($n, 1)) { name = name $n; continue }
                 --n; break
             }
@@ -360,7 +360,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
         __warning(fileName": Line "z": Unknown Character X"__HEX(Char_codepoint($i))" "$i); Index_remove(i--)
     }
 
-    parsed[fileName][++parsed[fileName]["length"]] = $0
+    parsed[fileName][++parsed[fileName]["0length"]] = $0
 }
     Index_pop()
 if (DEBUG == 2) __debug("A: C_parse File "fileName)

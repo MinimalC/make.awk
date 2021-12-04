@@ -42,11 +42,11 @@ function CSharp_prepare_preprocess(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p
 
 function CSharp_prepare_precompile(config,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
-    CSharp_Types["length"]
+    CSharp_Types["0length"]
     Array_clear(CSharp_Types)
     if (!("System" in CSharp_Types)) ; # TODO
 
-    precomp["CSharp"]["length"]
+    precomp["CSharp"]["0length"]
     # Array_clear(precomp["CSharp"])
 }
 
@@ -60,20 +60,20 @@ function CSharp_preprocess(fileName) {
 
 function CSharp_precompile(name,    __,a,A,AST,b,c,d,e,expressions,f,g,h,i,I,j,k,l,level,m,n,o,p,pre,q,r,s,S,t,T,u,using,v,w,x,y,z)
 {
-    if (!preproc["CSharp"][name]["length"]) return
+    if (!preproc["CSharp"][name]["0length"]) return
 
     Index_push("", REFIX, FIX, "\0", "\n")
-    for (z = 1; z <= preproc["CSharp"][name]["length"]; ++z) {
+    for (z = 1; z <= preproc["CSharp"][name]["0length"]; ++z) {
         Index_reset(preproc["CSharp"][name][z])
         if ($1 == "#") continue
         pre = String_concat(pre, FIX, preproc["CSharp"][name][z])
     }
     Index_pop()
 
-    A = AST["length"] = 1
-    S = AST[A]["length"] = 1
-    T = AST[A][S]["length"] = 1
-    using["length"]
+    A = AST["0length"] = 1
+    S = AST[A]["0length"] = 1
+    T = AST[A][S]["0length"] = 1
+    using["0length"]
 
 Index_push(pre, REFIX, FIX, "\0", "\n")
 for (i = I = 1; i <= NF; ++i) {
@@ -99,14 +99,14 @@ for (i = I = 1; i <= NF; ++i) {
             Index_remove(i--)
             if ($i == ",") Index_remove(i--)
         }
-        else using[++using["length"]] = name
+        else using[++using["0length"]] = name
 
         if ($(i + 1) == ",") continue
         if ($(i + 1) != ";") Index_append(i, ";")
         ++i
 
-        precomp["CSharp"][ ++precomp["CSharp"]["length"] ] = Index_getRange(I, i)
-        I = i + 1; S = ++AST[A]["length"]
+        precomp["CSharp"][ ++precomp["CSharp"]["0length"] ] = Index_getRange(I, i)
+        I = i + 1; S = ++AST[A]["0length"]
         continue
     }
 
@@ -119,7 +119,7 @@ if (DEBUG) { __debug("CSharp_using "); Array_debug(using) }
 
 #function CSharp_compile(   __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 #{
-#    for (z = 1; z <= precomp["CSharp"]["length"]; ++z)
-#        compiled["CSharp"][++compiled["CSharp"]["length"]] = precomp["CSharp"][z]
+#    for (z = 1; z <= precomp["CSharp"]["0length"]; ++z)
+#        compiled["CSharp"][++compiled["CSharp"]["0length"]] = precomp["CSharp"][z]
 #    return 1
 #}

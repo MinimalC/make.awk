@@ -35,7 +35,7 @@ function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,w
                     includeDir = get_DirectoryName(file)
                     workingDir = ENVIRON["PWD"]"/"
                     for (o = argi; o <= ARGV_length(); ++o) options = options" "ARGV[o]
-                    output["length"]; Array_clear(output)
+                    output["0length"]; Array_clear(output)
                     r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!runDir?"":":"runDir))
                     File_printTo(output, "/dev/stdout")
                     exit r
@@ -47,7 +47,7 @@ function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,w
 
 function END_run() {
     # don't if (ERRORS) exit 0; else exit 1
-    if (Index["length"]) __error("run.awk: More Index_push() than Index_pop()")
+    if (Index["0length"]) __error("run.awk: More Index_push() than Index_pop()")
 }
 
 function run_ARGV_ARGC(config) { ARGC_ARGV_debug() }
@@ -251,48 +251,48 @@ function File_remove(fileName, force) {
 }
 
 function get_FileNameArray(file, name,  __,path) {
-    path["length"] = split(name, path, "/")
-    file["length"] = split(path[path["length"]], file, ".")
-    return file["length"]
+    path["0length"] = split(name, path, "/")
+    file["0length"] = split(path[path["0length"]], file, ".")
+    return file["0length"]
 }
 
 function get_FileName(pathName,    __,path) {
-    path["length"] = split(pathName, path, "/")
-    if (path[path["length"]] == "") List_remove(path, path["length"])
-    return path[path["length"]]
+    path["0length"] = split(pathName, path, "/")
+    if (path[path["0length"]] == "") List_remove(path, path["0length"])
+    return path[path["0length"]]
 }
 
 function get_FileNameExt(pathName,    __,file,fileExt,path) {
-    path["length"] = split(pathName, path, "/")
-    file["length"] = split(path[path["length"]], file, ".")
-    return fileExt = file[file["length"]]
+    path["0length"] = split(pathName, path, "/")
+    file["0length"] = split(path[path["0length"]], file, ".")
+    return fileExt = file[file["0length"]]
 }
 
 function get_FileNameNoExt(pathName,    __,f,file,fileName,i,path) {
-    path["length"] = split(pathName, path, "/")
-    file["length"] = split(path[path["length"]], file, ".")
-    if (file["length"]) List_remove(file, file["length"])
-    for (i = 1; i <= file["length"]; ++i) fileName = String_concat(fileName, ".", file[i])
+    path["0length"] = split(pathName, path, "/")
+    file["0length"] = split(path[path["0length"]], file, ".")
+    if (file["0length"]) List_remove(file, file["0length"])
+    for (i = 1; i <= file["0length"]; ++i) fileName = String_concat(fileName, ".", file[i])
     return fileName
 }
 
 function get_DirectoryName(pathName,    __,dirName,i,path) {
-    path["length"] = split(pathName, path, "/")
-    for (i = 1; i < path["length"]; ++i)
+    path["0length"] = split(pathName, path, "/")
+    for (i = 1; i < path["0length"]; ++i)
         dirName = dirName path[i] "/"
     return dirName
 }
 
 function Path_join(pathName0, pathName1,    __,p,path0,path1,r) {
-    path0["length"] = split(pathName0, path0, "/")
-    if (path0["length"] && path0[path0["length"]] == "") delete path0[path0["length"]--]
-    path1["length"] = split(pathName1, path1, "/")
-    for (p = 1; p <= path1["length"]; ++p)
-        path0[++path0["length"]] = path1[p]
-    for (p = 1; p <= path0["length"]; ++p)
+    path0["0length"] = split(pathName0, path0, "/")
+    if (path0["0length"] && path0[path0["0length"]] == "") delete path0[path0["0length"]--]
+    path1["0length"] = split(pathName1, path1, "/")
+    for (p = 1; p <= path1["0length"]; ++p)
+        path0[++path0["0length"]] = path1[p]
+    for (p = 1; p <= path0["0length"]; ++p)
         if (path0[p + 1] == "..") { List_remove(path0, p + 1); List_remove(path0, p); p -= 2; continue }
-    for (p = 1; p <= path0["length"]; ++p)
-        r = r path0[p] (p < path0["length"] ? "/" : "")
+    for (p = 1; p <= path0["0length"]; ++p)
+        r = r path0[p] (p < path0["0length"] ? "/" : "")
     return r
 }
 
@@ -382,15 +382,15 @@ function __BEGIN(controller, action, usage,
             ARGV[i] = ""; continue
         }
         if (Directory_exists(ARGV[i])) {
-            config["directories"][++config["directories"]["length"]] = ARGV[i]
+            config["directories"][++config["directories"]["0length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
         if (File_exists(ARGV[i])) {
-            config["files"][++config["files"]["length"]] = ARGV[i]
+            config["files"][++config["files"]["0length"]] = ARGV[i]
             ARGV[i] = ""; continue
         }
         if (ARGV[i]) {
-            config["names"][ ++config["names"]["length"] ] = ARGV[i]
+            config["names"][ ++config["names"]["0length"] ] = ARGV[i]
             # __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
             ARGV[i] = ""
         }
@@ -410,7 +410,7 @@ function __BEGIN(controller, action, usage,
 function Array_create(array,    __,at) {
     if ((at = typeof(array)) == "untyped") ;
     else if ((at) != "array") { __error("Array_create: array is typeof "at); return }
-    if (!array["length"]) delete array["length"]
+    if (!array["0length"]) delete array["0length"]
 }
 
 function List_create(array) {
@@ -419,18 +419,18 @@ function List_create(array) {
 
 function Array_clear(array,    __,at,i) {
     Array_create(array)
-    delete array # array["length"]
+    delete array # array["0length"]
 }
 
 function List_clear(array,    __,at,i) {
     Array_create(array)
-    for (i = 1; i <= array["length"]; ++i) delete array[i]
-    delete array["length"]
+    for (i = 1; i <= array["0length"]; ++i) delete array[i]
+    delete array["0length"]
 }
 
 function List_length(array,   __,at) {
     if ((at = typeof(array)) != "array") { __error("List_length: array is typeof "at); return }
-    return "length" in array ? array["length"] : 0
+    return "0length" in array ? array["0length"] : 0
 }
 
 function List_first(array,    __,at) {
@@ -447,7 +447,7 @@ function List_last(array,    __,at,l) {
 
 function List_add(array, value,    __,at,l) {
     if ((at = typeof(array)) != "array") { __error("List_add: array is typeof "at); return }
-    l = ++array["length"]
+    l = ++array["0length"]
     if (typeof(value) != "untyped") array[l] = value
     return l
 }
@@ -455,7 +455,7 @@ function List_add(array, value,    __,at,l) {
 function List_insert(array, i, value,    __,at,it,l,n) {
     if ((at = typeof(array)) != "array") { __error("List_insert: array is typeof "at); return }
     if ((it = typeof(i)) != "number") { __error("List_insert: i is typeof "it); return }
-    l = ++array["length"]
+    l = ++array["0length"]
     for (n = l; n > i; --n) array[n] = array[n - 1]
     if (typeof(value) != "untyped") array[i] = value
 }
@@ -464,7 +464,7 @@ function List_contains(array, item,    __,at,ir,n,r,type) {
     if ((at = typeof(array)) != "array") { __error("List_contains: array is typeof "at); return }
     if ((type = typeof(item)) == "array") { __error("List_contains: doesn't work with with arrays"); return }
     ir = (type == "regex")
-    for (n = 1; n <= array["length"]; ++n) {
+    for (n = 1; n <= array["0length"]; ++n) {
         if (ir) { if (array[n] ~ item) { r = n; break } }
         else if (array[n] == item) { r = n; break }
     }
@@ -474,18 +474,18 @@ function List_contains(array, item,    __,at,ir,n,r,type) {
 function List_copy(file, copy,    __,ct,ft,i) {
     if ((ft = typeof(file)) != "array") { __error("List_copy: file is typeof "ft); return }
     if ((ct = typeof(copy)) != "array") { __error("List_copy: copy is typeof "ct); return }
-    for (i = 1; i <= file["length"]; ++i)
-        copy[++copy["length"]] = file[i]
+    for (i = 1; i <= file["0length"]; ++i)
+        copy[++copy["0length"]] = file[i]
 }
 
 function Dictionary_copy(file, copy,    __,ct,cit,ft,fit,i) {
     if ((ft = typeof(file)) != "array") { __error("Dictionary_copy: file is typeof "ft); return }
     if ((ct = typeof(copy)) != "array") { __error("Dictionary_copy: copy is typeof "ct); return }
     for (i in file) {
-        if (i == "length" || i ~ /^[0-9]/) continue
+        if (i ~ /^[0-9]/) continue
         if ((fit = typeof(file[i])) == "unassigned") copy[i]
         else if (fit == "array") {
-            copy[i]["length"]
+            copy[i]["0length"]
             Dictionary_copy(file[i], copy[i])
         }
         else if (fit == "string" || fit == "number") {
@@ -500,7 +500,7 @@ function Dictionary_count(array,    __,at,count,name) {
     if ((at = typeof(array)) == "untyped" || at == "unassigned") return
     if (at != "array") { __error("Dictionary_count: array is typeof "at); return }
     for (name in array) {
-        if (name == "length" || name ~ /^[0-9]/) continue
+        if (name ~ /^[0-9]/) continue
         ++count
     }
     return count
@@ -509,11 +509,11 @@ function Dictionary_count(array,    __,at,count,name) {
 function List_remove(array, i,    __,at,it,l,n) {
     if ((at = typeof(array)) != "array") { __error("List_remove: array is typeof "at); return }
     if ((it = typeof(i)) != "number") { __error("List_remove: i is typeof "it); return }
-    l = array["length"]
+    l = array["0length"]
     for (n = i; n < l; ++n)
         array[n] = array[n + 1]
     delete array[l]
-    --array["length"]
+    --array["0length"]
 }
 
 function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
@@ -543,7 +543,7 @@ function Array_print(array) {
 }
 
 function Array_error(array,    __,et) {
-    if ((et = typeof(ERRORS)) == "untyped" || et == "number") ++ERRORS
+    ERRORS; if ((et = typeof(ERRORS)) == "unassigned" || et == "number") ++ERRORS
     else __warning("Array_error: ERRORS is typeof "et)
     Array_printTo(array, "/dev/stderr")
 }
@@ -553,7 +553,7 @@ function Array_debug(array, level) {
 }
 
 function List_insertBefore(array, string0, string1,    __,l,n,n0,n1) {
-    l = array["length"]
+    l = array["0length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
         if (array[n] == string1) { n1 = n }
@@ -573,7 +573,7 @@ function List_insertBefore(array, string0, string1,    __,l,n,n0,n1) {
 }
 
 function List_insertAfter(array, string0, string1,    __,l,n,n0,n1) {
-    l = array["length"]
+    l = array["0length"]
     for (n = 1; n <= l; ++n) {
         if (array[n] == string0) { n0 = n }
         if (array[n] == string1) { n1 = n }
@@ -593,9 +593,9 @@ function List_insertAfter(array, string0, string1,    __,l,n,n0,n1) {
 }
 
 function List_sort(source,    __,copy,i) {
-    for (i = 1; i <= source["length"]; ++i) copy[i] = source[i]
+    for (i = 1; i <= source["0length"]; ++i) copy[i] = source[i]
     asort(copy)
-    for (i = 1; i <= source["length"]; ++i) source[i] = copy[i]
+    for (i = 1; i <= source["0length"]; ++i) source[i] = copy[i]
 }
 
 function List_replaceString(output, input, fs, ofs) {
@@ -607,14 +607,14 @@ function String_replace(string, fs, ofs, rs, ors,   __,r) {
 }
 
 function String_split(array, string, sepp) {
-    return array["length"] = split(string, array, sepp)
+    return array["0length"] = split(string, array, sepp)
 }
 
 function String_join(array, ofs,    __,at,i,r) {
     if ((at = typeof(array)) != "array") { __error("String_join: array is typeof "at); return }
     if (typeof(ofs) == "untyped") ofs = OFS
-    if (!array["length"]) return ""
-    for (i = 1; i <= array["length"]; ++i)
+    if (!array["0length"]) return ""
+    for (i = 1; i <= array["0length"]; ++i)
         if (i == 1) r = array[1]
         else r = r ofs array[i]
     return r
@@ -726,7 +726,7 @@ function __hex(number,    __,nt,s) {
 
 function Index_pushRange(from, to, fs, ofs, rs, ors,    __,i,m) {
     # save old Index
-    i = ++Index["length"]
+    i = ++Index["0length"]
     Index[i]["OUTPUTRECORDSEP"] = ORS
     Index[i]["RECORDSEP"] = RS
     Index[i]["OUTPUTFIELDSEP"] = OFS
@@ -747,7 +747,7 @@ function Index_pushRange(from, to, fs, ofs, rs, ors,    __,i,m) {
 
 function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
     # save old Index
-    i = ++Index["length"]
+    i = ++Index["0length"]
     Index[i]["OUTPUTRECORDSEP"] = ORS
     Index[i]["RECORDSEP"] = RS
     Index[i]["OUTPUTFIELDSEP"] = OFS
@@ -763,7 +763,7 @@ function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
     if (typeof(new) == "untyped" || typeof(new) == "unassigned") $0 = ""
     else if (typeof(new) == "array") {
         Index_push("", fs, ofs, rs, ors)
-        for (z = 1; z <= new["length"]; ++z)
+        for (z = 1; z <= new["0length"]; ++z)
             if (z == 1) n = Index_reset(new[1])
             else n = n ORS (Index_reset(new[z]))
         Index_pop()
@@ -777,7 +777,7 @@ function Index_pop(    null,i,r) { # Index
 
     r = Index_reset()
 
-    if (!(i = Index["length"])) __error("run.awk: More Index_pop() than Index_push()")
+    if (!(i = Index["0length"])) __error("run.awk: More Index_pop() than Index_push()")
     else {
         ORS = Index[i]["OUTPUTRECORDSEP"]
         RS  = Index[i]["RECORDSEP"]
@@ -785,7 +785,7 @@ function Index_pop(    null,i,r) { # Index
         FS  = Index[i]["FIELDSEP"]
         $0  = Index[i][0]
         delete Index[i]
-        --Index["length"]
+        --Index["0length"]
         Index_reset()
     }
     return r
@@ -800,7 +800,7 @@ function Index_pullArray(output, input, fs, ofs,   __,it,ot,z) {
     if ((it = typeof(input)) != "array") { __error("Index_pullArray: input is typeof "it); return }
     if ((ot = typeof(output)) != "array") { __error("Index_pullArray: output is typeof "ot); return }
     Index_push("", fs, ofs)
-    for (z = 1; z <= input["length"]; ++z) output[++output["length"]] = Index_reset(input[z])
+    for (z = 1; z <= input["0length"]; ++z) output[++output["0length"]] = Index_reset(input[z])
     Index_pop()
 }
 
@@ -903,12 +903,12 @@ function Index_reset(new) {
 function File_read(file, fileName, rs, ors,    __,x,y,z) {
     if (typeof(fileName) == "untyped" || !fileName) { __error("File_read without fileName"); return }
     if (!file["name"]) file["name"] = fileName
-    x = z = file["length"]
+    x = z = file["0length"]
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
     while (0 < y = ( getline < fileName ))
-        file[z = ++file["length"]] = $0
+        file[z = ++file["0length"]] = $0
     Index_pop()
     if (fileName != "/dev/stdin") close(fileName)
     if (y == -1) { __error("File doesn't exist: "fileName); return }
@@ -919,9 +919,9 @@ function File_printTo(file, to, rs, ors, noLastORS,    __,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    if (!file["length"]) { if (noLastORS) printf "" > to; else print "" > to }
-    else while (++z <= file["length"]) {
-        if (noLastORS && z == file["length"]) { printf "%s", file[z] > to; break }
+    if (!file["0length"]) { if (noLastORS) printf "" > to; else print "" > to }
+    else while (++z <= file["0length"]) {
+        if (noLastORS && z == file["0length"]) { printf "%s", file[z] > to; break }
         print file[z] > to
     }
     Index_pop()
@@ -931,9 +931,9 @@ function File_printFTo(file, to, format, rs, ors, noLastORS,    __,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    if (!file["length"]) printf "" > to
-    else while (++z <= file["length"]) {
-        if (noLastORS && z == file["length"]) { printf format, file[z] > to; break }
+    if (!file["0length"]) printf "" > to
+    else while (++z <= file["0length"]) {
+        if (noLastORS && z == file["0length"]) { printf format, file[z] > to; break }
         printf format, file[z] > to
     }
     Index_pop()
@@ -955,10 +955,10 @@ function File_debug(file, rs, ors, noLastORS) {
 
 function File_readString(file, string, rs,    __,i,splits,x,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
-    splits["length"] = split(string, splits, rs)
-    x = z = file["length"]
-    for (i = 1; i <= splits["length"]; ++i) {
-        z = ++file["length"]
+    splits["0length"] = split(string, splits, rs)
+    x = z = file["0length"]
+    for (i = 1; i <= splits["0length"]; ++i) {
+        z = ++file["0length"]
         file[z] = splits[i]
     }
     return z - x
@@ -966,12 +966,12 @@ function File_readString(file, string, rs,    __,i,splits,x,z) {
 
 function File_toString(file, ors,    __,r,z) {
     if (typeof(ors) == "untyped") ors = "\n"
-    while (++z <= file["length"]) r = String_concat(r, ors, file[z])
+    while (++z <= file["0length"]) r = String_concat(r, ors, file[z])
     return r
 }
 
 function File_clearLines(file, regex,    __,i) {
-    for (i = 1; i <= file["length"]; ++i)
+    for (i = 1; i <= file["0length"]; ++i)
         if (file[i] ~ regex) file[i] = ""
 }
 
@@ -985,7 +985,7 @@ function __sh(options, input, output, directory, variables) {
 
 function __command(command, options, input, output, directory, variables,    __,unseen) {
     if (typeof(input) == "untyped") {
-        unseen["length"]
+        unseen["0length"]
         return __pipe(command, options, unseen, directory, variables)
     }
     if (typeof(output) == "untyped" || typeof(output) == "string") {
@@ -1007,7 +1007,7 @@ function __pipe(command, options, output, directory, variables,    __,a,cmd,y) {
     Index_push("", "", "", "\n", "\n")
     a = typeof(output) == "array"
     while (0 < y = ( cmd | getline ))
-        if (a) output[++output["length"]] = $0
+        if (a) output[++output["0length"]] = $0
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(cmd)
@@ -1020,15 +1020,15 @@ function __coprocess(command, options, input, output, directory, variables,    _
     if (typeof(directory) == "string" && directory)
         cmd = "cd \""directory"\" ; "cmd
     cmd = cmd" "options
-    if (typeof(input) == "array" && input["length"])
-        for (z = 1; z <= input["length"]; ++z)
+    if (typeof(input) == "array" && input["0length"])
+        for (z = 1; z <= input["0length"]; ++z)
             print input[z] |& cmd
     else print "" |& cmd
     close(cmd, "to")
     Index_push("", "", "", "\n", "\n")
     a = typeof(output) == "array"
     while (0 < y = ( cmd |& getline ))
-        if (a) output[++output["length"]] = $0
+        if (a) output[++output["0length"]] = $0
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
     return close(cmd)

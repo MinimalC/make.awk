@@ -7,7 +7,7 @@
 @include "make.CDefine.awk"
 
 function gcc_version(    __,output) {
-    output["length"]
+    output["0length"]
     __command("gcc", "-dumpversion", output)
     return output[1]
 }
@@ -57,7 +57,7 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
 
     List_create(includeDirs)
     # List_clear(includeDirs)
-    if (!includeDirs["length"]) {
+    if (!includeDirs["0length"]) {
         List_add(includeDirs, "/usr/include/")
         List_add(includeDirs, "/usr/include/"ARCHITECTURE"-linux-gnu/")
 
@@ -69,35 +69,35 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
             else  __warning("make.awk: Unsupported C_compiler")
         }
 
-        for (d = 1; d <= config["directories"]["length"]; ++d)
+        for (d = 1; d <= config["directories"]["0length"]; ++d)
             if (Directory_exists((dir = config["directories"][d])"include/")) {
                 List_add(includeDirs, dir)
                 List_add(includeDirs, dir"include/")
             } else if (Directory_exists(dir))
                 List_add(includeDirs, dir)
 
-        if (d > config["directories"]["length"])
-            for (f = 1; f <= config["files"]["length"]; ++f)
+        if (d > config["directories"]["0length"])
+            for (f = 1; f <= config["files"]["0length"]; ++f)
                 # use the first file's directory, if there is one, add also to config
                 if (dir = get_DirectoryName(config["files"][f])) { List_add(includeDirs, dir); List_add(config["directories"], dir); break }
     }
 
     Array_clear(C_defines)
-    config["names"]["length"]
+    config["names"]["0length"]
     for (d in config["names"]) {
-        if (d == "length" || d ~ /^[0-9]+$/) continue
+        if (d ~ /^[0-9]/) continue
         if (d !~ /^D.+/) continue
         C_defines[c = substr(d, 2)]["value"] = config["names"][d]
     }
 
     Array_create(parsed)
-    if (!parsed[C_compiler]["length"]) {
+    if (!parsed[C_compiler]["0length"]) {
         Array_clear(input)
         if (STD == "ISO") {
-            if (PLATFORM == "LINUX") input[++input["length"]] = "# define _GNU_SOURCE 1"
-            input[++input["length"]] = "# include <stddef.h>"
-            input[++input["length"]] = "# include <stdint.h>"
-            input[++input["length"]] = "# include <limits.h>"
+            if (PLATFORM == "LINUX") input[++input["0length"]] = "# define _GNU_SOURCE 1"
+            input[++input["0length"]] = "# include <stddef.h>"
+            input[++input["0length"]] = "# include <stdint.h>"
+            input[++input["0length"]] = "# include <limits.h>"
         }
         Array_clear(output)
         output["name"] = C_compiler
@@ -106,27 +106,27 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         C_compiler_preprocess("", input, output)
 
         if (STD == "ISO") {
-            output[++output["length"]] = "# undef NULL"
-            output[++output["length"]] = "# define NULL  0"
-            output[++output["length"]] = "# noundef NULL"
+            output[++output["0length"]] = "# undef NULL"
+            output[++output["0length"]] = "# define NULL  0"
+            output[++output["0length"]] = "# noundef NULL"
 
-            output[++output["length"]] = "# if defined ( NDEBUG )"
-            output[++output["length"]] = "# noundefine NDEBUG"
-            output[++output["length"]] = "# define assert( e )"
-            output[++output["length"]] = "# else"
-            output[++output["length"]] = "/* GLIBC 7 assert.h: This prints an \"Assertion failed\" message and aborts. */"\
+            output[++output["0length"]] = "# if defined ( NDEBUG )"
+            output[++output["0length"]] = "# noundefine NDEBUG"
+            output[++output["0length"]] = "# define assert( e )"
+            output[++output["0length"]] = "# else"
+            output[++output["0length"]] = "/* GLIBC 7 assert.h: This prints an \"Assertion failed\" message and aborts. */"\
     " extern void  __assert_fail ( const char  * __assertion, const char  * __file, unsigned int  __line, const char  * __function )"\
     (C_compiler == "gcc"?" __attribute__ (( __nothrow__ , __leaf__ )) __attribute__ (( __noreturn__ ))":"") ";"
-    output[++output["length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
-            output[++output["length"]] = "# endif"
-            output[++output["length"]] = "# noundefine assert"
+    output[++output["0length"]] = "# define assert( e )  if ( ! ( e ) ) __assert_fail ( # e , __FILE__ , __LINE__ , __FUNCTION__ ) ;"
+            output[++output["0length"]] = "# endif"
+            output[++output["0length"]] = "# noundefine assert"
         }
 
         C_parse(C_compiler, output)
     }
-    if (C == "C" && !parsed["."Project".config.h"]["length"]) {
+    if (C == "C" && !parsed["."Project".config.h"]["0length"]) {
         name = ""
-        for (d = 1; d <= config["directories"]["length"]; ++d) {
+        for (d = 1; d <= config["directories"]["0length"]; ++d) {
             dir = config["directories"][d]
             #output["name"] = "configure"
             name = Project".config.awk"; if (File_exists(dir name)) break
@@ -137,13 +137,13 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         if (name == Project".config.awk") __warning("make.awk: Using "name) # run_awk(Project".config.awk", "configure_"Project, config)
         else if (!name) __warning("make.awk: Use ./configure to create config.h")
         #else __warning("make.awk: Using "name)
-#if (DEBUG) if (output["length"]) File_printTo(output, "/dev/stderr")
+#if (DEBUG) if (output["0length"]) File_printTo(output, "/dev/stderr")
 
         Array_clear(output)
-        if (!output["length"]) { file = "."Project".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
-        if (!output["length"]) { file = ".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
-        if (!output["length"]) { file = "config.h"; if (File_exists(dir file)) File_read(output, dir file) }
-        if (!output["length"]) {
+        if (!output["0length"]) { file = "."Project".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+        if (!output["0length"]) { file = ".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+        if (!output["0length"]) { file = "config.h"; if (File_exists(dir file)) File_read(output, dir file) }
+        if (!output["0length"]) {
             if (name == Project".config.awk") ; # say nothing
             else if (!name) ; # say nothing
             else __warning("make.awk: Use "name" to create a "file)
@@ -155,7 +155,7 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         }
     }
 
-    preproc["C"]["length"]
+    preproc["C"]["0length"]
     # Array_clear(preproc["C"])
 }
 
@@ -171,20 +171,20 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         else __warning("make.awk: C_preprocess: Unknown "C)
     }
 
-    if (!(fileName in parsed) && (!C_parse(fileName) || !parsed[fileName]["length"])) return
+    if (!(fileName in parsed) && (!C_parse(fileName) || !parsed[fileName]["0length"])) return
 
-    preproc[C][O]["length"]
-    if (!original) if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["length"] ] = O
+    preproc[C][O]["0length"]
+    if (!original) if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["0length"] ] = O
 
-    preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX"1"FIX"\""fileName"\""
-    # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
+    preproc[C][O][ ++preproc[C][O]["0length"] ] = "#"FIX"1"FIX"\""fileName"\""
+    # preproc[C][O][ preproc[C][O]["0length"] ] = "#"FIX"1"FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["0length"]" */"
 
     C_defines["__FILE__"]["value"] = "\""fileName"\""
 
-    ifExpressions["length"]
+    ifExpressions["0length"]
 
     Index_push("", REFIX, FIX, "\0", "\n")
-    for (z = 1; z <= parsed[fileName]["length"]; ++z) {
+    for (z = 1; z <= parsed[fileName]["0length"]; ++z) {
         Index_reset(parsed[fileName][z])
 
         C_defines["__LINE__"]["value"] = z
@@ -217,7 +217,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
                 if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
             }
 
-            f = ++ifExpressions["length"]
+            f = ++ifExpressions["0length"]
             ifExpressions[f]["if"] = Index_pull($0, REFIX, " ")
 
             w = CDefine_evaluate($0)
@@ -225,7 +225,7 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
             if (x) ifExpressions[f]["do"] = 1
 
 if (DEBUG == 3 || DEBUG == 4) {
-for (e = 1; e <= ifExpressions["length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
+for (e = 1; e <= ifExpressions["0length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
 if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
 }
             NF = 0
@@ -237,7 +237,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "
                 if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
             }
 
-            f = ifExpressions["length"]
+            f = ifExpressions["0length"]
             ifExpressions[f]["else if"] = Index_pull($0, REFIX, " ")
 
             w = CDefine_evaluate($0)
@@ -246,7 +246,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") if " ifExpressions[f]["if"] "
             else if (!ifExpressions[f]["do"] && x) ifExpressions[f]["do"] = 1
 
 if (DEBUG == 3 || DEBUG == 4) {
-for (e = 1; e <= ifExpressions["length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
+for (e = 1; e <= ifExpressions["0length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
 if (e > f) __debug(fileName" Line "z": (Level "f") else if " ifExpressions[f]["else if"] "  == "w" "(ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
 }
             NF = 0
@@ -254,21 +254,21 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else if " ifExpressions[f]["e
         else if ($2 == "else") {
             Index_remove(1)
 
-            f = ifExpressions["length"]
+            f = ifExpressions["0length"]
             ifExpressions[f]["else"] = Index_pull($0, REFIX, " ")
 
             if (ifExpressions[f]["do"] == 1) ifExpressions[f]["do"] = 2
             else if (!ifExpressions[f]["do"]) ifExpressions[f]["do"] = 1
 
 if (DEBUG == 3 || DEBUG == 4) {
-for (e = 1; e <= ifExpressions["length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
+for (e = 1; e <= ifExpressions["0length"]; ++e) { if (ifExpressions[e]["do"] == 1) continue; break }
 if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else"]?ifExpressions[f]["else"]" ":(ifExpressions[f]["if"]?ifExpressions[f]["if"]" ":""))\
 (ifExpressions[f]["do"] == 1 ? "okay" : "not okay"))
 }
             NF = 0
         }
         else if ($2 == "endif" || $2 == "end") {
-            f = ifExpressions["length"]
+            f = ifExpressions["0length"]
             List_remove(ifExpressions, f)
 
             NF = 0
@@ -276,7 +276,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
         if (!NF) { ++lz; continue }
     }
 
-        for (e = 1; e <= ifExpressions["length"]; ++e) {
+        for (e = 1; e <= ifExpressions["0length"]; ++e) {
             if (ifExpressions[e]["do"] == 1) continue
             NF = 0; break
         }
@@ -288,7 +288,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
             zZ = 0
             if ($3 ~ /^</) {
                 m = substr($3, 2, length($3) - 2)
-                for (n = 1; n <= includeDirs["length"]; ++n) {
+                for (n = 1; n <= includeDirs["0length"]; ++n) {
                     f = Path_join(includeDirs[n], m)
                     if (File_exists(f)) {
                         #if ($2 == "using") {
@@ -297,14 +297,14 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
 #if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
                         #}
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
-                        zZ = preproc[C][O]["length"]
+                        zZ = preproc[C][O]["0length"]
                         C_preprocess(f, O, C)
                         C_defines["__FILE__"]["value"] = "\""fileName"\""
                         C_defines["__LINE__"]["value"] = z
                         break
                     }
                 }
-                if (n > includeDirs["length"]) __warning(fileName" Line "z": File not found: <"m">")
+                if (n > includeDirs["0length"]) __warning(fileName" Line "z": File not found: <"m">")
             }
             else {
                 m = get_DirectoryName(fileName)
@@ -316,16 +316,16 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
 #if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": using "d)
                     #}
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
-                    zZ = preproc[C][O]["length"]
+                    zZ = preproc[C][O]["0length"]
                     C_preprocess(f, O, C)
                     C_defines["__FILE__"]["value"] = "\""fileName"\""
                     C_defines["__LINE__"]["value"] = z
                 }
                 else __warning(fileName" Line "z": File not found: \""f"\"")
             }
-            if (zZ && zZ < preproc[C][O]["length"]) {
-                preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""
-                # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
+            if (zZ && zZ < preproc[C][O]["0length"]) {
+                preproc[C][O][ ++preproc[C][O]["0length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""
+                # preproc[C][O][ preproc[C][O]["0length"] ] = "#"FIX (z + 1) FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["0length"]" */"
                 lz = 0; continue
             }
             NF = 0
@@ -371,17 +371,17 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                         if ($n in C_keywords) __warning(fileName" Line "z": Ambiguous define "name" argument \""$n"\" (is a keyword)")
                         m = String_concat(m, " ", $n)
                         if ($n == ",") continue
-                        C_defines[name]["arguments"][ ++C_defines[name]["arguments"]["length"] ] = $n
+                        C_defines[name]["arguments"][ ++C_defines[name]["arguments"]["0length"] ] = $n
                     }
                     C_defines[name]["arguments"]["text"] = m
                     Index_removeRange(1, a)
                     if ($1 == ":") {
                         Index_remove(1)
-                        zZ = z; m = $0; while (++zZ <= parsed[fileName]["length"]) {
+                        zZ = z; m = $0; while (++zZ <= parsed[fileName]["0length"]) {
                             if (parsed[fileName][zZ] ~ /^#/) break
                             m = String_concat(m, FIX"\n"FIX, parsed[fileName][zZ])
                         }
-                        if (zZ > parsed[fileName]["length"]) {
+                        if (zZ > parsed[fileName]["0length"]) {
                             __warning(fileName" Line "z": # define "name"( "C_defines[name]["arguments"]["text"]" ): without # end")
                             --zZ
                         }
@@ -459,12 +459,12 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             NF = 0
         }
         if (!NF) { ++lz; continue }
-        preproc[C][O][ ++preproc[C][O]["length"] ] = $0; continue
+        preproc[C][O][ ++preproc[C][O]["0length"] ] = $0; continue
     }
 
         #for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
 
-        parsed[fileName]["I"] = Index["length"]
+        parsed[fileName]["I"] = Index["0length"]
         for (i = 1; i <= NF; ++i) {
             if ($i ~ /^\s*$/) continue # no clean, no use
             if ($i in C_defines) {
@@ -488,19 +488,19 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
 
         if (!NF) { ++lz; continue }
 
-        if (lz <= 3) preproc[C][O]["length"] += lz
+        if (lz <= 3) preproc[C][O]["0length"] += lz
         else {
-            preproc[C][O]["length"] += 2
-            preproc[C][O][ ++preproc[C][O]["length"] ] = "#"FIX z FIX"\""fileName"\""
-            # preproc[C][O][ preproc[C][O]["length"] ] = "#"FIX z FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["length"]" */"
+            preproc[C][O]["0length"] += 2
+            preproc[C][O][ ++preproc[C][O]["0length"] ] = "#"FIX z FIX"\""fileName"\""
+            # preproc[C][O][ preproc[C][O]["0length"] ] = "#"FIX z FIX"\""fileName"\""" /* Zeile "++preproc[C][O]["0length"]" */"
         }
         lz = 0
 
-        preproc[C][O][ ++preproc[C][O]["length"] ] = $0
+        preproc[C][O][ ++preproc[C][O]["0length"] ] = $0
     }
     Index_pop()
-    if (ifExpressions["length"]) {
-        m = ""; for (n = 1; n <= ifExpressions["length"]; ++n) m = String_concat(m, " ", "# endif "ifExpressions[n]["if"])
+    if (ifExpressions["0length"]) {
+        m = ""; for (n = 1; n <= ifExpressions["0length"]; ++n) m = String_concat(m, " ", "# endif "ifExpressions[n]["if"])
         __warning(fileName" Line "z": Missing "m)
     }
     for (name in OLD_defines) {

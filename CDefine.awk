@@ -22,7 +22,7 @@ BEGIN {
     C_defines["__GNUC_PREREQ"]["isFunction"] = 1
     C_defines["__GNUC_PREREQ"]["arguments"][1] = "maj"
     C_defines["__GNUC_PREREQ"]["arguments"][2] = "min"
-    C_defines["__GNUC_PREREQ"]["arguments"]["length"] = 2
+    C_defines["__GNUC_PREREQ"]["arguments"]["0length"] = 2
     C_defines["__GNUC_PREREQ"]["value"] = "\\ ( ( __GNUC__ << 16 ) + __GNUC_MINOR__ >= ( ( maj ) << 16 ) + ( min ) )"
     C_defines["SQLITE_THREADSAFE"]["value"] = "1 /*IMP:R-07272-22309*/"
     C_defines["SQLITE_MAX_MMAP_SIZE"]["value"] = "0x7fff0000"
