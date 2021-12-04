@@ -5,6 +5,7 @@
 #include "run.awk"
 
 BEGIN { BEGIN_run() }
+END { END_run() }
 
 function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,workingDir) {
     LC_ALL="C"
@@ -44,22 +45,72 @@ function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,w
     }
 }
 
-END { END_run() }
-
 function END_run() {
-    # no if (ERRORS) exit 0; else exit 1
+    # don't if (ERRORS) exit 0; else exit 1
     if (Index["length"]) __error("run.awk: More Index_push() than Index_pop()")
 }
 
 function run_ARGV_ARGC(config) { ARGC_ARGV_debug() }
 function run_ARGC_ARGV(config) { ARGC_ARGV_debug() }
 
-function __printTo(to,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    print "" a b c d e f g h i j k l m n o p q r s t u v w x y z > to
+function __printTo(to,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,  __,msg) {
+    if (typeof(a) != "untyped") msg = String_concat(msg, " ", a)
+    if (typeof(b) != "untyped") msg = String_concat(msg, " ", b)
+    if (typeof(c) != "untyped") msg = String_concat(msg, " ", c)
+    if (typeof(d) != "untyped") msg = String_concat(msg, " ", d)
+    if (typeof(e) != "untyped") msg = String_concat(msg, " ", e)
+    if (typeof(f) != "untyped") msg = String_concat(msg, " ", f)
+    if (typeof(g) != "untyped") msg = String_concat(msg, " ", g)
+    if (typeof(h) != "untyped") msg = String_concat(msg, " ", h)
+    if (typeof(i) != "untyped") msg = String_concat(msg, " ", i)
+    if (typeof(j) != "untyped") msg = String_concat(msg, " ", j)
+    if (typeof(k) != "untyped") msg = String_concat(msg, " ", k)
+    if (typeof(l) != "untyped") msg = String_concat(msg, " ", l)
+    if (typeof(m) != "untyped") msg = String_concat(msg, " ", m)
+    if (typeof(n) != "untyped") msg = String_concat(msg, " ", n)
+    if (typeof(o) != "untyped") msg = String_concat(msg, " ", o)
+    if (typeof(p) != "untyped") msg = String_concat(msg, " ", p)
+    if (typeof(q) != "untyped") msg = String_concat(msg, " ", q)
+    if (typeof(r) != "untyped") msg = String_concat(msg, " ", r)
+    if (typeof(s) != "untyped") msg = String_concat(msg, " ", s)
+    if (typeof(t) != "untyped") msg = String_concat(msg, " ", t)
+    if (typeof(u) != "untyped") msg = String_concat(msg, " ", u)
+    if (typeof(v) != "untyped") msg = String_concat(msg, " ", v)
+    if (typeof(w) != "untyped") msg = String_concat(msg, " ", w)
+    if (typeof(x) != "untyped") msg = String_concat(msg, " ", x)
+    if (typeof(y) != "untyped") msg = String_concat(msg, " ", y)
+    if (typeof(z) != "untyped") msg = String_concat(msg, " ", z)
+    if (msg) print msg > to
 }
 
-function __printFTo(to,format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    printf format, "" a b c d e f g h i j k l m n o p q r s t u v w x y z > to
+function __printFTo(to,format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,  __,msg) {
+    if (typeof(a) != "untyped") msg = String_concat(msg, " ", a)
+    if (typeof(b) != "untyped") msg = String_concat(msg, " ", b)
+    if (typeof(c) != "untyped") msg = String_concat(msg, " ", c)
+    if (typeof(d) != "untyped") msg = String_concat(msg, " ", d)
+    if (typeof(e) != "untyped") msg = String_concat(msg, " ", e)
+    if (typeof(f) != "untyped") msg = String_concat(msg, " ", f)
+    if (typeof(g) != "untyped") msg = String_concat(msg, " ", g)
+    if (typeof(h) != "untyped") msg = String_concat(msg, " ", h)
+    if (typeof(i) != "untyped") msg = String_concat(msg, " ", i)
+    if (typeof(j) != "untyped") msg = String_concat(msg, " ", j)
+    if (typeof(k) != "untyped") msg = String_concat(msg, " ", k)
+    if (typeof(l) != "untyped") msg = String_concat(msg, " ", l)
+    if (typeof(m) != "untyped") msg = String_concat(msg, " ", m)
+    if (typeof(n) != "untyped") msg = String_concat(msg, " ", n)
+    if (typeof(o) != "untyped") msg = String_concat(msg, " ", o)
+    if (typeof(p) != "untyped") msg = String_concat(msg, " ", p)
+    if (typeof(q) != "untyped") msg = String_concat(msg, " ", q)
+    if (typeof(r) != "untyped") msg = String_concat(msg, " ", r)
+    if (typeof(s) != "untyped") msg = String_concat(msg, " ", s)
+    if (typeof(t) != "untyped") msg = String_concat(msg, " ", t)
+    if (typeof(u) != "untyped") msg = String_concat(msg, " ", u)
+    if (typeof(v) != "untyped") msg = String_concat(msg, " ", v)
+    if (typeof(w) != "untyped") msg = String_concat(msg, " ", w)
+    if (typeof(x) != "untyped") msg = String_concat(msg, " ", x)
+    if (typeof(y) != "untyped") msg = String_concat(msg, " ", y)
+    if (typeof(z) != "untyped") msg = String_concat(msg, " ", z)
+    if (msg) printf format, msg > to
 }
 
 function __print(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
@@ -122,7 +173,7 @@ function ARGC_ARGV_debug() {
 
 function File_exists(fileName,    __,e,r,y) {
     if (!fileName) { __error("File_exists: no fileName"); return }
-    if (!system("test -f '"fileName"'")) return 1
+    if (!system("test -e '"fileName"'")) return 1
     #r = 0
     #if (-1 < y = (getline e < fileName)) r = 1
     #else return 0
@@ -868,7 +919,7 @@ function File_printTo(file, to, rs, ors, noLastORS,    __,z) {
     if (typeof(rs) == "untyped") rs = @/\r?\n/
     if (typeof(ors) == "untyped") ors = "\n"
     Index_push("", "", "", rs, ors)
-    if (!file["length"]) printf "" > to
+    if (!file["length"]) { if (noLastORS) printf "" > to; else print "" > to }
     else while (++z <= file["length"]) {
         if (noLastORS && z == file["length"]) { printf "%s", file[z] > to; break }
         print file[z] > to
