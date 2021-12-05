@@ -20,7 +20,7 @@ function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,w
     # else MAX_INTEGER = 2 ^ 7 # if (__HEX(2 ^ 7) == "80")  # awk on 8bit :-)
 
     run_USAGE = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
-                 "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
+                "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
 
     if (PROCINFO["argv"][1] == "-f" && get_FileNameNoExt(PROCINFO["argv"][2]) == "run") {
         if (!("AWKPATH" in ENVIRON) || ENVIRON["AWKPATH"] == ".:/usr/local/share/awk") {
@@ -122,8 +122,7 @@ function __warning(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 }
 
 function __error(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
-    ERRORS
-    if (typeof(ERRORS) == "unassigned" || typeof(ERRORS) == "number") ++ERRORS
+    ERRORS; if (typeof(ERRORS) == "unassigned" || typeof(ERRORS) == "number") ++ERRORS
     else __warning("__error: ERRORS should be number")
     __printTo("/dev/stderr",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
@@ -204,16 +203,15 @@ function remove_Directory(directory) {
 
 function createTemp_Directory(prefix) {
     if (typeof(prefix) == "untyped") { __error("createTemp_Directory: no prefix"); return }
-    TEMP_DIRECTORY = prefix
+    TEMP_DIR = prefix
     # someone should add random data
-    if (!String_endsWith(TEMP_DIRECTORY, "/")) TEMP_DIRECTORY = TEMP_DIRECTORY"/"
-    if (!Directory_exists(TEMP_DIRECTORY)) create_Directory(TEMP_DIRECTORY)
+    if (!String_endsWith(TEMP_DIR, "/")) TEMP_DIR = TEMP_DIR"/"
+    if (!Directory_exists(TEMP_DIR)) create_Directory(TEMP_DIR)
 }
 
 function removeTemp_Directory() {
-    TEMP_DIRECTORY
-    if (typeof(TEMP_DIRECTORY) == "unassigned") { __error("removeTemp_Directory: no TEMP_DIRECTORY"); return }
-    if (Directory_exists(TEMP_DIRECTORY)) remove_Directory(TEMP_DIRECTORY)
+    TEMP_DIR; if (typeof(TEMP_DIR) == "unassigned") { __error("removeTemp_Directory: no TEMP_DIR"); return }
+    if (Directory_exists(TEMP_DIR)) remove_Directory(TEMP_DIR)
 }
 
 function create_SymbolicLink(directory, target) {
@@ -499,10 +497,8 @@ function Dictionary_copy(file, copy,    __,ct,cit,ft,fit,i) {
 function Dictionary_count(array,    __,at,count,name) {
     if ((at = typeof(array)) == "untyped" || at == "unassigned") return
     if (at != "array") { __error("Dictionary_count: array is typeof "at); return }
-    for (name in array) {
-        if (name ~ /^[0-9]/) continue
-        ++count
-    }
+    for (name in array)
+        if (name !~ /^[0-9]/) ++count
     return count
 }
 

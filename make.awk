@@ -149,7 +149,7 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
         if (!parsed[n]["0length"]) continue
         Index_pullArray(pre, parsed[n], REFIX, DEBUG ? DEFIX : " ")
     }
-    File_printTo(pre, TEMP_DIRECTORY Project"...C")
+    File_printTo(pre, TEMP_DIR Project"...C")
 }
 
 function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
@@ -175,7 +175,7 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             else {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-                File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
+                File_printTo(pre, TEMP_DIR Project (!short?"":"."short)"..."format)
                 ++o
             }
         }
@@ -204,7 +204,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             else {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-                File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
+                File_printTo(pre, TEMP_DIR Project (!short?"":"."short)"..."format)
             }
         }
 
@@ -216,7 +216,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             else {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
-                File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
+                File_printTo(pre, TEMP_DIR Project (!short?"":"."short)"..."format)
                 ++o
             }
         }
@@ -245,7 +245,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             else {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-                File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
+                File_printTo(pre, TEMP_DIR Project (!short?"":"."short)"..."format)
             }
         }
 
@@ -257,7 +257,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             else {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
-                File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
+                File_printTo(pre, TEMP_DIR Project (!short?"":"."short)"..."format)
             }
         }
 
@@ -266,7 +266,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             compiled[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else if (compiled[format][name]["0length"]) {
-                file = compiled[format][name]["file"] = TEMP_DIRECTORY Project (!short?"":"."short)"..."format".o"
+                file = compiled[format][name]["file"] = TEMP_DIR Project (!short?"":"."short)"..."format".o"
                 File_printTo(compiled[format][name], file, "\n", "\n", 1)
                 compiled[format][ ++compiled[format]["0length"] ] = name
                 ++o
@@ -293,7 +293,7 @@ Array_debug(config)
             if (STD == "ISO")
                 options = options" -lm -ldl -pthread"
 
-            options = options" -o "TEMP_DIRECTORY"lib"Project".so"
+            options = options" -o "TEMP_DIR"lib"Project".so"
 
 __debug("C_link_library: "C_linker" "options)
             unseen["0length"]
@@ -302,7 +302,7 @@ File_debug(unseen)
             ++o
         }
         else {
-            options = options" rcs "TEMP_DIRECTORY"lib"Project".a"
+            options = options" rcs "TEMP_DIR"lib"Project".a"
             options = options" "names
 
 __debug("C_static_library: ar "options)
@@ -335,7 +335,7 @@ Array_debug(config)
             else {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-                File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
+                File_printTo(pre, TEMP_DIR Project (!short?"":"."short)"..."format)
             }
         }
 
@@ -347,7 +347,7 @@ Array_debug(config)
             else {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
-                File_printTo(pre, TEMP_DIRECTORY Project (!short?"":"."short)"..."format)
+                File_printTo(pre, TEMP_DIR Project (!short?"":"."short)"..."format)
             }
         }
 
@@ -356,7 +356,7 @@ Array_debug(config)
             compiled[format][name]["0length"]
             if (!@C(name)) { __error("make.awk: No "C" "name); continue }
             else {
-                fileName = compiled[format][name]["file"] = TEMP_DIRECTORY Project (!short?"":"."short)"..."format".o"
+                fileName = compiled[format][name]["file"] = TEMP_DIR Project (!short?"":"."short)"..."format".o"
                 File_printTo(compiled[format][name], fileName, "\n", "\n", 1)
             }
         }
@@ -374,12 +374,12 @@ Array_debug(config)
         options = options" "fileName
     }
 
-    options = options" -L"TEMP_DIRECTORY" -l:lib"Project"."(!C_link_shared?"a":"so")
+    options = options" -L"TEMP_DIR" -l:lib"Project"."(!C_link_shared?"a":"so")
 
     if (STD == "ISO")
         options = options" -lm -ldl -pthread"
 
-    options = options" -o "TEMP_DIRECTORY Project
+    options = options" -o "TEMP_DIR Project
 
 __debug("C_link_executable: "C_linker" "options)
     unseen["0length"]
