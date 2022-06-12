@@ -63,11 +63,9 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
 
         if (C_compiler == "tcc")
             List_add(includeDirs, "/usr/lib/"ARCHITECTURE"-linux-gnu/tcc/include/")
-        else {
-            if (C_compiler == "gcc")
-                List_add(includeDirs, "/usr/lib/gcc/"ARCHITECTURE"-linux-gnu/"gcc_version()"/include/")
-            else  __warning("make.awk: Unsupported C_compiler")
-        }
+        else if (C_compiler == "gcc")
+            List_add(includeDirs, "/usr/lib/gcc/"ARCHITECTURE"-linux-gnu/"gcc_version()"/include/")
+        else  __warning("make.awk: Unsupported C_compiler")
 
         for (d = 1; d <= config["directories"]["0length"]; ++d)
             if (Directory_exists((dir = config["directories"][d])"include/")) {
@@ -93,7 +91,7 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     Array_create(parsed)
     if (!parsed[C_compiler]["0length"]) {
         Array_clear(input)
-        if (STD == "ISO") {
+        if (STANDARD == "ISO") {
             if (PLATFORM == "LINUX") input[++input["0length"]] = "# define _GNU_SOURCE 1"
             input[++input["0length"]] = "# include <stddef.h>"
             input[++input["0length"]] = "# include <stdint.h>"
@@ -105,7 +103,7 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
         List_sort(output)
         C_compiler_preprocess("", input, output)
 
-        if (STD == "ISO") {
+        if (STANDARD == "ISO") {
             output[++output["0length"]] = "# undef NULL"
             output[++output["0length"]] = "# define NULL  0"
             output[++output["0length"]] = "# noundef NULL"

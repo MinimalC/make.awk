@@ -382,7 +382,7 @@ if (DEBUG == 4) __debug("Expression: "Index_pull($0, REFIX, " "))
 if (DEBUG == 4) __debug("not: "Index_pull($0, REFIX, " "))
             continue
         }
-        # Evaluate Binary, Bitwise NOT ~ Negation: the complement of n
+        # Evaluate Binary NOT ~ Negation: the "complement" of n
         if ($i == "~") {
             if ($(i + 1) == "~") continue
             if ($(i + 1) !~ /^[-+]?[0-9]+$/) continue
@@ -392,6 +392,7 @@ if (DEBUG == 4) __debug("not: "Index_pull($0, REFIX, " "))
 if (DEBUG == 4) __debug("NOT: "Index_pull($0, REFIX, " "))
             continue
         }
+        # TODO Binary AND OR XOR
     }
 
     for (i = 1; i <= NF; ++i) {
@@ -435,7 +436,7 @@ if (DEBUG == 4) __debug("Addition: "Index_pull($0, REFIX, " "))
     }
 
     for (i = 1; i <= NF; ++i) {
-        # Evaluate Left Shift << Right Shift >>
+        # Evaluate Binary Left Shift << Right Shift >>
         if ($i == "<<") {
             if ($(i + 1) !~ /^[-+]?[0-9]+$/ || $(i - 1) !~ /^[-+]?[0-9]+$/) continue
             $i = lshift($(i - 1), $(i + 1))

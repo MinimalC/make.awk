@@ -6,15 +6,15 @@
 #include "make.C.awk"
 
 function is_CName(name, end) {
-    # a-zA-Z$_0-9
     # U00A2 U00A3 U00A5 U00A7 U00B5
     # U00C0-U00D6 or U00D9-U00F6 or U00F9-UD7FF
+    # /[a-zA-Z$_¢£¥§µÀ-ÖÙ-öù-퟿]/ ÿ
     if (length(name) == 1) {
-        if (!end) { if (name ~ /[a-zA-Z$_¢£¥§µÀ-ÖÙ-öù-퟿]/) return 1 }
-        else if (name ~ /[a-zA-Z$_0-9¢£¥§µÀ-ÖÙ-öù-퟿]/) return 1
+        if (!end) { if (name ~ /[a-zA-Z$_]/) return 1 }
+        else if (name ~ /[a-zA-Z$_0-9]/) return 1
         return
     }
-    if (name ~ /^[a-zA-Z$_¢£¥§µÀ-ÖÙ-öù-퟿][a-zA-Z$_0-9¢£¥§µÀ-ÖÙ-öù-퟿]*$/) return 1
+    if (name ~ /^[a-zA-Z$_][a-zA-Z$_0-9]*$/) return 1
 }
 
 function C_parse(fileName, input,

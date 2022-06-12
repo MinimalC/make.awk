@@ -7,7 +7,7 @@
 BEGIN { BEGIN_run() }
 END { END_run() }
 
-function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,workingDir) {
+function BEGIN_run(    __,a,argi,f,file,includeDir,input,o,output,options,r,runDir,w,workingDir) {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
@@ -19,39 +19,50 @@ function BEGIN_run(    __,a,argi,f,file,includeDir,o,output,options,r,runDir,w,w
     # else MAX_INTEGER = 2 ^ 15  # if (__HEX(2 ^ 15) == "8000") # awk on 16bit ?
     # else MAX_INTEGER = 2 ^ 7 # if (__HEX(2 ^ 7) == "80")  # awk on 8bit :-)
 
-    run_USAGE = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
-                "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
-
     if (PROCINFO["argv"][1] == "-f" && get_FileNameNoExt(PROCINFO["argv"][2]) == "run") {
-        if (!("AWKPATH" in ENVIRON) || ENVIRON["AWKPATH"] == ".:/usr/local/share/awk") {
-            if (ARGV_length() == 0) { __error(run_USAGE); exit }
-            argi = 1; while ((f = "run_"ARGV[argi]) in FUNCTAB) { @f(); ++argi }
-            if (ARGV[argi]) {
-                runDir = ENVIRON["OLDPWD"]"/"
-                file = runDir ARGV[argi]; if (!File_exists(file)) file = ""
-                if (!file) file = ARGV[argi]; if (!File_exists(file)) file = ""
-                if (!file) { __error("run.awk: File or Function "ARGV[argi]" doesn't exist"); exit }
-                else {
-                    includeDir = get_DirectoryName(file)
-                    workingDir = ENVIRON["PWD"]"/"
-                    for (o = argi; o <= ARGV_length(); ++o) options = options" "ARGV[o]
-                    output["0length"]; Array_clear(output)
-                    r = __awk("-f "file" "options, output, workingDir, "AWKPATH=."(!includeDir?"":":"includeDir)(!runDir?"":":"runDir))
-                    File_printTo(output, "/dev/stdout")
-                    exit r
+        USAGE = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
+            "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }\n"
+        if (ENVIRON["AWKPATH"] ~ /^\.:/) {
+            if (ARGV_length() == 0) { __error(USAGE); exit }
+            for (argi = 1; argi <= ARGV_length(); ++argi) {
+                if (!ARGV[argi]) continue
+                if ((f = "run_"ARGV[argi]) in FUNCTAB) { @f(); continue }
+                if (ARGV[argi] ~ /\..+$/) {
+                    runDir = ENVIRON["OLDPWD"]
+                    workingDir = ENVIRON["PWD"]
+                    if (runDir && runDir !~ /\/$/) runDir = runDir"/"
+                    if (workingDir && workingDir !~ /\/$/) workingDir = workingDir"/"
+                    if (runDir == workingDir) runDir = ""
+                    file = ""
+                    if (runDir) file = runDir ARGV[argi]; if (!File_exists(file)) { file = ""; runDir = "" }
+                    if (!file) file = ARGV[argi]; if (!File_exists(file)) file = ""
+                    if (!file) { __error("run.awk: File or Function "ARGV[argi]" doesn't exist"); continue }
+                    else {
+                        includeDir = get_DirectoryName(file)
+                        if (includeDir && includeDir !~ /\/$/) includeDir = includeDir"/"
+                        for (o = argi; o <= ARGV_length(); ++o) options = options" "ARGV[o]
+                        Array_clear(input)
+                        Array_clear(output)
+                        r = __awk("-f "file" "options, input, output, workingDir, "AWKPATH="workingDir (!includeDir?"":":"includeDir)(!runDir?"":":"runDir))
+                        File_printTo(output, "/dev/stdout")
+                        exit r
+                    }
                 }
-            } else { __error(run_USAGE); exit }
-        } else __BEGIN()
+            }
+        }
+        __error(USAGE); exit
     }
 }
 
 function END_run() {
     # don't if (ERRORS) exit 0; else exit 1
     if (Index["0length"]) __error("run.awk: More Index_push() than Index_pop()")
+    if (RUN_ARGC_ARGV) ARGC_ARGV_debug()
 }
 
-function run_ARGV_ARGC(config) { ARGC_ARGV_debug() }
-function run_ARGC_ARGV(config) { ARGC_ARGV_debug() }
+function run_ARGV_ARGC(config) { RUN_ARGC_ARGV = 1 }
+
+function run_ARGC_ARGV(config) { RUN_ARGC_ARGV = 1 }
 
 function __printTo(to,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,  __,msg) {
     if (typeof(a) != "untyped") msg = String_concat(msg, " ", a)
@@ -110,6 +121,7 @@ function __printFTo(to,format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,
     if (typeof(x) != "untyped") msg = String_concat(msg, " ", x)
     if (typeof(y) != "untyped") msg = String_concat(msg, " ", y)
     if (typeof(z) != "untyped") msg = String_concat(msg, " ", z)
+    if (!format) format = "%s"
     if (msg) printf format, msg > to
 }
 
@@ -118,6 +130,10 @@ function __print(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 }
 
 function __warning(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+    __printTo("/dev/stderr",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
+}
+
+function __info(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     __printTo("/dev/stderr",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
 
@@ -132,9 +148,45 @@ function __debug(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
         __printTo("/dev/stderr",a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 }
 
-function __debugF(to,format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
+function __debugF(format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
         __printFTo("/dev/stderr",format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
+}
+
+function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
+    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
+    else if (at != "array") { __error("Array_printTo: array is typeof "at); return }
+    if (!length(array)) return
+    if ((lt = typeof(level)) == "number") t = String_repeat("\t", level)
+    else if (lt != "untyped") { __error("Array_printTo: level is typeof "lt); return }
+    if (typeof(to) == "untyped") to = "/dev/stdout"
+
+    for (i in array)
+        if ((it = typeof(array[i])) == "unassigned")
+            print t i > to
+        else if (it == "array") {
+            if (!length(array[i]))
+                print t i ": (empty)" > to
+            else {
+                print t i ": " > to
+                Array_printTo(array[i], to, level + 1)
+            }
+        } else
+            print t i ": " array[i] > to
+}
+
+function Array_print(array, level) {
+    Array_printTo(array, "/dev/stdout", level)
+}
+
+function Array_error(array, level,    __,et) {
+    ERRORS; if ((et = typeof(ERRORS)) == "unassigned" || et == "number") ++ERRORS
+    else __warning("Array_error: ERRORS is typeof "et)
+    Array_printTo(array, "/dev/stderr", level)
+}
+
+function Array_debug(array, level) {
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr", level)
 }
 
 function ENVIRON_debug() {
@@ -163,11 +215,11 @@ function ARGV_debug() {
 }
 
 function ARGC_ARGV_debug() {
-    ENVIRON_debug()
-    PROCINFO_debug()
-    FUNCTAB_debug()
+    # ENVIRON_debug() # in gawk 5.1, this is in SYMTAB
+    # PROCINFO_debug()
+    # FUNCTAB_debug()
     SYMTAB_debug()
-    ARGV_debug()
+    # ARGV_debug()
 }
 
 function File_exists(fileName,    __,e,r,y) {
@@ -263,13 +315,16 @@ function get_FileName(pathName,    __,path) {
 function get_FileNameExt(pathName,    __,file,fileExt,path) {
     path["0length"] = split(pathName, path, "/")
     file["0length"] = split(path[path["0length"]], file, ".")
+    while (file["0length"] && file[file["0length"]] == "") List_remove(file, file["0length"])
     return fileExt = file[file["0length"]]
 }
 
 function get_FileNameNoExt(pathName,    __,f,file,fileName,i,path) {
     path["0length"] = split(pathName, path, "/")
     file["0length"] = split(path[path["0length"]], file, ".")
+    while (file["0length"] && file[file["0length"]] == "") List_remove(file, file["0length"])
     if (file["0length"]) List_remove(file, file["0length"])
+    while (file["0length"] && file[file["0length"]] == "") List_remove(file, file["0length"])
     for (i = 1; i <= file["0length"]; ++i) fileName = String_concat(fileName, ".", file[i])
     return fileName
 }
@@ -334,14 +389,15 @@ function __BEGIN(controller, action, usage,
         controller = ""
     }
     if (!usage) {
-        if ("USAGE" in SYMTAB && SYMTAB["USAGE"]) usage = SYMTAB["USAGE"]
-        else usage = run_USAGE
+        if (!(usage = USAGE)) usage = "Use \"USAGE\" = \"to say what Project you are working on\""
     }
+    # CONTROLLER
     if (!controller) {
-        if (typeof(CONTROLLER) != "untyped" && CONTROLLER) controller = CONTROLLER
+        if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
         else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
         if (!controller) { __error(usage); exit }
     }
+    if ( typeof(CONTROLLER) == "untyped" ) CONTROLLER = controller
     if (action) { default = action; action = "" }
 
     delete config
@@ -379,6 +435,10 @@ function __BEGIN(controller, action, usage,
             else config["names"][paramName] = paramWert
             ARGV[i] = ""; continue
         }
+        if (ARGV[i] ~ /^https?:/ || ARGV[i] ~ /^\/\//) {
+            config["addresses"][++config["addresses"]["0length"]] = ARGV[i]
+            ARGV[i] = ""; continue
+        }
         if (Directory_exists(ARGV[i])) {
             config["directories"][++config["directories"]["0length"]] = ARGV[i]
             ARGV[i] = ""; continue
@@ -405,9 +465,9 @@ function __BEGIN(controller, action, usage,
     exit 1
 }
 
-function Array_create(array,    __,at) {
-    if ((at = typeof(array)) == "untyped") ;
-    else if ((at) != "array") { __error("Array_create: array is typeof "at); return }
+function Array_create(array,    __,type) {
+    if ((type = typeof(array)) == "untyped") ;
+    else if (type != "array") { __error("Array_create: array is typeof "type); return }
     if (!array["0length"]) delete array["0length"]
 }
 
@@ -415,9 +475,8 @@ function List_create(array) {
     Array_create(array)
 }
 
-function Array_clear(array,    __,at,i) {
-    Array_create(array)
-    delete array # array["0length"]
+function Array_clear(array) {
+    Array_create(array); delete array
 }
 
 function List_clear(array,    __,at,i) {
@@ -510,42 +569,6 @@ function List_remove(array, i,    __,at,it,l,n) {
         array[n] = array[n + 1]
     delete array[l]
     --array["0length"]
-}
-
-function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
-    if ((at = typeof(array)) == "untyped" || at == "unassigned") return
-    else if (at != "array") { __error("Array_printTo: array is typeof "at); return }
-    if (!length(array)) return
-    if ((lt = typeof(level)) == "number") t = String_repeat("\t", level)
-    else if (lt != "untyped") { __error("Array_printTo: level is typeof "lt); return }
-    if (typeof(to) == "untyped") to = "/dev/stdout"
-
-    for (i in array)
-        if ((it = typeof(array[i])) == "unassigned")
-            print t i > to
-        else if (it == "array") {
-            if (!length(array[i]))
-                print t i ": (empty)" > to
-            else {
-                print t i ": " > to
-                Array_printTo(array[i], to, level + 1)
-            }
-        } else
-            print t i ": " array[i] > to
-}
-
-function Array_print(array) {
-    Array_printTo(array, "/dev/stdout")
-}
-
-function Array_error(array,    __,et) {
-    ERRORS; if ((et = typeof(ERRORS)) == "unassigned" || et == "number") ++ERRORS
-    else __warning("Array_error: ERRORS is typeof "et)
-    Array_printTo(array, "/dev/stderr")
-}
-
-function Array_debug(array, level) {
-    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr")
 }
 
 function List_insertBefore(array, string0, string1,    __,l,n,n0,n1) {
@@ -719,6 +742,14 @@ function __hex(number,    __,nt,s) {
     if (length(s) % 2 == 1) s = "0"s
     return s
 }
+
+function __AND(n0,n1) { return and(n0,n1) }
+
+function __OR(n0,n1) { return or(n0,n1) }
+
+function __NOT(n0) { return compl(n0) }
+
+function __XOR(n0,n1) { return xor(n0,n1) }
 
 function Index_pushRange(from, to, fs, ofs, rs, ors,    __,i,m) {
     # save old Index
@@ -993,39 +1024,139 @@ function __command(command, options, input, output, directory, variables,    __,
     return __coprocess(command, options, input, output, directory, variables)
 }
 
-function __pipe(command, options, output, directory, variables,    __,a,cmd,y) {
+function __pipe(command, options, output, directory, variables,    __,a,cmd,r,y) {
     cmd = command
+    if (options)
+        cmd = cmd" "options
     if (typeof(variables) == "string" && variables)
         cmd = variables" "cmd
     if (typeof(directory) == "string" && directory)
         cmd = "cd \""directory"\" ; "cmd
-    cmd = cmd" "options
     Index_push("", "", "", "\n", "\n")
     a = typeof(output) == "array"
     while (0 < y = ( cmd | getline ))
         if (a) output[++output["0length"]] = $0
+    r = close(cmd)
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
-    return close(cmd)
+    return r
 }
 
-function __coprocess(command, options, input, output, directory, variables,    __,a,cmd,y,z) {
+function __coprocess(command, options, input, output, directory, variables, rs, ors,    __,a,cmd,r,y,z) {
     cmd = command
+    if (options)
+        cmd = cmd" "options
     if (typeof(variables) == "string" && variables)
         cmd = variables" "cmd
     if (typeof(directory) == "string" && directory)
         cmd = "cd \""directory"\" ; "cmd
-    cmd = cmd" "options
+    if (typeof(rs) == "untyped") rs = @/\r?\n/
+    if (typeof(ors) == "untyped") ors = "\n"
+    Index_push("", "", "", rs, ors)
     if (typeof(input) == "array" && input["0length"])
         for (z = 1; z <= input["0length"]; ++z)
             print input[z] |& cmd
     else print "" |& cmd
     close(cmd, "to")
-    Index_push("", "", "", "\n", "\n")
     a = typeof(output) == "array"
     while (0 < y = ( cmd |& getline ))
         if (a) output[++output["0length"]] = $0
+    r = close(cmd)
     Index_pop()
     if (y == -1) { __error("Command doesn't exist: "command); return }
-    return close(cmd)
+    return r
+}
+
+function System_sleep(seconds, minutes, hours,  __,s) {
+
+    s = (hours * 3600) + (minutes * 60) + seconds
+    if (!system("sleep " s "s")) return 1
+}
+
+function __URI(uri, address,    __,i,n,r) {
+    delete uri
+    if (i = index(address, ":")) {
+        uri["schema"] = substr(address, 1, i - 1)
+        address = substr(address, i + 1)
+    }
+    if (i = index(address, "//"))
+        address = substr(address, i + 2)
+    if (i = index(address, "/")) {
+        uri["host"] = substr(address, 1, i - 1)
+        address = substr(address, i)
+    } else n = 1
+    if (i = index(address, "#")) {
+        uri["hash"] = substr(address, i + 1)
+        address = substr(address, i - 1)
+    }
+    if (i = index(address, "?")) {
+        uri["query"] = substr(address, i + 1)
+        address = substr(address, i - 1)
+    }
+    if (n) uri["host"] = address
+    else uri["path"] = address
+    if (uri["host"] ~ /.\..+$/) return 1
+}
+
+function __HTTP(address, input, output, headers,   __,cmd,headerName,headerValue,i,r,status,uri,var,y,z) {
+    uri["host"]
+    if (!__URI(uri, address)) { __error("HTTP: no URI: "address); return }
+    if (!input["0length"] || input[ input["0length"] ] != "") ++input["0length"]
+    Index_push("", "", "", @/\r?\n/, "\r\n")
+    cmd = "/inet4/tcp/0/"uri["host"]"/80"
+    for (z = 1; z <= input["0length"]; ++z)
+        print input[z] |& cmd
+    close(cmd, "to")
+    z = 0; while (0 < y = ( cmd |& getline var )) { ++z
+        if (!r) {
+            if (z == 1) {
+                if (substr(var, 1, 4) != "HTTP") __warning("HTTP: Host "uri["host"]": other "substr(var, 1, 4))
+                if (substr(var, 6, 3) != "1.1") __warning("HTTP/1.1: Host "uri["host"]": other version: "substr(var, 6, 3))
+                headers["Status"] = substr(var, 10)
+                headers["Status-Code"] = status = 0 + headers["Status"]
+                continue
+            }
+            if (i = index(var, ":")) {
+                headerName = substr(var, 1, i - 1)
+                headerValue = substr(var, i + 2)
+                headers[headerName] = headerValue
+                continue
+            }
+            r = 1 # unknown
+            if (var == "") continue
+        }
+        if (r == 1) { RS="\n";ORS="\n" } else ++r
+        output[++output["0length"]] = var
+    }
+    close(cmd); Index_pop()
+    if (y == -1) { __error("Address doesn't exist: "address); return }
+    return (status == 200)
+}
+
+#function __uname_kernel_machine(    __,output) {
+#    output["0length"]
+#    __command("uname", "-s -m", output)
+#    return output[1]
+#}
+
+function HTTP_GET(address, response, headers,   __,r,request,status,uri) {
+
+    uri["host"]
+    if (!__URI(uri, address)) { __error("HTTP GET: no URI: "address); return }
+#__debug("HTTP GET //"uri["host"]uri["path"](uri["query"]?"?"uri["query"]:""))
+
+    request[ ++request["0length"] ] = "GET "(uri["path"]?uri["path"]:"/")(uri["query"]?"?"uri["query"]:"")" HTTP/1.1"
+    request[ ++request["0length"] ] = "Host: "uri["host"]
+    request[ ++request["0length"] ] = "User-Agent: Mozilla/5.0 (gawk;"(CONTROLLER?" "CONTROLLER".awk":"")")"
+    request[ ++request["0length"] ] = "Accept: text/html"
+    #request[ ++request["0length"] ] = "Accept-Language: de,en"
+    #request[ ++request["0length"] ] = "Accept-Encoding: *"
+    request[ ++request["0length"] ] = "Connection: close"
+    response["0length"]
+
+    if (!(r = __HTTP(address, request, response, headers))) {
+        #status = headers["Status-Code"]
+#__debug("HTTP GET Host: " uri["host"]" Status: "headers["Status"])
+    }
+    return r
 }

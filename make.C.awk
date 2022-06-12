@@ -7,7 +7,7 @@
 @include "make.C.preprocess.awk"
 @include "make.C.precompile.awk"
 
-function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
+function C_compile(name,    __,a,b,c,l,n,o,options,p,pre,t,target,x,y,z)
 {
     if (!(name in precomp["C"]) || !precomp["C"][name]["0length"]) return
 
@@ -29,9 +29,9 @@ function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
         if ($n == "₤") { $n = "Lira";   Index_reset() }   # U20A4
         if ($n == "₱") { $n = "Peso";   Index_reset() }   # U20B1
         if ($n == "₿") { $n = "BTC";    Index_reset() }   # U20BF
-        if ($n ~ /[À-ÖÙ-öù-퟿]/) {   # U00C0-U00D6 or U00D9-U00F6 or U00F9-UD7FF
-            $n = "X"__HEX(Char_codepoint($n)); Index_reset()
-        }
+#        if ($n ~ /[À-ÖÙ-öù-퟿]/) {   # U00C0-U00D6 or U00D9-U00F6 or U00F9-UD7FF
+#            $n = "X"__HEX(Char_codepoint($n)); Index_reset()
+#        }
     }
         pre[ ++pre["0length"] ] = $0
     }
@@ -39,11 +39,11 @@ function C_compile(name,    __,a,b,c,l,language,n,o,options,p,pre,x,y,z)
 
     if (C_link_shared) options = "-fPIC"
 
-    language = "C"
-    #if (C_compiler == "tcc") language = "ASM"
+    target = "ASM"
+    if (C_compiler == "gcc") target = "C"
 
-    compiled[language][name]["0length"]
-    if (C_compiler_coprocess(options, pre, compiled[language][name])) return
+    compiled[target][name]["0length"]
+    if (C_compiler_coprocess(options, pre, compiled[target][name])) return
     return 1
 }
 
@@ -58,15 +58,16 @@ function C_compiler_preprocess(final_options, input, output,    a,b,c,command,d,
     return r
 }
 
-function C_compiler_coprocess(final_options, input, output, language,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
-    #if (!language || language == "C") options = "-S"
-    #else if (language == "ASM")
+function C_compiler_coprocess(final_options, input, output, target,    a,b,c,command,d,e,f,g,h,i,j,k,l,m,n,o,options,p,q,r,report,s,t,u,v,w,x,y,z) {
+
     options = "-c"
-    #else __warning("make.awk: C_compiler_coprocess: Unknown Language")
+    if (target == "C") options = "-S"
+    else if (target && target != "ASM") __warning("make.awk: C_compiler_coprocess: Unknown target "target)
+
     if (C_compiler == "gcc") {
         options = options" -xc -fpreprocessed"
-        if (STD == "META") {
-            options = options" -nodefaultlibs -nostdlib -nostdinc" # -ffreestanding
+        if (STANDARD == "MINIMAL") {
+            options = options" -nostdinc -nostdlib" #  -nodefaultlibs -ffreestanding
             options = options" -fno-jump-tables -fomit-frame-pointer" # -fno-plt
             options = options" -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
         }
