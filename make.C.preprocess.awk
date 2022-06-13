@@ -165,11 +165,11 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
     if (original) O = original
     else {
         O = fileName
-        if (C == "C") C_preprocess(C_compiler, O, C)
+        if (C == "C" || C == "ASM") C_preprocess(C_compiler, O, C)
         else __warning("make.awk: C_preprocess: Unknown "C)
     }
 
-    if (!(fileName in parsed) && (!C_parse(fileName) || !parsed[fileName]["0length"])) return
+    if (!(fileName in parsed) && ((((c = C"_parse") in FUNCTAB) && !@c(fileName)) || !parsed[fileName]["0length"])) return
 
     preproc[C][O]["0length"]
     if (!original) if (!List_contains(preproc[C], O)) preproc[C][ ++preproc[C]["0length"] ] = O
