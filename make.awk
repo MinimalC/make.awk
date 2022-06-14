@@ -253,7 +253,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         if (!@C(name)) { __error("make.awk: No "C" "name); continue }
         if (format == "C" && precomp["ASM"][name]["0length"]) {
-            file = precomp["ASM"][name]["file"] = TEMP_DIR short"..."format".S"
+            file = precomp["ASM"][name]["file"] = TEMP_DIR short"...S"
             File_printTo(precomp["ASM"][name], file, "\n", "\n")
             precomp["ASM"][file]["length"]
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
@@ -316,8 +316,6 @@ File_debug(unseen)
 function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,file,final_options,format,g,h,i,j,k,l,m,n,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 Array_debug(config)
 
-
-
     for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
     for (n = 1; n <= config["files"]["0length"]; ++n) {
@@ -350,7 +348,7 @@ Array_debug(config)
         if (!@C(name)) { __error("make.awk: No "C" "name); continue }
         if (format == "C" && precomp["ASM"][name]["0length"]) {
             file = precomp["ASM"][name]["file"] = TEMP_DIR short"..."format".S"
-            File_printTo(precomp["ASM"][name], file, "\n", "\n", 1)
+            File_printTo(precomp["ASM"][name], file, "\n", "\n")
             precomp["ASM"][file]["length"]
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
             Array_clear(precomp["ASM"][name])
@@ -371,7 +369,8 @@ Array_debug(config)
     else options = options" -static"
 
     if (STANDARD == "MINIMAL")
-        options = options" -nostdinc -nostdlib" #  -nodefaultlibs -ffreestanding
+# ACHTUNG
+        options = options" -nostdinc " # -nostdlib -nodefaultlibs -ffreestanding
     else if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
 

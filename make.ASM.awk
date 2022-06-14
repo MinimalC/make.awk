@@ -25,6 +25,8 @@ function ASM_compile(name,   __,a,b,c,d,directory,e,f,g,h,i,j,k,l,m,n,o,options,
 
     report["0length"]
     r = __pipe(ASM_compiler, options, report)
+    #File_debug(report)
+
     compiled["ASM"][name]["0length"]
     if (!r) {
         File_read(compiled["ASM"][name], TEMP_DIR".make.o", "\n", "\n", 1)
