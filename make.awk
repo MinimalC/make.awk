@@ -287,7 +287,8 @@ Array_debug(config)
         options = "-shared"
 
         if (STANDARD == "MINIMAL")
-            options = options" -nostdinc -nostdlib" #  -nodefaultlibs -ffreestanding
+# ACHTUNG
+            options = options"  -nostdlib" # -nodefaultlibs -ffreestanding
         else if (STANDARD == "ISO")
             options = options" -lm -ldl -pthread"
 
@@ -370,7 +371,7 @@ Array_debug(config)
 
     if (STANDARD == "MINIMAL")
 # ACHTUNG
-        options = options" -nostdinc " # -nostdlib -nodefaultlibs -ffreestanding
+        options = options" -nostdlib" # -nodefaultlibs -ffreestanding
     else if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
 

@@ -73,8 +73,8 @@ function C_compiler_coprocess(final_options, input, output, target,    a,b,c,com
     if (C_compiler == "gcc") {
         options = options" -xc -fpreprocessed"
         if (STANDARD == "MINIMAL") {
-            options = options" -nostdinc -nostdlib" #  -nodefaultlibs -ffreestanding
-            options = options" -fno-jump-tables -fomit-frame-pointer" # -fno-plt
+            options = options" -nostdinc" # -nostdlib -nodefaultlibs -ffreestanding
+            options = options" -fno-jump-tables -fomit-frame-pointer -fno-stack-protector" # -fno-plt
             options = options" -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
         }
     }
