@@ -465,6 +465,18 @@ function __BEGIN(controller, action, usage,
     exit 1
 }
 
+function get_Date(time,    __,string) {
+    if (!time) time = systime()
+    string = strftime("%Y-%m-%d", time)
+    return string
+}
+
+function get_DateTime(time,    __,string) {
+    if (!time) time = systime()
+    string = strftime("%Y-%m-%d.%H-%M-%S", time)
+    return string
+}
+
 function Array_create(array,    __,type) {
     if ((type = typeof(array)) == "untyped") ;
     else if (type != "array") { __error("Array_create: array is typeof "type); return }
@@ -1095,15 +1107,19 @@ function __URI(uri, address,    __,i,n,r) {
     }
     if (n) uri["host"] = address
     else uri["path"] = address
-    if (uri["host"] ~ /.\..+$/) return 1
+    if (uri["host"] ~ /.\..+$/ || uri["path"]) {
+        uri[0] = (!uri["schema"]?"//":uri["schema"]"://")uri["host"]uri["path"](uri["query"]?"?"uri["query"]:"")
+        return 1
+    }
 }
 
 function __HTTP(address, input, output, headers,   __,cmd,headerName,headerValue,i,r,status,uri,var,y,z) {
     uri["host"]
-    if (!__URI(uri, address)) { __error("HTTP: no URI: "address); return }
+    if (!__URI(uri, address)) { __error("HTTP: no address: "address); return }
+    if (!uri["host"]) { __error("HTTP: no host in address: "address); return }
     if (!input["0length"] || input[ input["0length"] ] != "") ++input["0length"]
     Index_push("", "", "", @/\r?\n/, "\r\n")
-    cmd = "/inet4/tcp/0/"uri["host"]"/80"
+    cmd = "/inet/tcp/0/"uri["host"]"/80"
     for (z = 1; z <= input["0length"]; ++z)
         print input[z] |& cmd
     close(cmd, "to")
@@ -1140,12 +1156,12 @@ function __HTTP(address, input, output, headers,   __,cmd,headerName,headerValue
 #}
 
 function HTTP_GET(address, response, headers,   __,r,request,status,uri) {
-
     uri["host"]
-    if (!__URI(uri, address)) { __error("HTTP GET: no URI: "address); return }
-#__debug("HTTP GET //"uri["host"]uri["path"](uri["query"]?"?"uri["query"]:""))
+    if (!__URI(uri, address)) { __error("HTTP: no address: "address); return }
+    if (!uri["host"]) { __error("HTTP: no host in address: "address); return }
+#__debug("HTTP GET "uri[0])
 
-    request[ ++request["0length"] ] = "GET "(uri["path"]?uri["path"]:"/")(uri["query"]?"?"uri["query"]:"")" HTTP/1.1"
+    request[ ++request["0length"] ] = "GET "uri[0]" HTTP/1.1"
     request[ ++request["0length"] ] = "Host: "uri["host"]
     request[ ++request["0length"] ] = "User-Agent: Mozilla/5.0 (gawk;"(CONTROLLER?" "CONTROLLER".awk":"")")"
     request[ ++request["0length"] ] = "Accept: text/html"
@@ -1154,7 +1170,7 @@ function HTTP_GET(address, response, headers,   __,r,request,status,uri) {
     request[ ++request["0length"] ] = "Connection: close"
     response["0length"]
 
-    if (!(r = __HTTP(address, request, response, headers))) {
+    if (!(r = __HTTP(uri[0], request, response, headers))) {
         #status = headers["Status-Code"]
 #__debug("HTTP GET Host: " uri["host"]" Status: "headers["Status"])
     }

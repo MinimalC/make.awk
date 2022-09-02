@@ -82,7 +82,7 @@ __debug(file["name"]" Line "file["z"]": using "name"  ( "C_defines[name]["argume
                 if ($j in C_defines) {
                     if (typeof(C_defines[$j]) != "array") continue
                     if ($j in C_selfreference)
-                        #__warning(file["name"]" Line "file["z"]": self-referencing1 define "$j" "$j)
+#if (DEBUG == 3) __warning(file["name"]" Line "file["z"]": self-referencing1 define "$j" "$j)
                         continue
                     if ("arguments" in C_defines[$j] && $(j + 1) != "(") {
 if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": 2 not apply "$j)
@@ -211,7 +211,7 @@ if (DEBUG == 3) __debug(file["name"]" Line "file["z"]": using "name" without bod
             if (typeof(C_defines[$j]) != "array") continue
             if ($j in C_selfreference) {
                 rendered = Index_pull(defineBody, REFIX, " ")
-                __warning(file["name"]" Line "file["z"]": self-reference in define "$j" "rendered)
+if (DEBUG == 3) __warning(file["name"]" Line "file["z"]": self-reference in define "$j" "rendered)
                 continue
             }
             if ("arguments" in C_defines[$j] && $(j + 1) != "(") {

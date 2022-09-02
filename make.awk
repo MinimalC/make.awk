@@ -288,7 +288,7 @@ Array_debug(config)
 
         if (STANDARD == "MINIMAL")
 # ACHTUNG
-            options = options"  -nostdlib" # -nodefaultlibs -ffreestanding
+            options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding"
         else if (STANDARD == "ISO")
             options = options" -lm -ldl -pthread"
 
@@ -371,7 +371,7 @@ Array_debug(config)
 
     if (STANDARD == "MINIMAL")
 # ACHTUNG
-        options = options" -nostdlib" # -nodefaultlibs -ffreestanding
+        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding"
     else if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
 
@@ -383,7 +383,10 @@ Array_debug(config)
         short = get_FileNameNoExt(file)
         short = get_FileNameNoExt(short)
         if (!short) continue # warning
-        final_options = " -o "TEMP_DIR short" "file" "options
+        if (short == "System.Runtime.static" || short == "System.Runtime.shared")
+            final_options = " -o "TEMP_DIR short" "file" "options
+        else
+            final_options = " -o "TEMP_DIR short" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o "file" "options
         final_options = final_options" -L"TEMP_DIR" -l:lib"Project"."(!C_link_shared?"a":"so")
 
 __debug("C_link_executable: "C_linker" "final_options)
