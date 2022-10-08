@@ -71,7 +71,7 @@ function C_compiler_coprocess(final_options, input, output, target,    a,b,c,com
     else if (target && target != "C") __warning("make.awk: C_compiler_coprocess: Unknown target "target)
 
     if (C_compiler == "gcc") {
-        options = options" -xc -fpreprocessed"
+        options = options" -xc -fpreprocessed -fcommon"
         options = options" -g" # -On
         if (STANDARD == "MINIMAL") {
             options = options" -nostdinc -fvisibility=hidden"

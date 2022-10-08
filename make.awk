@@ -292,7 +292,7 @@ Array_debug(config)
         else if (STANDARD == "ISO")
             options = options" -lm -ldl -pthread"
 
-        options = "-o "TEMP_DIR"lib"Project".so"" "names" "options
+        options = options" -o "TEMP_DIR"lib"Project".so"" "names
 
 __debug("C_link_library: "C_linker" "options)
         unseen["0length"]
@@ -383,10 +383,14 @@ Array_debug(config)
         short = get_FileNameNoExt(file)
         short = get_FileNameNoExt(short)
         if (!short) continue # warning
-        if (short == "System.Runtime.static" || short == "System.Runtime.shared")
-            final_options = " -o "TEMP_DIR short" "file" "options
-        else
-            final_options = " -o "TEMP_DIR short" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o "file" "options
+        if (STANDARD == "MINIMAL") {
+            if (short == "System.Runtime.static" || short == "System.Runtime.shared")
+                final_options = options" -o "TEMP_DIR short" "file
+            else
+                final_options = options" -o "TEMP_DIR short" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o "file
+        }
+        else if (STANDARD == "ISO")
+            final_options = options" -o "TEMP_DIR short" "file
         final_options = final_options" -L"TEMP_DIR" -l:lib"Project"."(!C_link_shared?"a":"so")
 
 __debug("C_link_executable: "C_linker" "final_options)
