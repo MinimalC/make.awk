@@ -284,6 +284,11 @@ Array_debug(config)
     if (!names) return
 
     if (C_link_shared) {
+        for (n = 1; n <= config["files"]["0length"]; ++n) {
+            name = config["files"][n]
+            if (get_FileNameExt(name) == "so") names = String_concat("-l:"name, " ", names)
+        }
+
         options = "-shared"
 
         if (STANDARD == "MINIMAL")
@@ -301,6 +306,11 @@ File_debug(unseen)
         ++o
     }
     else {
+        for (n = 1; n <= config["files"]["0length"]; ++n) {
+            name = config["files"][n]
+            if (get_FileNameExt(name) == "a") names = String_concat("-l:"name, " ", names)
+        }
+
         options = "rcs "TEMP_DIR"lib"Project".a"
         options = options" "names
 
@@ -364,16 +374,26 @@ Array_debug(config)
         }
     } }
 
-
-    if (C_link_shared)
-         options = options" -shared -pie"
-    else options = options" -static"
-
     if (STANDARD == "MINIMAL")
 # ACHTUNG
-        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding"
+        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding" # -Wl,--no-dynamic-linker
     else if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
+
+    if (C_link_shared) {
+        options = options" -shared -pie"
+        for (n = 1; n <= config["files"]["0length"]; ++n) {
+            name = config["files"][n]
+            if (get_FileNameExt(name) == "so") options = String_concat("-l:"name, " ", options)
+        }
+    }
+    else {
+        options = options" -static"
+        for (n = 1; n <= config["files"]["0length"]; ++n) {
+            name = config["files"][n]
+            if (get_FileNameExt(name) == "a") options = String_concat("-l:"name, " ", options)
+        }
+    }
 
     for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
