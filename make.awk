@@ -294,10 +294,10 @@ Array_debug(config)
         if (STANDARD == "MINIMAL")
 # ACHTUNG
             options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding"
-        else if (STANDARD == "ISO")
+        else # if (STANDARD == "ISO")
             options = options" -lm -ldl -pthread"
 
-        options = options" -o "TEMP_DIR"lib"Project".so"" "names
+        options = options" -o "TEMP_DIR (STANDARD == "ISO"?"lib":"") Project".so"" "names
 
 __debug("C_link_library: "C_linker" "options)
         unseen["0length"]
@@ -311,7 +311,7 @@ File_debug(unseen)
             if (get_FileNameExt(name) == "a") names = String_concat("-l:"name, " ", names)
         }
 
-        options = "rcs "TEMP_DIR"lib"Project".a"
+        options = "rcs "TEMP_DIR (STANDARD == "ISO"?"lib":"") Project".a"
         options = options" "names
 
 __debug("C_static_library: ar "options)
@@ -324,7 +324,7 @@ File_debug(unseen)
     if (!o) { __error("make.awk: No Library built"); return }
 }
 
-function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,file,final_options,format,g,h,i,j,k,l,m,n,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
+function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 Array_debug(config)
 
     for (f = 1; f <= Format["0length"]; ++f) {
@@ -377,7 +377,7 @@ Array_debug(config)
     if (STANDARD == "MINIMAL")
 # ACHTUNG
         options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding" # -Wl,--no-dynamic-linker
-    else if (STANDARD == "ISO")
+    else # if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
 
     if (C_link_shared) {
@@ -408,10 +408,21 @@ Array_debug(config)
                 final_options = options" -o "TEMP_DIR short" "file
             else
                 final_options = options" -o "TEMP_DIR short" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o "file
+
+            if (short == "System.Interpreter") {
+                final_options = final_options" -Wl,--no-dynamic-linker"
+                for (f0 = 1; f0 <= Format["0length"]; ++f0) {
+                for (n0 = 1; n0 <= compiled[format]["0length"]; ++n0) {
+                    final_options = String_concat(final_options, " ", compiled[ Format[f0] ][  compiled[ Format[f0] ][n0]  ]["file"])
+                } }
+            }
+            else
+                final_options = final_options" -L"TEMP_DIR" -l:"Project"."(!C_link_shared?"a":"so")
         }
-        else if (STANDARD == "ISO")
+        else { # if STANDARD == "ISO"
             final_options = options" -o "TEMP_DIR short" "file
-        final_options = final_options" -L"TEMP_DIR" -l:lib"Project"."(!C_link_shared?"a":"so")
+            final_options = final_options" -L"TEMP_DIR" -l:" (STANDARD == "ISO"?"lib":"") Project"."(!C_link_shared?"a":"so")
+        }
 
 __debug("C_link_executable: "C_linker" "final_options)
 unseen["0length"]
