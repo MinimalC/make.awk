@@ -1,6 +1,5 @@
 #
 # Gemeinfrei. Public Domain.
-# 2020 Hans Riehm
 
 #include "run.awk"
 #include "make.C.awk"

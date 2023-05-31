@@ -1,13 +1,12 @@
 #!/usr/bin/awk -f
 # Gemeinfrei. Public Domain.
-# 2020 Hans Riehm
 
 #include "run.awk"
 
 BEGIN { BEGIN_run() }
 END { END_run() }
 
-function BEGIN_run(    __,a,argi,f,file,includeDir,input,o,output,options,r,runDir,w,workingDir) {
+function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,output,options,r,runDir,u,usage,w,workingDir) {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
@@ -19,38 +18,54 @@ function BEGIN_run(    __,a,argi,f,file,includeDir,input,o,output,options,r,runD
     # else MAX_INTEGER = 2 ^ 15  # if (__HEX(2 ^ 15) == "8000") # awk on 16bit ?
     # else MAX_INTEGER = 2 ^ 7 # if (__HEX(2 ^ 7) == "80")  # awk on 8bit :-)
 
-    if (PROCINFO["argv"][1] == "-f" && get_FileNameNoExt(PROCINFO["argv"][2]) == "run") {
-        USAGE = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
-            "with Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }\n"
-        if (ENVIRON["AWKPATH"] ~ /^\.:/) {
-            if (ARGV_length() == 0) { __error(USAGE); exit }
-            for (argi = 1; argi <= ARGV_length(); ++argi) {
-                if (!ARGV[argi]) continue
-                if ((f = "run_"ARGV[argi]) in FUNCTAB) { @f(); continue }
-                if (ARGV[argi] ~ /\..+$/) {
-                    runDir = ENVIRON["OLDPWD"]
-                    workingDir = ENVIRON["PWD"]
-                    if (runDir && runDir !~ /\/$/) runDir = runDir"/"
-                    if (workingDir && workingDir !~ /\/$/) workingDir = workingDir"/"
-                    if (runDir == workingDir) runDir = ""
-                    file = ""
-                    if (runDir) file = runDir ARGV[argi]; if (!File_exists(file)) { file = ""; runDir = "" }
-                    if (!file) file = ARGV[argi]; if (!File_exists(file)) file = ""
-                    if (!file) { __error("run.awk: File or Function "ARGV[argi]" doesn't exist"); continue }
-                    else {
-                        includeDir = get_DirectoryName(file)
-                        if (includeDir && includeDir !~ /\/$/) includeDir = includeDir"/"
-                        for (o = argi; o <= ARGV_length(); ++o) options = options" "ARGV[o]
-                        Array_clear(input)
-                        Array_clear(output)
-                        r = __awk("-f "file" "options, input, output, workingDir, "AWKPATH="workingDir (!includeDir?"":":"includeDir)(!runDir?"":":"runDir))
-                        File_printTo(output, "/dev/stdout")
-                        exit r
-                    }
-                }
+    if (ARGV[0] == "awk" || ARGV[0] == "gawk")
+        for (i = 1; i < length(PROCINFO["argv"]); ++i)
+            if (PROCINFO["argv"][i] == "-f") {
+                f = get_FileName(PROCINFO["argv"][i + 1])
+                if (ARGV[1] == f) ARGV_remove(1)
+                ARGV[0] = f
+                break
+            }
+    if (ARGV[0] == "run.awk" && ENVIRON["AWKPATH"] ~ /^\.:/) {
+        usage = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
+            "with a Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }\n"
+        if (ARGV_length() == 0) { __error(usage); exit }
+
+        #runDir = ENVIRON["OLDPWD"]
+        #if (runDir && runDir !~ /\/$/) runDir = runDir"/"
+        workingDir = ENVIRON["PWD"]
+        if (workingDir && workingDir !~ /\/$/) workingDir = workingDir"/"
+        #if (runDir == workingDir) runDir = ""
+
+        for (i = 1; i <= ARGV_length(); ++i) {
+            if (!ARGV[i]) continue
+            if ((f = "run_"ARGV[i]) in FUNCTAB) { @f(); continue }
+            if (ARGV[i] ~ /^@.+/) {
+                config = get_FileName(substr(ARGV[i], 2)); ARGV[i] = ""
+                f = config; if (!File_exists(f)) f = ""
+                if (!f && includeDir) f = includeDir config; if (!File_exists(f)) { f = "" }
+                if (!f && workingDir) f = workingDir config; if (!File_exists(f)) { f = "" }
+                #if (!f && runDir) f = runDir config; if (!File_exists(f)) { f = "" }
+                if (!f) { __error("run.awk: @config file "config" doesn't exist"); config = ""; continue }
+                continue
+            }
+            if (ARGV[i] ~ /\..+$/) {
+                includeDir = get_DirectoryName(ARGV[i])
+                if (includeDir && includeDir !~ /\/$/) includeDir = includeDir"/"
+                fileName = get_FileName(ARGV[i]); ARGV[i] = ""
+                f = fileName; if (!File_exists(f)) f = ""
+                if (!f && includeDir) f = includeDir fileName; if (!File_exists(f)) { f = "" }
+                if (!f && workingDir) f = workingDir fileName; if (!File_exists(f)) { f = "" }
+                #if (!f && runDir) f = runDir fileName; if (!File_exists(f)) { f = "" }
+                if (!f) { __error("run.awk: File or Function "includeDir fileName" doesn't exist"); continue }
+                options = ""; for (o = i + 1; o <= ARGV_length(); ++o) options = options" "ARGV[o]
+                Array_clear(input); Array_clear(output) #  (!runDir?"":runDir":")
+                r = __gawk((!config?"":"-i "config" ")"-f "fileName" -- "options, input, output, workingDir, "AWKPATH="(!includeDir?"":includeDir":")".")
+                File_printTo(output, "/dev/stdout")
+                exit r
             }
         }
-        __error(USAGE); exit
+        __error(usage); exit
     }
 }
 
@@ -151,6 +166,35 @@ function __debug(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 function __debugF(format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
     if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"])
         __printFTo("/dev/stderr",format,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
+}
+
+function ARGV_contains(item,    __,t,type,u,v) {
+    type = typeof(item)
+    if (type == "array") { __error("ARGV_contains doesn't work with arrays"); return }
+    for (v = 1; v < ARGC; ++v)
+        if (type == "regex" && ARGV[v] ~ item) { u = v; break }
+        else if (ARGV[v] == item) { u = v; break }
+    return u
+}
+
+function ARGV_add(item,    __,r) {
+    ARGV[r = ARGC++] = item
+    return r
+}
+
+function ARGV_remove(i,   __,n) {
+    for (n = ARGC - 1; n > i; --n) ARGV[n - 1] = ARGV[n]
+    --ARGC
+}
+
+function ARGV_insert(i, item,    __,n) {
+    ++ARGC
+    for (n = i; n < ARGC - 1; ++n) ARGV[n + 1] = ARGV[n]
+    ARGV[i] = item
+}
+
+function ARGV_length() {
+    return ARGC - 1
 }
 
 function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
@@ -349,27 +393,6 @@ function Path_join(pathName0, pathName1,    __,p,path0,path1,r) {
     return r
 }
 
-function ARGV_contains(item,    __,t,type,u,v) {
-    type = typeof(item)
-    if (type == "array") { __error("ARGV_contains doesn't work with arrays"); return }
-    for (v = 1; v < ARGC; ++v)
-        if (type == "regex" && ARGV[v] ~ item) { u = v; break }
-        else if (ARGV[v] == item) { u = v; break }
-    return u
-}
-
-function ARGV_add(item,    __,r) {
-    if (!(r = ARGV_contains(item))) ARGV[r = ARGC++] = item
-    return r
-}
-
-function ARGV_remove(i) {
-    ARGV[i] = ""
-}
-function ARGV_length() {
-    return ARGC - 1
-}
-
 function __BEGIN(controller, action, usage,
     null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,runDir,
     n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
@@ -391,14 +414,16 @@ function __BEGIN(controller, action, usage,
     if (!usage) {
         if (!(usage = USAGE)) usage = "Use \"USAGE\" = \"to say what Project you are working on\""
     }
-    # CONTROLLER
     if (!controller) {
         if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
-        else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
+        #else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
+        else if (ARGV[0] != "gawk") controller = get_FileNameNoExt(ARGV[0])
         if (!controller) { __error(usage); exit }
     }
     if ( typeof(CONTROLLER) == "untyped" ) CONTROLLER = controller
     if (action) { default = action; action = "" }
+
+    if ((c = "configure") in FUNCTAB) @c()
 
     delete config
     for (i = 1; i <= ARGV_length(); ++i) {
@@ -1014,12 +1039,20 @@ function File_clearLines(file, regex,    __,i) {
         if (file[i] ~ regex) file[i] = ""
 }
 
-function __awk(options, input, output, directory, variables) {
-    return __command("awk", options, input, output, directory, variables)
+function __gawk(options, input, output, directory, variables) {
+    return __command("gawk", options, input, output, directory, variables)
 }
 
-function __sh(options, input, output, directory, variables) {
-    return __command("sh", options, input, output, directory, variables)
+function __bash(options, input, output, directory, variables) {
+    return __command("bash", options, input, output, directory, variables)
+}
+
+function __sudo(options, input, output, directory, variables) {
+    return __command("sudo", "-n "options, input, output, directory, variables)
+}
+
+function sudo_isAdministrator() {
+    return !__sudo("echo")
 }
 
 function __command(command, options, input, output, directory, variables,    __,unseen) {

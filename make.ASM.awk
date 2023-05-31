@@ -1,6 +1,5 @@
 #
 # Gemeinfrei. Public Domain.
-# 2022 Hans Riehm
 
 @include "run.awk"
 

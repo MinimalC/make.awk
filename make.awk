@@ -1,6 +1,5 @@
 #!/usr/bin/awk -f
 # Gemeinfrei. Public Domain.
-# 2020 Hans Riehm
 
 @include "run.awk"
 @include "make.C.awk"
@@ -79,17 +78,16 @@ function BEGIN_make() {
     createTemp_Directory(".make")
 
     USAGE =\
-    "Usage:\n"\
-"    make.awk project=Program [options] [preprocess] [precompile] Program.c [compile]\n"\
+    "make.awk project=Program [options] [preprocess] [precompile] Program.c [compile]\n"\
     "\n"\
     "Options:\n"\
     "    project=Name for a custom Project\n"\
     "    cc=customcc for a custom C_compiler\n"\
-    "    +std for a custom STANDARD, default is ISO\n"\
+    "    -std for MINIMAL STANDARD, default is ISO\n"\
     "\n"\
     "C_preprocess'ing:\n"\
     "    +enableComments for not removing comments\n"\
-    "    -DNDEBUG or +DDEBUG for boolean true or false or DDEBUG=3 for the value 3"
+    "    -DDEBUG or +DDEBUG for boolean true 1 or false 0, or DDEBUG=3 for the value 3"
 
     __BEGIN("compile")
 }
@@ -404,28 +402,34 @@ Array_debug(config)
         short = get_FileNameNoExt(short)
         if (!short) continue # warning
         if (STANDARD == "MINIMAL") {
-            if (short == "System.Runtime.static" || short == "System.Runtime.shared")
-                final_options = options" -o "TEMP_DIR short" "file
-            else
-                final_options = options" -o "TEMP_DIR short" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o "file
-
+            final_options = options" -o "TEMP_DIR short
             if (short == "System.Interpreter") {
                 final_options = final_options" -Wl,--no-dynamic-linker"
                 for (f0 = 1; f0 <= Format["0length"]; ++f0) {
                 for (n0 = 1; n0 <= compiled[format]["0length"]; ++n0) {
                     final_options = String_concat(final_options, " ", compiled[ Format[f0] ][  compiled[ Format[f0] ][n0]  ]["file"])
                 } }
+                final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o"
+                final_options = final_options" "file
             }
-            else
+            else if (short == "System.Runtime.static" || short == "System.Runtime.shared") {
+                final_options = final_options" "file
                 final_options = final_options" -L"TEMP_DIR" -l:"Project"."(!C_link_shared?"a":"so")
+            }
+            else {
+                final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o"
+                final_options = final_options" "file
+                final_options = final_options" -L"TEMP_DIR" -l:"Project"."(!C_link_shared?"a":"so")
+            }
         }
         else { # if STANDARD == "ISO"
-            final_options = options" -o "TEMP_DIR short" "file
+            final_options = options" -o "TEMP_DIR short
+            final_options = final_options" "file
             final_options = final_options" -L"TEMP_DIR" -l:" (STANDARD == "ISO"?"lib":"") Project"."(!C_link_shared?"a":"so")
         }
 
 __debug("C_link_executable: "C_linker" "final_options)
-unseen["0length"]
+        unseen["0length"]
         __pipe(C_linker, final_options, unseen)
 File_debug(unseen)
     } }

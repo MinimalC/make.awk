@@ -1,6 +1,5 @@
 #!/usr/bin/awk -f
-# Public Domain
-# 2022 Hans Riehm
+# Public Domain. Gemeinfrei
 
 @include "run.awk"
 
