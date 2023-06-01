@@ -161,8 +161,7 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
-        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
-        if (!short) short = Project
+        if (!short) continue # warning
 
         preproc[format][name]["0length"]
         if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
@@ -188,8 +187,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
-        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
-        if (!short) short = Project
+        if (!short) continue # warning
 
         if ((C = format"_""preprocess") in FUNCTAB) {
             preproc[format][name]["0length"]
@@ -225,9 +223,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
-        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
-        if ("C" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
-        if (!short) short = Project
+        if (!short) continue # warning
 
         if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
@@ -251,7 +247,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         if (!@C(name)) { __error("make.awk: No "C" "name); continue }
         if (format == "C" && precomp["ASM"][name]["0length"]) {
-            file = precomp["ASM"][name]["file"] = TEMP_DIR short"...S"
+            file = precomp["ASM"][name]["file"] = TEMP_DIR short"...ASM"
             File_printTo(precomp["ASM"][name], file, "\n", "\n")
             precomp["ASM"][file]["length"]
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
@@ -260,7 +256,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             continue
         }
         if (compiled[format][name]["0length"]) {
-            file = compiled[format][name]["file"] = TEMP_DIR short"..."format".o"
+            file = compiled[format][name]["file"] = TEMP_DIR short"...o"
             File_printTo(compiled[format][name], file, "\n", "\n", 1)
             compiled[format][ ++compiled[format]["0length"] ] = name
             ++o
@@ -331,9 +327,7 @@ Array_debug(config)
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
         short = get_FileNameNoExt(name)
-        if ("auto" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
-        if ("C" == get_FileNameExt(short)) short = get_FileNameNoExt(short)
-        if (!short) short = Project
+        if (!short) continue # warning
 
         if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
@@ -356,7 +350,7 @@ Array_debug(config)
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
         if (!@C(name)) { __error("make.awk: No "C" "name); continue }
         if (format == "C" && precomp["ASM"][name]["0length"]) {
-            file = precomp["ASM"][name]["file"] = TEMP_DIR short"..."format".S"
+            file = precomp["ASM"][name]["file"] = TEMP_DIR short"...ASM"
             File_printTo(precomp["ASM"][name], file, "\n", "\n")
             precomp["ASM"][file]["length"]
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
@@ -365,15 +359,14 @@ Array_debug(config)
             continue
         }
         if (compiled[format][name]["0length"]) {
-            file = compiled[format][name]["file"] = TEMP_DIR short"..."format".o"
+            file = compiled[format][name]["file"] = TEMP_DIR short"...o"
             File_printTo(compiled[format][name], file, "\n", "\n", 1)
-            # dont't compiled[format][ ++compiled[format]["0length"] ] = name
+            # do not compiled[format][ ++compiled[format]["0length"] ] = name
             continue
         }
     } }
 
     if (STANDARD == "MINIMAL")
-# ACHTUNG
         options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding" # -Wl,--no-dynamic-linker
     else # if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
@@ -399,8 +392,8 @@ Array_debug(config)
         name = config["files"][n]
         file = compiled[format][name]["file"]
         short = get_FileNameNoExt(file)
-        short = get_FileNameNoExt(short)
         if (!short) continue # warning
+
         if (STANDARD == "MINIMAL") {
             final_options = options" -o "TEMP_DIR short
             if (short == "System.Interpreter") {
@@ -409,15 +402,13 @@ Array_debug(config)
                 for (n0 = 1; n0 <= compiled[format]["0length"]; ++n0) {
                     final_options = String_concat(final_options, " ", compiled[ Format[f0] ][  compiled[ Format[f0] ][n0]  ]["file"])
                 } }
-                final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o"
+                final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...o"
                 final_options = final_options" "file
-            }
-            else if (short == "System.Runtime.static" || short == "System.Runtime.shared") {
-                final_options = final_options" "file
-                final_options = final_options" -L"TEMP_DIR" -l:"Project"."(!C_link_shared?"a":"so")
             }
             else {
-                final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...ASM.o"
+                #final_options = final_options" -Wl,--dynamic-linker=System.Interpreter"
+                if (short != "System.Runtime.static" && short != "System.Runtime.shared")
+                    final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...o"
                 final_options = final_options" "file
                 final_options = final_options" -L"TEMP_DIR" -l:"Project"."(!C_link_shared?"a":"so")
             }
@@ -434,5 +425,5 @@ __debug("C_link_executable: "C_linker" "final_options)
 File_debug(unseen)
     } }
 
-    # ++o if (!o) { __error("make.awk: No Executable linked"); return }
+    # ++o if (!o) { __error("make.awk: No executable linked"); return }
 }
