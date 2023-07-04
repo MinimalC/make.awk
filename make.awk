@@ -253,6 +253,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
             Array_clear(precomp["ASM"][name])
             config["files"][ n ] = file
+__debug("C_compile: "C_compiler" "name)
             continue
         }
         if (compiled[format][name]["0length"]) {
@@ -260,6 +261,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             File_printTo(compiled[format][name], file, "\n", "\n", 1)
             compiled[format][ ++compiled[format]["0length"] ] = name
             ++o
+__debug("C_compile: "C_compiler" "name)
             continue
         }
     } }
@@ -296,7 +298,7 @@ Array_debug(config)
 __debug("C_link_library: "C_linker" "options)
         unseen["0length"]
         __pipe(C_linker, options, unseen)
-File_debug(unseen)
+if (unseen["0length"]) File_debug(unseen)
         ++o
     }
     else {
@@ -311,7 +313,7 @@ File_debug(unseen)
 __debug("C_static_library: ar "options)
         unseen["0length"]
         __pipe("ar", options, unseen)
-File_debug(unseen)
+if (unseen["0length"]) File_debug(unseen)
         ++o
     }
 
@@ -356,33 +358,37 @@ Array_debug(config)
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
             Array_clear(precomp["ASM"][name])
             config["files"][ n ] = file
+__debug("C_compile: "C_compiler" "name)
             continue
         }
         if (compiled[format][name]["0length"]) {
             file = compiled[format][name]["file"] = TEMP_DIR short"...o"
             File_printTo(compiled[format][name], file, "\n", "\n", 1)
             # do not compiled[format][ ++compiled[format]["0length"] ] = name
+__debug("C_compile: "C_compiler" "name)
             continue
         }
     } }
 
     if (STANDARD == "MINIMAL")
-        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding" # -Wl,--no-dynamic-linker
+        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding"
     else # if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
 
+    options = options" -L"TEMP_DIR
+
     if (C_link_shared) {
         options = options" -shared -pie"
-        for (n = 1; n <= config["files"]["0length"]; ++n) {
-            name = config["files"][n]
-            if (get_FileNameExt(name) == "so") options = String_concat("-l:"name, " ", options)
+        for (n = 1; n <= config["names"]["0length"]; ++n) {
+            name = config["names"][n]
+            if (get_FileNameExt(name) == "so") final_libraries = String_concat(" -l:"name, " ", final_libraries)
         }
     }
     else {
         options = options" -static"
-        for (n = 1; n <= config["files"]["0length"]; ++n) {
-            name = config["files"][n]
-            if (get_FileNameExt(name) == "a") options = String_concat("-l:"name, " ", options)
+        for (n = 1; n <= config["names"]["0length"]; ++n) {
+            name = config["names"][n]
+            if (get_FileNameExt(name) == "a") final_libraries = String_concat(" -l:"name, " ", final_libraries)
         }
     }
 
@@ -406,23 +412,23 @@ Array_debug(config)
                 final_options = final_options" "file
             }
             else {
-                #final_options = final_options" -Wl,--dynamic-linker=System.Interpreter"
+                final_options = final_options" -Wl,--dynamic-linker=System.Interpreter"
                 if (short != "System.Runtime.static" && short != "System.Runtime.shared")
                     final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...o"
                 final_options = final_options" "file
-                final_options = final_options" -L"TEMP_DIR" -l:"Project"."(!C_link_shared?"a":"so")
+                final_options = final_options final_libraries" -l:"Project"."(!C_link_shared?"a":"so")
             }
         }
         else { # if STANDARD == "ISO"
             final_options = options" -o "TEMP_DIR short
             final_options = final_options" "file
-            final_options = final_options" -L"TEMP_DIR" -l:" (STANDARD == "ISO"?"lib":"") Project"."(!C_link_shared?"a":"so")
+            final_options = final_options" -l:" (STANDARD == "ISO"?"lib":"") Project"."(!C_link_shared?"a":"so")
         }
 
 __debug("C_link_executable: "C_linker" "final_options)
         unseen["0length"]
         __pipe(C_linker, final_options, unseen)
-File_debug(unseen)
+if (unseen["0length"]) File_debug(unseen)
     } }
 
     # ++o if (!o) { __error("make.awk: No executable linked"); return }

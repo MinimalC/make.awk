@@ -131,10 +131,8 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
             name = "configure"; if (File_exists(dir name)) break
             name = ""
         }
-        if (name == Project".config.awk") __warning("make.awk: Using "name) # run_awk(Project".config.awk", "configure_"Project, config)
-        else if (!name) __warning("make.awk: Use ./configure to create config.h")
+        if (name == Project".config.awk") __warning("make.awk: Using "name)
         #else __warning("make.awk: Using "name)
-#if (DEBUG) if (output["0length"]) File_printTo(output, "/dev/stderr")
 
         Array_clear(output)
         if (!output["0length"]) { file = "."Project".config.h"; if (File_exists(dir file)) File_read(output, dir file) }
