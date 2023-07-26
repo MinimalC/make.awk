@@ -45,6 +45,8 @@ END { END_make() }
 
 function BEGIN_make() {
 
+    __error("make.awk " get_DateTime())
+
     REFIX = @/\x01/
       FIX = "\x01"
     DEFIX = "`"
@@ -293,6 +295,8 @@ Array_debug(config)
         else # if (STANDARD == "ISO")
             options = options" -lm -ldl -pthread"
 
+        options = options" -Wl,-soname=\""(STANDARD == "ISO"?"lib":"") Project".so\""
+
         options = options" -o "TEMP_DIR (STANDARD == "ISO"?"lib":"") Project".so"" "names
 
 __debug("C_link_library: "C_linker" "options)
@@ -410,6 +414,7 @@ __debug("C_compile: "C_compiler" "name)
                 } }
                 final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...o"
                 final_options = final_options" "file
+                final_options = final_options" -Wl,-soname=\""short"\""
             }
             else {
                 final_options = final_options" -Wl,--dynamic-linker=System.Interpreter"
@@ -417,12 +422,14 @@ __debug("C_compile: "C_compiler" "name)
                     final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...o"
                 final_options = final_options" "file
                 final_options = final_options final_libraries" -l:"Project"."(!C_link_shared?"a":"so")
+                final_options = final_options" -Wl,-soname=\""short"\""
             }
         }
         else { # if STANDARD == "ISO"
             final_options = options" -o "TEMP_DIR short
             final_options = final_options" "file
-            final_options = final_options" -l:" (STANDARD == "ISO"?"lib":"") Project"."(!C_link_shared?"a":"so")
+            final_options = final_options final_libraries" -l:" (STANDARD == "ISO"?"lib":"") Project"."(!C_link_shared?"a":"so")
+            final_options = final_options" -Wl,-soname=\""short"\""
         }
 
 __debug("C_link_executable: "C_linker" "final_options)

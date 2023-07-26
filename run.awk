@@ -988,6 +988,7 @@ function File_printTo(file, to, rs, ors, noLastORS,    __,z) {
         if (noLastORS && z == file["0length"]) { printf "%s", file[z] > to; break }
         print file[z] > to
     }
+    fflush(to)
     Index_pop()
     if (to != "/dev/stdout" && to != "/dev/stderr") close(to)
 }
@@ -1000,6 +1001,7 @@ function File_printFTo(file, to, format, rs, ors, noLastORS,    __,z) {
         if (noLastORS && z == file["0length"]) { printf format, file[z] > to; break }
         printf format, file[z] > to
     }
+    fflush(to)
     Index_pop()
 }
 
