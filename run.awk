@@ -6,7 +6,7 @@
 BEGIN { BEGIN_run() }
 END { END_run() }
 
-function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,output,options,r,runDir,u,usage,w,workingDir) {
+function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,output,options,r,runDir,u,usage,unseen,w,workingDir) {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
 
@@ -26,12 +26,17 @@ function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,out
                 ARGV[0] = f
                 break
             }
+    if (!("PWD" in ENVIRON)) {
+        unseen["0length"]
+        __pipe("pwd", "", unseen)
+        ENVIRON["PWD"] = unseen[1]
+    }
     if (ARGV[0] == "run.awk" && ENVIRON["AWKPATH"] ~ /^\.:/) {
-        usage = "Use awk -f run.awk Project.awk [command] [Directory] [File.name]\n"\
-            "with a Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }\n"
+        usage = "Use run.awk Project.awk [command] [Directory] [File.name]\n"\
+            "with a Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
         if (ARGV_length() == 0) { __error(usage); exit }
 
-        #runDir = ENVIRON["OLDPWD"]
+        #runDir = ?
         #if (runDir && runDir !~ /\/$/) runDir = runDir"/"
         workingDir = ENVIRON["PWD"]
         if (workingDir && workingDir !~ /\/$/) workingDir = workingDir"/"
@@ -52,15 +57,15 @@ function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,out
             if (ARGV[i] ~ /\..+$/) {
                 includeDir = get_DirectoryName(ARGV[i])
                 if (includeDir && includeDir !~ /\/$/) includeDir = includeDir"/"
-                fileName = get_FileName(ARGV[i]); ARGV[i] = ""
+                fileName = get_FileName(ARGV[i])
                 f = fileName; if (!File_exists(f)) f = ""
                 if (!f && includeDir) f = includeDir fileName; if (!File_exists(f)) { f = "" }
                 if (!f && workingDir) f = workingDir fileName; if (!File_exists(f)) { f = "" }
                 #if (!f && runDir) f = runDir fileName; if (!File_exists(f)) { f = "" }
-                if (!f) { __error("run.awk: File or Function "includeDir fileName" doesn't exist"); continue }
-                options = ""; for (o = i + 1; o <= ARGV_length(); ++o) options = options" "ARGV[o]
-                Array_clear(input); Array_clear(output) #  (!runDir?"":runDir":")
-                r = __gawk((!config?"":"-i "config" ")"-f "fileName" -- "options, input, output, workingDir, "AWKPATH="(!includeDir?"":includeDir":")".")
+                if (!f) { __error("run.awk: File or Function "fileName" doesn't exist"); continue }
+                ARGV[i] = ""; options = ""; for (o = i + 1; o <= ARGV_length(); ++o) options = options" "ARGV[o]
+                Array_clear(input); Array_clear(output)
+                r = __gawk((!config?"":"-i "config" ")"-f "fileName" -- "options, input, output, workingDir, "AWKPATH="(!includeDir?"":includeDir":")"."" PWD="workingDir)
                 File_printTo(output, "/dev/stdout")
                 exit r
             }
@@ -78,6 +83,114 @@ function END_run() {
 function run_ARGV_ARGC(config) { RUN_ARGC_ARGV = 1 }
 
 function run_ARGC_ARGV(config) { RUN_ARGC_ARGV = 1 }
+
+function run_install(config,    __, pwd) {
+    if (!sudo_isAdministrator()) { __print("Usage: sudo ./run.awk install"); exit }
+    File_remove("/usr/bin/run.awk", 1)
+    pwd = ENVIRON["PWD"]"/"
+    if (create_Link("/usr/bin/", "run.awk", pwd"run.awk")) {
+        __print("/usr/bin/run.awk is now linked to "pwd"run.awk.")
+        exit 1
+    }
+    exit
+}
+
+function __BEGIN(controller, action, usage,
+    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,runDir,
+    n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
+{   # CONTROLLER, ACTION, USAGE, ERRORS
+
+    if (typeof(null) != "untyped")
+        __warning("run.awk: Use __BEGIN with just three arguments:\n"\
+                  "__BEGIN(action), __BEGIN(action, usage) or __BEGIN(controller, action, usage)")
+
+    if (typeof(action) == "untyped") {
+        action = controller
+        controller = ""
+    }
+    else if (typeof(usage) == "untyped") {
+        usage = action
+        action = controller
+        controller = ""
+    }
+    if (!usage) {
+        if (!(usage = USAGE)) usage = "Use USAGE = \"to say what Project you are working on\""
+    }
+    if (!controller) {
+        if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
+        #else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
+        else if (ARGV[0] != "gawk") controller = get_FileNameNoExt(ARGV[0])
+        if (!controller) { __error(usage); exit }
+    }
+    if ( typeof(CONTROLLER) == "untyped" ) CONTROLLER = controller
+    if (action) { default = action; action = "" }
+
+    if ((c = "configure") in FUNCTAB) @c()
+
+    delete config
+    for (i = 1; i <= ARGV_length(); ++i) {
+        if (ARGV[i] ~ /^\s*$/) continue
+        if (controller"_"ARGV[i] in FUNCTAB) {
+            if (i > 1 && action) {
+                if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
+                @make(config); if ("next" in config) delete config["next"]; else delete config # Array_clear(config)
+            }
+            action = ARGV[i]
+            ARGV[i] = ""; continue
+        }
+        paramName = paramWert = ""
+        if (ARGV[i] ~ /^.*=/) {
+            paramWert = index(ARGV[i], "=")
+            paramName = substr(ARGV[i], 1, paramWert - 1)
+            paramWert = substr(ARGV[i], paramWert + 1)
+        } else
+        if (ARGV[i] ~ /^\+/ || ARGV[i] ~ /^-/) {
+            paramWert = substr(ARGV[i], 1, 1)
+            paramName = substr(ARGV[i], 2)
+            paramWert = paramWert == "+" ? 1 : 0
+        } else
+        if (ARGV[i] ~ /\+$/ || ARGV[i] ~ /-$/) {
+            l = length(ARGV[i])
+            paramWert = substr(ARGV[i], l, 1)
+            paramName = substr(ARGV[i], 1, l - 1)
+            paramWert = paramWert == "+" ? 1 : 0
+        }
+        if (paramName) {
+          # if (paramName == "debug") DEBUG = paramWert; else
+            if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
+            else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
+            else config["names"][paramName] = paramWert
+            ARGV[i] = ""; continue
+        }
+        if (ARGV[i] ~ /^https?:/ || ARGV[i] ~ /^\/\//) {
+            config["addresses"][++config["addresses"]["0length"]] = ARGV[i]
+            ARGV[i] = ""; continue
+        }
+        if (Directory_exists(ARGV[i])) {
+            config["directories"][++config["directories"]["0length"]] = ARGV[i]
+            ARGV[i] = ""; continue
+        }
+        if (File_exists(ARGV[i])) {
+            config["files"][++config["files"]["0length"]] = ARGV[i]
+            ARGV[i] = ""; continue
+        }
+        if (ARGV[i]) {
+            config["names"][ ++config["names"]["0length"] ] = ARGV[i]
+            # __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
+            ARGV[i] = ""
+        }
+    }
+    if (!action) {
+        if (typeof(ACTION) != "untyped" && ACTION) action = ACTION
+        else if (default) action = default
+        else action = "BEGIN"
+    }
+    if (!((make = controller"_"action) in FUNCTAB)) __error(controller".awk: Unknown method "make)
+    else @make(config)
+
+    if (typeof(ERRORS) == "number" && ERRORS) exit
+    exit 1
+}
 
 function __printTo(to,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,  __,msg) {
     if (typeof(a) != "untyped") msg = String_concat(msg, " ", a)
@@ -310,22 +423,31 @@ function removeTemp_Directory() {
     if (Directory_exists(TEMP_DIR)) remove_Directory(TEMP_DIR)
 }
 
-function create_SymbolicLink(directory, target) {
-    if (!directory) { __error("create_SymbolicLink: no directory"); return }
-    if (!target) { __error("create_SymbolicLink: no target"); return }
-    if (!system("ln -s '"directory"' '"target"'")) return 1
+function Directory_list(directory, list,   __,t) {
+    if (!directory) { __error("Directory_list: no directory"); return }
+    if (!list) { __error("Directory_list: no list"); return }
+    if ((t = typeof(list)) != "array") { __error("Directory_list: list is typeof "t); return }
+    __list(".", list, directory)
 }
 
-function SymbolicLink_exists(target) {
-    if (!target) { __error("SymbolicLink_exists: no target"); return }
+function create_SymbolicLink(directory, name, target) {
+    if (!directory) { __error("create_SymbolicLink: no directory"); return }
+    if (!name) { __error("create_SymbolicLink: no name"); return }
+    if (!target) { __error("create_SymbolicLink: no target"); return }
+    if (!system("cd '"directory"' ; ln -s '"target"' '"name"'")) return 1
+}
+
+function create_Link(directory, name, target) {
+    if (!directory) { __error("create_Link: no directory"); return }
+    if (!name) { __error("create_Link: no name"); return }
+    if (!target) { __error("create_Link: no target"); return }
+    if (!system("cd '"directory"' ; ln '"target"' '"name"'")) return 1
+}
+
+function Link_exists(target) {
+    if (!target) { __error("Link_exists: no target"); return }
     if (!system("test -L '"target"'")) return 1
 }
-
-#function create_HardLink(file, target) {
-#    if (!file) { __error("create_HardLink: no file"); return }
-#    if (!target) { __error("create_HardLink: no target"); return }
-#    if (!system("ln -P '"file"' '"target"'")) return 1
-#}
 
 function File_contains(fileName, string,    __,i,r,y) {
     if (!fileName) { __error("File_contains: no fileName"); return }
@@ -341,7 +463,6 @@ function File_contains(fileName, string,    __,i,r,y) {
 function File_remove(fileName, force) {
     if (!fileName) { __error("File_remove: no fileName"); return }
     if (!system("rm"(force ? " -f" : "")" '"fileName"'")) return 1
-    return 0
 }
 
 function get_FileNameArray(file, name,  __,path) {
@@ -391,103 +512,6 @@ function Path_join(pathName0, pathName1,    __,p,path0,path1,r) {
     for (p = 1; p <= path0["0length"]; ++p)
         r = r path0[p] (p < path0["0length"] ? "/" : "")
     return r
-}
-
-function __BEGIN(controller, action, usage,
-    null,a,b,c,config,d,default,e,f,file,g,h,i,includeDir,j,k,l,m,make,runDir,
-    n,o,options,output,p,paramName,paramWert,q,r,s,t,u,v,w,workingDir,x,y,z)
-{   # CONTROLLER, ACTION, USAGE, ERRORS
-
-    if (typeof(null) != "untyped")
-        __warning("run.awk: Use __BEGIN with just three arguments:\n"\
-                  "__BEGIN(action), __BEGIN(action, usage) or __BEGIN(controller, action, usage)")
-
-    if (typeof(action) == "untyped") {
-        action = controller
-        controller = ""
-    }
-    else if (typeof(usage) == "untyped") {
-        usage = action
-        action = controller
-        controller = ""
-    }
-    if (!usage) {
-        if (!(usage = USAGE)) usage = "Use \"USAGE\" = \"to say what Project you are working on\""
-    }
-    if (!controller) {
-        if (typeof(CONTROLLER) != "untyped") controller = CONTROLLER
-        #else if (PROCINFO["argv"][1] == "-f") controller = get_FileNameNoExt(PROCINFO["argv"][2])
-        else if (ARGV[0] != "gawk") controller = get_FileNameNoExt(ARGV[0])
-        if (!controller) { __error(usage); exit }
-    }
-    if ( typeof(CONTROLLER) == "untyped" ) CONTROLLER = controller
-    if (action) { default = action; action = "" }
-
-    if ((c = "configure") in FUNCTAB) @c()
-
-    delete config
-    for (i = 1; i <= ARGV_length(); ++i) {
-        if (ARGV[i] ~ /^\s*$/) continue
-        if (controller"_"ARGV[i] in FUNCTAB) {
-            if (i > 1 && action) {
-                if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-                @make(config); if ("next" in config) delete config["next"]; else delete config # Array_clear(config)
-            }
-            action = ARGV[i]
-            ARGV[i] = ""; continue
-        }
-        paramName = paramWert = ""
-        if (ARGV[i] ~ /^.*=/) {
-            paramWert = index(ARGV[i], "=")
-            paramName = substr(ARGV[i], 1, paramWert - 1)
-            paramWert = substr(ARGV[i], paramWert + 1)
-        } else
-        if (ARGV[i] ~ /^\+/ || ARGV[i] ~ /^-/) {
-            paramWert = substr(ARGV[i], 1, 1)
-            paramName = substr(ARGV[i], 2)
-            paramWert = paramWert == "+" ? 1 : 0
-        } else
-        if (ARGV[i] ~ /\+$/ || ARGV[i] ~ /-$/) {
-            l = length(ARGV[i])
-            paramWert = substr(ARGV[i], l, 1)
-            paramName = substr(ARGV[i], 1, l - 1)
-            paramWert = paramWert == "+" ? 1 : 0
-        }
-        if (paramName) {
-          # if (paramName == "debug") DEBUG = paramWert; else
-            if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
-            else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
-            else config["names"][paramName] = paramWert
-            ARGV[i] = ""; continue
-        }
-        if (ARGV[i] ~ /^https?:/ || ARGV[i] ~ /^\/\//) {
-            config["addresses"][++config["addresses"]["0length"]] = ARGV[i]
-            ARGV[i] = ""; continue
-        }
-        if (Directory_exists(ARGV[i])) {
-            config["directories"][++config["directories"]["0length"]] = ARGV[i]
-            ARGV[i] = ""; continue
-        }
-        if (File_exists(ARGV[i])) {
-            config["files"][++config["files"]["0length"]] = ARGV[i]
-            ARGV[i] = ""; continue
-        }
-        if (ARGV[i]) {
-            config["names"][ ++config["names"]["0length"] ] = ARGV[i]
-            # __warning(controller".awk: Unknown File, command or parameter not found: "ARGV[i])
-            ARGV[i] = ""
-        }
-    }
-    if (!action) {
-        if (typeof(ACTION) != "untyped" && ACTION) action = ACTION
-        else if (default) action = default
-        else action = "BEGIN"
-    }
-    if (!((make = controller"_"action) in FUNCTAB)) __error(controller".awk: Unknown method "make)
-    else @make(config)
-
-    if (typeof(ERRORS) == "number" && ERRORS) exit
-    exit 1
 }
 
 function get_Date(time,    __,string) {
@@ -1050,17 +1074,30 @@ function __bash(options, input, output, directory, variables) {
 }
 
 function __sudo(options, input, output, directory, variables) {
-    return __command("sudo", "-n "options, input, output, directory, variables)
+    return __command("sudo", options, input, output, directory, variables)
 }
 
 function sudo_isAdministrator() {
-    return !__sudo("echo")
+    return !__sudo("-n echo")
+}
+
+function __list(options, output, directory, variables) {
+    __pipe("ls", "-1 "options, output, directory, variables)
+}
+
+function __listAll(options, output, directory, variables) {
+    __pipe("la", "-1 "options, output, directory, variables)
+}
+
+function __find(options, output, directory, variables) {
+    __pipe("find", "-name '"options"'", output, directory, variables)
 }
 
 function __command(command, options, input, output, directory, variables,    __,unseen) {
     if (typeof(input) == "untyped") {
-        unseen["0length"]
-        return __pipe(command, options, unseen, directory, variables)
+        return system((!variables?"":variables" ")(!directory?"":"cd "directory" ; ")command" "options)
+#        unseen["0length"]
+#        return __pipe(command, options, unseen, directory, variables)
     }
     if (typeof(output) == "untyped" || typeof(output) == "string") {
         # input is output: use pipe out
@@ -1183,12 +1220,6 @@ function __HTTP(address, input, output, headers,   __,cmd,headerName,headerValue
     if (y == -1) { __error("Address doesn't exist: "address); return }
     return (status == 200)
 }
-
-#function __uname_kernel_machine(    __,output) {
-#    output["0length"]
-#    __command("uname", "-s -m", output)
-#    return output[1]
-#}
 
 function HTTP_GET(address, response, headers,   __,r,request,status,uri) {
     uri["host"]

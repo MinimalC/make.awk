@@ -33,6 +33,12 @@ function uname_operatingSystem(    __,output) {
     return output[1]
 }
 
+function __uname_kernel_release(    __,output) {
+    output["0length"]
+    __command("uname", "-r", output)
+    return output[1]
+}
+
 function reg_query(key,    __,output) {
     output["0length"]
     __command("reg", "query "key, output)
@@ -375,7 +381,7 @@ __debug("C_compile: "C_compiler" "name)
     } }
 
     if (STANDARD == "MINIMAL")
-        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding"
+        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding -pthread"
     else # if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
 
