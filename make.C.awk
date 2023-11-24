@@ -6,7 +6,7 @@
 @include "make.C.preprocess.awk"
 @include "make.C.precompile.awk"
 
-function C_compile(name,   __,a,b,c,l,n,o,options,p,pre,t,target,x,y,z)
+function C_compile(name, options,   __,a,b,c,l,n,o,p,pre,t,target,x,y,z)
 {
     if (!(name in precomp["C"]) || !precomp["C"][name]["0length"]) return
 
@@ -35,8 +35,6 @@ function C_compile(name,   __,a,b,c,l,n,o,options,p,pre,t,target,x,y,z)
         pre[ ++pre["0length"] ] = $0
     }
     Index_pop()
-
-    if (C_link_shared) options = "-fPIC"
 
     target = "C"
     if (C_compiler == "gcc") target = "ASM"
@@ -70,7 +68,8 @@ function C_compiler_coprocess(final_options, input, output, target,    a,b,c,com
     else if (target && target != "C") __warning("make.awk: C_compiler_coprocess: Unknown target "target)
 
     if (C_compiler == "gcc") {
-        options = options" -xc -fpreprocessed -fcommon -pthread" # -fverbose-asm
+        options = options" -xc -fpreprocessed -fcommon"(!DEBUG?"":" -fverbose-asm")
+        options = options" -pthread -ftls-model=initial-exec" # global-dynamic, local-dynamic, "initial-exec" or local-exec
         options = options" -g" # -On
         if (STANDARD == "MINIMAL") {
             options = options" -nostdinc -fvisibility=hidden"
@@ -78,6 +77,7 @@ function C_compiler_coprocess(final_options, input, output, target,    a,b,c,com
             options = options" -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
         }
     }
+#__debug("C_compile: "C_compiler" "options" "final_options)
     options = options" -o "TEMP_DIR".make.o "TEMP_DIR".make.c"
     input["0length"]
     File_printTo(input, TEMP_DIR".make.c")

@@ -253,7 +253,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
 
         compiled[format][name]["0length"]
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+        if (!@C(name, "-shared -fPIC")) { __error("make.awk: No "C" "name); continue }
         if (format == "C" && precomp["ASM"][name]["0length"]) {
             file = precomp["ASM"][name]["file"] = TEMP_DIR short"...ASM"
             File_printTo(precomp["ASM"][name], file, "\n", "\n")
@@ -360,7 +360,7 @@ Array_debug(config)
         }
 
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+        if (!@C(name, "-fPIE")) { __error("make.awk: No "C" "name); continue }
         if (format == "C" && precomp["ASM"][name]["0length"]) {
             file = precomp["ASM"][name]["file"] = TEMP_DIR short"...ASM"
             File_printTo(precomp["ASM"][name], file, "\n", "\n")
