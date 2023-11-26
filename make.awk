@@ -376,6 +376,11 @@ Array_debug(config)
         }
     } }
 
+    if (C_link_shared)
+        options = options" -shared -pie"
+    else
+        options = options" -static"
+
     if (STANDARD == "MINIMAL")
         options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding -pthread"
     else # if (STANDARD == "ISO")
@@ -383,19 +388,10 @@ Array_debug(config)
 
     options = options" -L"TEMP_DIR
 
-    if (C_link_shared) {
-        options = options" -shared -pie"
-        for (n = 1; n <= config["names"]["0length"]; ++n) {
-            name = config["names"][n]
-            if (get_FileNameExt(name) == "so") final_libraries = String_concat(" -l:"name, " ", final_libraries)
-        }
-    }
-    else {
-        options = options" -static"
-        for (n = 1; n <= config["names"]["0length"]; ++n) {
-            name = config["names"][n]
-            if (get_FileNameExt(name) == "a") final_libraries = String_concat(" -l:"name, " ", final_libraries)
-        }
+    for (n = 1; n <= config["names"]["0length"]; ++n) {
+        name = config["names"][n]
+        if (C_link_shared && get_FileNameExt(name) == "so") final_libraries = String_concat(" -l:"name, " ", final_libraries)
+        else if (!C_link_shared && get_FileNameExt(name) == "a") final_libraries = String_concat(" -l:"name, " ", final_libraries)
     }
 
     for (f = 1; f <= Format["0length"]; ++f) {
@@ -408,7 +404,9 @@ Array_debug(config)
 
         if (STANDARD == "MINIMAL") {
             final_options = options" -o "TEMP_DIR short
-            if (short == "System.Interpreter") {
+
+            if (short == "System.Runtime.static" || short == "System.Runtime.shared") continue
+            else if (short == "System.Interpreter") {
                 final_options = final_options" -Wl,--no-dynamic-linker"
                 for (f0 = 1; f0 <= Format["0length"]; ++f0) {
                 for (n0 = 1; n0 <= compiled[format]["0length"]; ++n0) {
@@ -420,8 +418,7 @@ Array_debug(config)
             }
             else {
                 final_options = final_options" -Wl,--dynamic-linker=System.Interpreter"
-                if (short != "System.Runtime.static" && short != "System.Runtime.shared")
-                    final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...o"
+                final_options = final_options" "TEMP_DIR"System.Runtime."(!C_link_shared?"static":"shared")"...o"
                 final_options = final_options" "file
                 final_options = final_options final_libraries" -l:"Project"."(!C_link_shared?"a":"so")
                 final_options = final_options" -Wl,-soname=\""short"\""
@@ -434,7 +431,7 @@ Array_debug(config)
             final_options = final_options" -Wl,-soname=\""short"\""
         }
 
-__debug("C_link_executable: "C_linker" "final_options)
+__debug("C_link_executable: "C_linker" "short) # final_options
         unseen["0length"]
         __pipe(C_linker, final_options, unseen)
 if (unseen["0length"]) File_debug(unseen)
