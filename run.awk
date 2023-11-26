@@ -310,7 +310,7 @@ function ARGV_length() {
     return ARGC - 1
 }
 
-function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
+function Array_printTo(array, to, level,    __,at,h,i,it,l,lt,t) {
     if ((at = typeof(array)) == "untyped" || at == "unassigned") return
     else if (at != "array") { __error("Array_printTo: array is typeof "at); return }
     if (!length(array)) return
@@ -322,20 +322,10 @@ function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
         if ((it = typeof(array[i])) == "unassigned")
             print t i > to
         else if (it == "array") {
-            if (!length(array[i]) || !array[i]["0length"])
-                print t i "." > to
-            else {
-                print t i ":" > to
-                Array_printTo(array[i], to, level + 1)
-            }
-        } else {
-            if (i == "0length")
-                continue
-            else if (!array[i])
-                print t i > to
-            else
-                print t i ": " array[i] > to
-        }
+            print t i ": " > to
+            Array_printTo(array[i], to, level + 1)
+        } else
+            print t i ": " array[i] > to
 }
 
 function Array_print(array, level) {
