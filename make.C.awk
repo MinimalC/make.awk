@@ -41,10 +41,12 @@ function C_compile(name, options,   __,a,b,c,l,n,o,p,pre,t,target,x,y,z)
 
     if (target == "ASM") {
         precomp[target][name]["0length"]
+        precomp[target][name]["name"] = name
         if (C_compiler_coprocess(options, pre, precomp[target][name], target)) return
     }
     else {
         compiled[target][name]["0length"]
+        compiled[target][name]["name"] = name
         if (C_compiler_coprocess(options, pre, compiled[target][name], target)) return
     }
     return 1
@@ -77,12 +79,12 @@ function C_compiler_coprocess(final_options, input, output, target,    a,b,c,com
             options = options" -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
         }
     }
-#__debug("C_compile: "C_compiler" "options" "final_options)
+__debug("C_compile: "C_compiler" "output["name"]" "final_options) # " "options
     options = options" -o "TEMP_DIR".make.o "TEMP_DIR".make.c"
     input["0length"]
     File_printTo(input, TEMP_DIR".make.c")
     report["0length"]
-    r = __pipe(C_compiler, options" "final_options, report)
+    r = __pipe(C_compiler, final_options" "options, report)
     File_remove(TEMP_DIR".make.c", 1)
     output["0length"]
     if (!r) {

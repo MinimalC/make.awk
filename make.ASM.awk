@@ -8,6 +8,7 @@ function ASM_precompile(name,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,
 
     if (!precomp["ASM"][name]["0length"] && File_exists(name)) {
         File_read(precomp["ASM"][name], name)
+        precomp["ASM"][name]["name"] = name
         return 1
     }
     if (precomp["ASM"][name]["0length"])
@@ -18,6 +19,8 @@ function ASM_compile(name,   __,a,b,c,d,directory,e,f,g,h,i,j,k,l,m,n,o,options,
     # input is precomp["ASM"][name]["0length"]
     if (!(name in precomp["ASM"]) || !precomp["ASM"][name]["0length"]) return
     # output is compiled["ASM"][name]["0length"]
+
+__debug("ASM_compile: "ASM_compiler" "name)
 
     directory = get_DirectoryName(name)
     options = "-I "directory" -o "TEMP_DIR".make.o "name

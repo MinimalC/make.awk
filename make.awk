@@ -261,7 +261,6 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
             Array_clear(precomp["ASM"][name])
             config["files"][ n ] = file
-__debug("C_compile: "C_compiler" "name)
             continue
         }
         if (compiled[format][name]["0length"]) {
@@ -269,7 +268,6 @@ __debug("C_compile: "C_compiler" "name)
             File_printTo(compiled[format][name], file, "\n", "\n", 1)
             compiled[format][ ++compiled[format]["0length"] ] = name
             ++o
-__debug("C_compile: "C_compiler" "name)
             continue
         }
     } }
@@ -368,14 +366,12 @@ Array_debug(config)
             List_copy(precomp["ASM"][name], precomp["ASM"][file])
             Array_clear(precomp["ASM"][name])
             config["files"][ n ] = file
-__debug("C_compile: "C_compiler" "name)
             continue
         }
         if (compiled[format][name]["0length"]) {
             file = compiled[format][name]["file"] = TEMP_DIR short"...o"
             File_printTo(compiled[format][name], file, "\n", "\n", 1)
             # do not compiled[format][ ++compiled[format]["0length"] ] = name
-__debug("C_compile: "C_compiler" "name)
             continue
         }
     } }
