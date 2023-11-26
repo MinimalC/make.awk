@@ -20,7 +20,8 @@ function ASM_compile(name,   __,a,b,c,d,directory,e,f,g,h,i,j,k,l,m,n,o,options,
     if (!(name in precomp["ASM"]) || !precomp["ASM"][name]["0length"]) return
     # output is compiled["ASM"][name]["0length"]
 
-__debug("ASM_compile: "ASM_compiler" "name)
+    short = get_FileNameNoExt(name)
+__debug("ASM_compile: "ASM_compiler" "short)
 
     directory = get_DirectoryName(name)
     options = "-I "directory" -o "TEMP_DIR".make.o "name

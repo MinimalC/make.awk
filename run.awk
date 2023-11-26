@@ -322,14 +322,20 @@ function Array_printTo(array, to, level,    __,at,h,i,it,lt,t) {
         if ((it = typeof(array[i])) == "unassigned")
             print t i > to
         else if (it == "array") {
-            if (!length(array[i]))
-                print t i ": (empty)" > to
+            if (!length(array[i]) || !array[i]["0length"])
+                print t i "." > to
             else {
-                print t i ": " > to
+                print t i ":" > to
                 Array_printTo(array[i], to, level + 1)
             }
-        } else
-            print t i ": " array[i] > to
+        } else {
+            if (i == "0length")
+                continue
+            else if (!array[i])
+                print t i > to
+            else
+                print t i ": " array[i] > to
+        }
 }
 
 function Array_print(array, level) {
