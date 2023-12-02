@@ -522,6 +522,10 @@ function get_DateTime(time,    __,string) {
     return string
 }
 
+function get_Time() {
+    return systime()
+}
+
 function Array_create(array,    __,type) {
     if ((type = typeof(array)) == "untyped") ;
     else if (type != "array") { __error("Array_create: array is typeof "type); return }

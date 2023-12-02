@@ -51,7 +51,8 @@ END { END_make() }
 
 function BEGIN_make() {
 
-    __error("make.awk " get_DateTime())
+    start_time = get_Time()
+    __error("make.awk start "get_DateTime(start_time))
 
     REFIX = @/\x01/
       FIX = "\x01"
@@ -100,7 +101,7 @@ function BEGIN_make() {
     __BEGIN("compile")
 }
 
-function END_make(    __,name,rendered) {
+function END_make(    __,name,rendered,seconds) {
 
     # if (!DEBUG) removeTemp_Directory()
     if (DEBUG) {
@@ -122,6 +123,11 @@ function END_make(    __,name,rendered) {
         delete C_types
         delete C_defines
         ARGC_ARGV_debug()
+    }
+    if (DEBUG) {
+        end_time = get_Time()
+        seconds = end_time - start_time
+        __error("make.awk end "get_DateTime(end_time)" := "seconds"s")
     }
 }
 
@@ -275,7 +281,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
 }
 
 function make_library(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,names,o,options,p,q,r,s,short,t,u,unseen,v,w,x,y,z) {
-if (config["names"]["0length"]) Array_debug(config["names"])
+if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
 
     for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
@@ -329,7 +335,7 @@ if (unseen["0length"]) File_debug(unseen)
 }
 
 function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
-if (config["names"]["0length"]) Array_debug(config["names"])
+if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
 
     for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
