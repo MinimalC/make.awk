@@ -36,21 +36,17 @@ function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,out
             "with a Project.awk BEGIN { __BEGIN(\"command\") } and function Project_command(config) { }"
         if (ARGV_length() == 0) { __error(usage); exit }
 
-        #runDir = ?
-        #if (runDir && runDir !~ /\/$/) runDir = runDir"/"
         workingDir = ENVIRON["PWD"]
         if (workingDir && workingDir !~ /\/$/) workingDir = workingDir"/"
-        #if (runDir == workingDir) runDir = ""
 
         for (i = 1; i <= ARGV_length(); ++i) {
             if (!ARGV[i]) continue
             if ((f = "run_"ARGV[i]) in FUNCTAB) { @f(); continue }
             if (ARGV[i] ~ /^@.+/) {
                 config = get_FileName(substr(ARGV[i], 2)); ARGV[i] = ""
-                f = config; if (!File_exists(f)) f = ""
-                if (!f && includeDir) f = includeDir config; if (!File_exists(f)) { f = "" }
-                if (!f && workingDir) f = workingDir config; if (!File_exists(f)) { f = "" }
-                #if (!f && runDir) f = runDir config; if (!File_exists(f)) { f = "" }
+                f = File_exists(config)
+                if (!f && includeDir) f = File_exists(includeDir config)
+                if (!f && workingDir) f = File_exists(workingDir config)
                 if (!f) { __error("run.awk: @config file "config" doesn't exist"); config = ""; continue }
                 continue
             }
@@ -58,14 +54,17 @@ function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,out
                 includeDir = get_DirectoryName(ARGV[i])
                 if (includeDir && includeDir !~ /\/$/) includeDir = includeDir"/"
                 fileName = get_FileName(ARGV[i])
-                f = fileName; if (!File_exists(f)) f = ""
-                if (!f && includeDir) f = includeDir fileName; if (!File_exists(f)) { f = "" }
-                if (!f && workingDir) f = workingDir fileName; if (!File_exists(f)) { f = "" }
-                #if (!f && runDir) f = runDir fileName; if (!File_exists(f)) { f = "" }
+                f = File_exists(fileName)
+                if (!f && includeDir) f = File_exists(includeDir fileName)
+                if (!f && workingDir) f = File_exists(workingDir fileName)
+                if (!f) {
+                    f = EnvironmentFile_exists(fileName)
+                    if (f) includeDir = get_DirectoryName(f)
+                }
                 if (!f) { __error("run.awk: File or Function "fileName" doesn't exist"); continue }
                 ARGV[i] = ""; options = ""; for (o = i + 1; o <= ARGV_length(); ++o) options = options" "ARGV[o]
                 Array_clear(input); Array_clear(output)
-                r = __gawk((!config?"":"-i "config" ")"-f "fileName" -- "options, input, output, workingDir, "AWKPATH="(!includeDir?"":includeDir":")"."" PWD="workingDir)
+                r = __gawk((!config?"":"-i "config" ")"-f "f" -- "options, input, output, workingDir, "AWKPATH="(!includeDir?"":includeDir":")"."" PWD="workingDir)
                 File_printTo(output, "/dev/stdout")
                 exit r
             }
@@ -90,6 +89,8 @@ function run_install(config,    __, pwd) {
     pwd = ENVIRON["PWD"]"/"
     if (create_Link("/usr/bin/", "run.awk", pwd"run.awk")) {
         __print("/usr/bin/run.awk is now linked to "pwd"run.awk.")
+        if (create_Link("/usr/bin/", "make.awk", pwd"make.awk"))
+            __print("/usr/bin/make.awk is now linked to "pwd"make.awk.")
         exit 1
     }
     exit
@@ -375,19 +376,27 @@ function ARGC_ARGV_debug() {
     # ARGV_debug()
 }
 
-function File_exists(fileName,    __,e,r,y) {
+function File_exists(fileName) {
     if (!fileName) { __error("File_exists: no fileName"); return }
-    if (!system("test -e '"fileName"'")) return 1
-    #r = 0
-    #if (-1 < y = (getline e < fileName)) r = 1
-    #else return 0
-    #close(fileName)
-    return 0 #r
+    if (!system("test -e '"fileName"'")) return fileName
+}
+
+function EnvironmentFile_exists(fileName,    __,file,i,list,path) {
+    if (!fileName) { __error("File_exists: no fileName"); return }
+    path["0length"] = split(ENVIRON["PATH"], path, ":")
+    for (i = 1; i <= path["0length"]; ++i) {
+        file = path[i]"/"fileName
+        if (!system("test -e '"file"'")) {
+            Array_clear(list)
+            __pipe("readlink", "-f "file, list)
+            return list[1]
+        }
+    }
 }
 
 function Directory_exists(directory) {
     if (!directory) { __error("Directory_exists: no directory"); return }
-    if (!system("test -d '"directory"'")) return 1
+    if (!system("test -d '"directory"'")) return directory
 }
 
 # Look: this is running bash "cd xyz", but not changing the directory in the awk process:
