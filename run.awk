@@ -449,9 +449,13 @@ function create_Link(directory, name, target) {
     if (!system("cd '"directory"' ; ln '"target"' '"name"'")) return 1
 }
 
-function Link_exists(target) {
+function Link_exists(target,    __,list) {
     if (!target) { __error("Link_exists: no target"); return }
-    if (!system("test -L '"target"'")) return 1
+    if (!system("test -L '"target"'")) {
+        Array_clear(list)
+        __pipe("readlink", "-f "target, list)
+        return list[1]
+    }
 }
 
 function File_contains(fileName, string,    __,i,r,y) {
