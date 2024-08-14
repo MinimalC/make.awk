@@ -10,6 +10,7 @@ function C_prepare_precompile(config,    a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
         C_types["void"]["isLiteral"]
         C_types["unsigned"]["isLiteral"]
         C_types["signed"]["isLiteral"]
+        C_types["_Atomic"]["isLiteral"]
         C_types["_Bool"]["isLiteral"]
         C_types["char"]["isLiteral"]
         C_types["short"]["isLiteral"]

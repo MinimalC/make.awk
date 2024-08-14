@@ -77,8 +77,8 @@ function BEGIN_make() {
         C_linker = "link"
     }
     else {
-        PLATFORM = uname_operatingSystem()
-        ARCHITECTURE = uname_machine() # "GNU/Linux"
+        PLATFORM = uname_operatingSystem() # "GNU/Linux"
+        ARCHITECTURE = uname_machine() # "x86_64"
         C_compiler = "gcc"
         ASM_compiler = "as"
         C_linker = "gcc"

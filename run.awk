@@ -523,6 +523,18 @@ function Path_join(pathName0, pathName1,    __,p,path0,path1,r) {
     return r
 }
 
+function Path_hasAsterisk(pathName) {
+    return index(pathName, "*")
+}
+
+function Path_expandAsterisk(pathName, fileNames, i,   __, output) {
+    output["0length"]
+    __listAll(pathName, output)
+    if (typeof(i) == "untyped") i = 1
+    fileNames["0length"]
+    List_insert(fileNames, i, output)
+}
+
 function get_Date(time,    __,string) {
     if (!time) time = systime()
     string = strftime("%Y-%m-%d", time)
@@ -576,19 +588,34 @@ function List_last(array,    __,at,l) {
     return array[l]
 }
 
-function List_add(array, value,    __,at,l) {
+function List_add(array, value,    __,at,l,o,vt) {
     if ((at = typeof(array)) != "array") { __error("List_add: array is typeof "at); return }
+    if ((vt = typeof(value)) == "array") {
+        for (o = 1; o <= value["0length"]; ++o) {
+            l = ++array["0length"]
+            array[l] = value[o]
+        }
+        return l
+    }
     l = ++array["0length"]
-    if (typeof(value) != "untyped") array[l] = value
+    if (vt != "untyped") array[l] = value
     return l
 }
 
-function List_insert(array, i, value,    __,at,it,l,n) {
+function List_insert(array, i, value,    __,at,it,l,n,o,vt) {
     if ((at = typeof(array)) != "array") { __error("List_insert: array is typeof "at); return }
     if ((it = typeof(i)) != "number") { __error("List_insert: i is typeof "it); return }
+    if ((vt = typeof(value)) == "array") {
+        for (o = 1; o <= value["0length"]; ++o) {
+            l = ++array["0length"]
+            for (n = l; n > i; --n) array[n] = array[n - 1]
+            array[n] = value[o]
+        }
+        return
+    }
     l = ++array["0length"]
     for (n = l; n > i; --n) array[n] = array[n - 1]
-    if (typeof(value) != "untyped") array[i] = value
+    if (vt != "untyped") array[n] = value
 }
 
 function List_contains(array, item,    __,at,ir,n,r,type) {
