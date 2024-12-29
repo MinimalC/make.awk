@@ -154,8 +154,33 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
     # Array_clear(preproc["C"])
 }
 
+function C_preprocess_documentation(text,   __,class,html,i0,i1,split0,split1,reture) {
+
+    if (documentation == 1 || documentation == "txt") {
+        return text
+    }
+    if (documentation == "html") {
+        String_split(split0, text, "\n")
+        for (i0 = 1; i0 <= split0["0length"]; ++i0) {
+            html = ""; class = ""
+            String_split(split1, split0[i0], " ")
+            for (i1 = 1; i1 <= split1["0length"]; ++i1) {
+                if (split1[i1] == "function") { html = "h3"; break }
+                if (split1[i1] == "struct") { html = "h2"; break }
+                if (split1[i1] == "class") { html = "h2"; break }
+                if (split1[i1] == "interface") { html = "h2"; break }
+                if (split1[i1] == "argument") { html = "div"; class = "argument"; break }
+                if (split1[i1] == "returns") { html = "div"; class = "returns"; break }
+            }
+            if (html) reture = String_concat(reture, "\n", "<"html (class?" class=\""class"\"":"")">"split0[i0]"</"html">")
+            else reture = String_concat(reture, "\n", split0[i0])
+        }
+        return "<div class=\"comment\">"reture"</div>"
+    }
+}
+
 function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
-    __,a,b,c,d,e,f,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,v,w,x,y,z,zZ)
+    __,a,b,c,d,e,f,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,unsafe,v,w,x,y,z,zZ)
 {
     if (!C) C = "C"
     if (typeof(fileName) != "string" || !fileName) { __error("make.awk: C_preprocess without fileName"); return }
@@ -183,6 +208,11 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         Index_reset(parsed[fileName][z])
 
         C_defines["__LINE__"]["value"] = z
+
+    if (documentation)
+        for (n = 1; n <= NF; ++n)
+            if ($n ~ /^\/\*\*/ && $n ~ /\*\/$/)
+                document[C][O][ ++document[C][O]["0length"] ] = C_preprocess_documentation(substr($n, 4, length($n) - 6))
 
     if ($1 == "#") {
         if ($2 == "ifdef") {
@@ -326,8 +356,10 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
             NF = 0
         }
         else if ($2 == "define") {
+            #unsafe = 0
             for (n = 3; n <= NF; ++n) {
                 if ($n ~ /^\s*$/) { Index_remove(n--); continue } # clean
+                #if ($n ~ /^\/\*\s*unsafe\s*\*\/$/) { Index_remove(n--); unsafe = 1; continue } # comments
                 if ($n ~ /^\/\*/ || $n ~ /\*\/$/) { Index_remove(n--); continue } # comments
                 break # define just before name
             }
@@ -393,12 +425,31 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
 
                 C_defines[name]["value"] = $0
 
+                #C_defines[name]["unsafe"] = unsafe
+                #if ("arguments" in C_defines[name]) {
+                #    m = name FIX "("
+                #    for (i = 1; i <= C_defines[name]["arguments"]["0length"]; ++i) {
+                #        m = m FIX i
+                #        if (i < C_defines[name]["arguments"]["0length"]) m = m FIX ","
+                #    }
+                #    m = m FIX ")"
+                #    w = CDefine_evaluate(m)
+                #    if (!unsafe && (w && w !~ /^[0-9]+/))
+                #       __warning(fileName" Line "z": # define not /* unsafe */ "name"( "C_defines[name]["arguments"]["text"]" ) "m" => "w)
+                #}
+                #else {
+                #    m = name
+                #    w = CDefine_evaluate(m)
+                #    if (!unsafe && (w && w !~ /^[0-9]+/))
+                #        __warning(fileName" Line "z": # define not /* unsafe */ "name" "m" => "w)
+                #}
+
 if (DEBUG == 3 || DEBUG == 4) {
 rendered = Index_pull(C_defines[name]["value"], REFIX, " ")
 if ("arguments" in C_defines[name])
-__debug(fileName" Line "z": define "name" ("C_defines[name]["arguments"]["text"]")  "rendered)
+__debug(fileName" Line "z": define " (unsafe?"/* unsafe */":"") name" ("C_defines[name]["arguments"]["text"]")  "rendered)
 else
-__debug(fileName" Line "z": define "name"  "rendered)
+__debug(fileName" Line "z": define " (unsafe?"/* unsafe */":"") name"  "rendered)
 }
                 if (zZ) z = zZ
             }

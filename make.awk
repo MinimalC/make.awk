@@ -15,6 +15,7 @@ function set_make_asm(wert) { ASM_compiler = wert }
 function set_make_ld(wert) { C_linker = wert }
 function set_make_shared(wert) { C_link_shared = wert }
 function set_make_enableComments(wert) { enable_Comments = wert }
+function set_make_doc(wert) { documentation = wert }
 
 function set_make_std(wert) {
     if (typeof(wert) == "untyped" || typeof(wert) == "number" && !wert) STANDARD = "MINIMAL"
@@ -49,10 +50,12 @@ BEGIN { BEGIN_make() }
 
 END { END_make() }
 
-function BEGIN_make() {
+function BEGIN_make(    __,c,usage) {
 
     start_time = get_Time()
     __error("make.awk start "get_DateTime(start_time))
+
+    if ((c = "configure_make_awk") in FUNCTAB) @c()
 
     REFIX = @/\x01/
       FIX = "\x01"
@@ -86,7 +89,7 @@ function BEGIN_make() {
 
     createTemp_Directory(".make")
 
-    USAGE =\
+    usage =\
     "make.awk project=Program [options] [preprocess] [precompile] Program.c [compile]\n"\
     "\n"\
     "Options:\n"\
@@ -98,11 +101,27 @@ function BEGIN_make() {
     "    +enableComments for not removing comments\n"\
     "    -DDEBUG or +DDEBUG for boolean true 1 or false 0, or DDEBUG=3 for the value 3"
 
-    __BEGIN("compile")
+    __BEGIN("make", "compile", usage)
 }
 
-function END_make(    __,name,rendered,seconds) {
+function END_make(    __,f,format,n,name,pre,rendered,seconds) {
 
+    if (Project && documentation) {
+        pre["0length"] # Array_clear(pre)
+        for (f = 1; f <= Format["0length"]; ++f) {
+            format = Format[f]
+        for (name in document[format]) {
+            if (name ~ /^[0-9]/) continue
+            if (document[format][name]["0length"]) {
+                __debug("Documenting "name)
+                Index_pullArray(pre, document[format][name])
+            }
+        } }
+        if (pre["0length"]) {
+            File_printTo(pre, TEMP_DIR Project"..."(documentation == 1 ? "txt" : documentation))
+        }
+        else __error("make.awk: Nothing documented.")
+    }
     # if (!DEBUG) removeTemp_Directory()
     if (DEBUG) {
         if (Dictionary_count(CSharp_Types)) { __debug("CSharp_Types: "); Array_debug(CSharp_Types) }
@@ -117,6 +136,7 @@ function END_make(    __,name,rendered,seconds) {
     if (RUN_ARGC_ARGV) {
         delete parsed
         delete preproc
+        delete document
         delete precomp
         delete compiled
         delete CSharp_Types
@@ -177,15 +197,16 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         short = get_FileNameNoExt(name)
         if (!short) continue # warning
 
-        preproc[format][name]["0length"]
-        if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-        if (!((C = format"_""preprocess") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--) }
-        if (!preproc[format][name]["0length"]) continue
-        pre["0length"]; Array_clear(pre)
-        Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-        File_printTo(pre, TEMP_DIR Project short"..."format)
-        ++o
+        if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
+            if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
+            if (preproc[format][name]["0length"]) {
+                pre["0length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, TEMP_DIR short"..."format)
+                ++o
+            }
+        }
     } }
     if (!o) { __error("make.awk: Nothing preprocessed"); return }
 }
@@ -203,25 +224,25 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
         short = get_FileNameNoExt(name)
         if (!short) continue # warning
 
-        if ((C = format"_""preprocess") in FUNCTAB) {
-            preproc[format][name]["0length"]
+        if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
-            if (!preproc[format][name]["0length"]) continue
-            pre["0length"]; Array_clear(pre)
-            Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, TEMP_DIR short"..."format)
+            if (preproc[format][name]["0length"]) {
+                pre["0length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, TEMP_DIR short"..."format)
+            }
         }
 
-        precomp[format][name]["0length"]
-        if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
-        if (!((C = format"_""precompile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        if (!@C(name)) { __error("make.awk: No "C" "name); continue }
-        if (!precomp[format][name]["0length"]) continue
-        pre["0length"]; Array_clear(pre)
-        Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
-        File_printTo(pre, TEMP_DIR short"..."format)
-        ++o
+        if ((C = format"_""precompile") in FUNCTAB && !precomp[format][name]["0length"]) {
+            if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
+            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            if (!precomp[format][name]["0length"]) continue
+            pre["0length"]; Array_clear(pre)
+            Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
+            File_printTo(pre, TEMP_DIR short"..."format)
+            ++o
+        }
     } }
     if (!o) { __error("make.awk: Nothing precompiled"); return }
 }
@@ -242,10 +263,11 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
         if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
-            if (!preproc[format][name]["0length"]) continue
-            pre["0length"]; Array_clear(pre)
-            Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, TEMP_DIR short"..."format)
+            if (preproc[format][name]["0length"]) {
+                pre["0length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, TEMP_DIR short"..."format)
+            }
         }
 
         if ((C = format"_""precompile") in FUNCTAB && !precomp[format][name]["0length"]) {
@@ -348,10 +370,11 @@ if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names
         if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
             if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
-            if (!preproc[format][name]["0length"]) continue
-            pre["0length"]; Array_clear(pre)
-            Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
-            File_printTo(pre, TEMP_DIR short"..."format)
+            if (preproc[format][name]["0length"]) {
+                pre["0length"]; Array_clear(pre)
+                Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
+                File_printTo(pre, TEMP_DIR short"..."format)
+            }
         }
 
         if ((C = format"_""precompile") in FUNCTAB && !precomp[format][name]["0length"]) {

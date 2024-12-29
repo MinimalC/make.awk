@@ -9,6 +9,7 @@ END { END_run() }
 function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,output,options,r,runDir,u,usage,unseen,w,workingDir) {
     LC_ALL="C"
     PROCINFO["sorted_in"] = "@ind_num_asc"
+    # IGNORECASE = 1
 
     FS="";OFS="";RS="\0";ORS="\n"
 
@@ -22,7 +23,7 @@ function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,out
         for (i = 1; i < length(PROCINFO["argv"]); ++i)
             if (PROCINFO["argv"][i] == "-f") {
                 f = get_FileName(PROCINFO["argv"][i + 1])
-                if (ARGV[1] == f) ARGV_remove(1)
+                ## if (ARGV[1] == f) ARGV_remove(1)
                 ARGV[0] = f
                 break
             }
@@ -126,15 +127,15 @@ function __BEGIN(controller, action, usage,
     if ( typeof(CONTROLLER) == "untyped" ) CONTROLLER = controller
     if (action) { default = action; action = "" }
 
-    if ((c = "configure") in FUNCTAB) @c()
-
     delete config
     for (i = 1; i <= ARGV_length(); ++i) {
         if (ARGV[i] ~ /^\s*$/) continue
         if (controller"_"ARGV[i] in FUNCTAB) {
             if (i > 1 && action) {
+                # if (!a && ((c = "configure_"controller"_awk") in FUNCTAB)) { a = 1; @c() }
                 if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-                @make(config); if ("next" in config) delete config["next"]; else delete config # Array_clear(config)
+                @make(config);
+                if ("next" in config) delete config["next"]; else delete config # Array_clear(config)
             }
             action = ARGV[i]
             ARGV[i] = ""; continue
@@ -157,9 +158,8 @@ function __BEGIN(controller, action, usage,
             paramWert = paramWert == "+" ? 1 : 0
         }
         if (paramName) {
-          # if (paramName == "debug") DEBUG = paramWert; else
-            if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
-            else if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
+            if ((make = "set_"controller"_"paramName) in FUNCTAB) @make(paramWert)
+            else if (paramName in SYMTAB) SYMTAB[paramName] = paramWert
             else config["names"][paramName] = paramWert
             ARGV[i] = ""; continue
         }
@@ -186,6 +186,7 @@ function __BEGIN(controller, action, usage,
         else if (default) action = default
         else action = "BEGIN"
     }
+    # if (!a && ((c = "configure_"controller"_awk") in FUNCTAB)) { a = 1; @c() }
     if (!((make = controller"_"action) in FUNCTAB)) __error(controller".awk: Unknown method "make)
     else @make(config)
 
@@ -1136,8 +1137,8 @@ function __find(options, output, directory, variables) {
 function __command(command, options, input, output, directory, variables,    __,unseen) {
     if (typeof(input) == "untyped") {
         return system((!variables?"":variables" ")(!directory?"":"cd "directory" ; ")command" "options)
-#        unseen["0length"]
-#        return __pipe(command, options, unseen, directory, variables)
+        #unseen["0length"]
+        #return __pipe(command, options, unseen, directory, variables)
     }
     if (typeof(output) == "untyped" || typeof(output) == "string") {
         # input is output: use pipe out
@@ -1192,7 +1193,6 @@ function __coprocess(command, options, input, output, directory, variables, rs, 
 }
 
 function System_sleep(seconds, minutes, hours,  __,s) {
-
     s = (hours * 3600) + (minutes * 60) + seconds
     if (!system("sleep " s "s")) return 1
 }
@@ -1232,10 +1232,9 @@ function __HTTP(address, input, output, headers,   __,cmd,headerName,headerValue
     if (!input["0length"] || input[ input["0length"] ] != "") ++input["0length"]
     Index_push("", "", "", @/\r?\n/, "\r\n")
     cmd = "/inet/tcp/0/"uri["host"]"/80"
-    for (z = 1; z <= input["0length"]; ++z)
-        print input[z] |& cmd
-    close(cmd, "to")
-    z = 0; while (0 < y = ( cmd |& getline var )) { ++z
+    for (z = 1; z <= input["0length"]; ++z) print input[z] |& cmd
+    close(cmd, "to"); z = 0
+    while (0 < y = ( cmd |& getline var )) { ++z
         if (!r) {
             if (z == 1) {
                 if (substr(var, 1, 4) != "HTTP") __warning("HTTP: Host "uri["host"]": other "substr(var, 1, 4))
@@ -1276,9 +1275,9 @@ function HTTP_GET(address, response, headers,   __,r,request,status,uri) {
     request[ ++request["0length"] ] = "Connection: close"
     response["0length"]
 
-    if (!(r = __HTTP(uri[0], request, response, headers))) {
+    #if (!(r = __HTTP(uri[0], request, response, headers)))
         #status = headers["Status-Code"]
+
 #__debug("HTTP GET Host: " uri["host"]" Status: "headers["Status"])
-    }
     return r
 }
