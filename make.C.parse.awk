@@ -27,7 +27,7 @@ if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
 for (z = 1; z <= input["0length"]; ++z) {
     Index_reset(input[z])
 
-    was = "newline"
+    was = "\n"
     hash = ""
 
     for (i = 1; i <= NF; ++i) {
@@ -89,7 +89,7 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 if (i < NF) Index_append(i++, FIX)
                 continue
             }
-            if (was == "newline") {
+            if (was == "\n") {
                 was = "#"; hash = "#"
                 if (i > 1) { Index_removeRange(1, i - 1); i = 1 }
                 n = 1; while (++n <= NF) {

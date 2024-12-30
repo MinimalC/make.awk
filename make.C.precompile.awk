@@ -35,41 +35,39 @@ function C_precompile(name,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,
 
     # C_precompile is PROTOTYPE
 
-#    for (z = 1; z <= preproc["C"][name]["0length"]; ++z)
-#        precomp["C"][name][ ++precomp["C"][name]["0length"] ] = preproc["C"][name][z]
+    for (z = 1; z <= preproc["C"][name]["0length"]; ++z)
+        precomp["C"][name][ ++precomp["C"][name]["0length"] ] = preproc["C"][name][z]
 
-    Index_push("", REFIX, FIX, "\0", "\n")
-    for (z = 1; z <= preproc["C"][name]["0length"]; ++z) {
-        if (!preproc["C"][name][z] || preproc["C"][name][z] ~ /^#/) {
-            precomp["C"][name][ ++precomp["C"][name]["0length"] ] = preproc["C"][name][z]
-            continue
-        }
-        Index_reset(preproc["C"][name][z])
-
-        t = 0; b = ""; s = ""
-        for (i = 1; i <= NF; ++i) {
-            if ($i == "typedef") { t = 1; continue }
-            if ($i == "struct" && is_CName($(i + 1))) {
-                $i = $i" "$(i + 1)
-                Index_remove(i + 1)
-                C_types[$i]["baseType"]
-                b = $i
-                continue
-            }
-            if (t && b) {
-                if ($i == "*") { s = String_concat(s, " ", "*"); continue }
-                if (is_CName($i)) {
-                    C_types[$i]["baseType"] = String_concat(b, " ", s)
-                }
-                if ($i == "[" || $i == "]" || $i == "(" || $i == ")") continue # ignore?
-                if ($i == ",") { s = ""; continue }
-                if ($i == ";") { t = 0; b = ""; s = "" }
-            }
-        }
-
-        precomp["C"][name][ ++precomp["C"][name]["0length"] ] = $0
-    }
-    Index_pop()
+    #Index_push("", REFIX, FIX, "\0", "\n")
+    #for (z = 1; z <= preproc["C"][name]["0length"]; ++z) {
+    #    if (!preproc["C"][name][z] || preproc["C"][name][z] ~ /^#/) {
+    #        precomp["C"][name][ ++precomp["C"][name]["0length"] ] = preproc["C"][name][z]
+    #        continue
+    #    }
+    #    Index_reset(preproc["C"][name][z])
+    #    t = 0; b = ""; s = ""
+    #    for (i = 1; i <= NF; ++i) {
+    #        if ($i == "typedef") { t = 1; continue }
+    #        if ($i == "struct" && is_CName($(i + 1))) {
+    #            $i = $i" "$(i + 1)
+    #            Index_remove(i + 1)
+    #            C_types[$i]["baseType"]
+    #            b = $i
+    #            continue
+    #        }
+    #        if (t && b) {
+    #            if ($i == "*") { s = String_concat(s, " ", "*"); continue }
+    #            if (is_CName($i)) {
+    #                C_types[$i]["baseType"] = String_concat(b, " ", s)
+    #            }
+    #            if ($i == "[" || $i == "]" || $i == "(" || $i == ")") continue # ignore?
+    #            if ($i == ",") { s = ""; continue }
+    #            if ($i == ";") { t = 0; b = ""; s = "" }
+    #        }
+    #    }
+    #    precomp["C"][name][ ++precomp["C"][name]["0length"] ] = $0
+    #}
+    #Index_pop()
 
     return 1
 }
