@@ -180,7 +180,7 @@ function C_preprocess_documentation(text,   __,class,html,i0,i1,split0,split1,re
 }
 
 function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
-    __,a,b,c,d,e,f,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,t,u,unsafe,v,w,x,y,z,zZ)
+    __,a,b,c,d,e,f,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,S,t,u,unsafe,v,w,x,y,z,zZ)
 {
     if (!C) C = "C"
     if (typeof(fileName) != "string" || !fileName) { __error("make.awk: C_preprocess without fileName"); return }
@@ -213,6 +213,18 @@ function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C
         for (n = 1; n <= NF; ++n)
             if ($n ~ /^\/\*\*/ && $n ~ /\*\/$/)
                 document[C][O][ ++document[C][O]["0length"] ] = C_preprocess_documentation(substr($n, 4, length($n) - 6))
+
+    for (i = 1; i <= NF; ++i) {
+        if ($i ~ /^\s*$/) continue
+        if ($i == "#") break
+    }
+    if (i <= NF) {
+        for (n = 1; n <= NF; ++n) {
+            if ($n ~ /^\s*$/) Index_remove(n--) # clean
+            if ($n == "#") continue
+            break
+        }
+    }
 
     if ($1 == "#") {
         if ($2 == "ifdef") {
@@ -307,6 +319,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
         }
         if (!NF) { ++lz; continue }
 
+    # for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
     if ($1 == "#") {
         if ($2 == "include") { # $2 == "using"
             for (i = 1; i <= NF; ++i) if ($i ~ /^\s*$/) Index_remove(i--) # clean
@@ -389,7 +402,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                         break
                     }
                     if ($a != ")") {
-                        __warning(fileName" Line "z": define "name" without )")
+                        __warning(fileName" Line "z": define "name" without )    instead "$a)
                         Index_insert(a, ")")
                     }
                     m = ""; for (n = 2; n < a; ++n) {
@@ -505,6 +518,10 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
             NF = 0
         }
         if (!NF) { ++lz; continue }
+
+        # fallthrough or make a comment?
+        if (NF > 0) { $0 = "/* "$0" */" }
+        # if (NF > 0) Index_append(NF, FIX"\n") ; else $1 = "\n"
         preproc[C][O][ ++preproc[C][O]["0length"] ] = $0; continue
     }
 
@@ -542,6 +559,7 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         }
         lz = 0
 
+        # if (NF > 0) Index_append(NF, FIX"\n") ; else $1 = "\n"
         preproc[C][O][ ++preproc[C][O]["0length"] ] = $0
     }
     Index_pop()

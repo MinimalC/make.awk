@@ -17,7 +17,7 @@ function is_CName(name, end) {
 }
 
 function C_parse(fileName, input,
-    __,a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
+    __,a,b,c,comments,d,directory,e,f,g,h,hash,i,j,k,l,m,n,name,newline,o,p,q,r,s,string,t,u,v,w,was,x,y,z,zahl)
 {
 if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
     if ( !input["0length"] ) if (!fileName || !File_read(input, fileName)) return
@@ -27,16 +27,49 @@ if (DEBUG == 2) __debug("Q: C_parse0 File "fileName)
 for (z = 1; z <= input["0length"]; ++z) {
     Index_reset(input[z])
 
-    was = "\n"
+    newline = 1
     hash = ""
 
     for (i = 1; i <= NF; ++i) {
+        if ($i ~ /\s/) {
+            while (++i <= NF) {
+                if ($i ~ /\s/) continue
+                --i; break
+            }
+            if (i < NF) Index_append(i++, FIX)
+            continue
+        }
+        if ($i == "#") {
+            if (newline) {
+                was = hash = "#"
+                #if (i > 1) { Index_removeRange(1, i - 1); i = 1 }
+                #n = 1; while (++n <= NF) {
+                #    if ($n ~ /\s/) continue
+                #    --n; break
+                #}
+                #if (n > i) Index_removeRange(i + 1, n)
+# if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+                if (i < NF) Index_append(i++, FIX)
+                continue
+            }
+            if ($(i + 1) == "#") {
+                ++i; was = "##"
+if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+                if (i < NF) Index_append(i++, FIX)
+                continue
+            }
+            was = "#"
+if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+            if (i < NF) Index_append(i++, FIX)
+            continue
+        }
+        newline = 0
         if ($i == "/") {
             if ($(i + 1) == "*") {
-                was = "comment"; comments = 1; n = i + 1
+                comments = 1; n = i + 1
                 while (++n) {
                     if (n > NF) {
-                        if (++z <= input["0length"]) { Index_append(NF, "\n"); Index_append(NF, input[z]); --n; continue }
+                        if (++z <= input["0length"]) { Index_append(NF, "\n"input[z]); --n; continue }
                         break
                     }
                     if (n > i + 2 && $(n - 1) == "/" && $n == "*") {
@@ -52,17 +85,14 @@ for (z = 1; z <= input["0length"]; ++z) {
                         continue
                     }
                 }
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
                 i = n
                 if (i < NF) Index_append(i++, FIX)
                 continue
             }
             if ($(i + 1) == "/") {
-                was = "comment"
                 $(++i) = "*"
-                while ($NF == "\\") { Index_remove(NF); if (++z <= input["0length"]) Index_append(NF, input[z]) }
+                while ($NF == "\\") { Index_remove(NF); if (++z <= input["0length"]) Index_append(NF, "\n"input[z]) }
                 Index_append(NF, "*/")
-if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
                 i = NF
                 continue
             }
@@ -82,43 +112,8 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": // "was)
             Index_remove(i); --i
             continue
         }
-        if ($i == "#") {
-            if ($(i + 1) == "#") {
-                ++i; was = "##"
-if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
-                if (i < NF) Index_append(i++, FIX)
-                continue
-            }
-            if (was == "\n") {
-                was = "#"; hash = "#"
-                if (i > 1) { Index_removeRange(1, i - 1); i = 1 }
-                n = 1; while (++n <= NF) {
-                    if ($n ~ /\s/) continue
-                    --n; break
-                }
-                if (n > i) Index_removeRange(i + 1, n)
-# if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
-                if (i < NF) Index_append(i++, FIX)
-                continue
-            }
-            was = "#"
-if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
-            if (i < NF) Index_append(i++, FIX)
-            continue
-        }
-        if ($i ~ /\s/) {
-            n = i; while (++n <= NF) {
-                if ($n ~ /\s/) continue
-                --n; break
-            }
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
-            i = n
-            if (i < NF) Index_append(i++, FIX)
-            continue
-        }
         if ($i == "L" && $(i + 1) == "\"") ++i
         if ($i == "\"") {
-            was = "\""
             string = ""
             n = i; while (++n <= NF) {
                 if ($n == "\\") {
@@ -137,7 +132,8 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n":")
                     break
                 }
             }
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
+            was = "string"
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was" \""string"\"")
             i = n
             if (i < NF) Index_append(i++, FIX)
             continue
@@ -155,9 +151,9 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": \""string"\"")
                     if ($n == ">") break
                     string = string $n
                 }
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "hash" <"string">")
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": <"string">")
                 i = n
-                Index_append(i++, FIX)
+                if (i < NF) Index_append(i++, FIX)
                 continue
             }
             if (C_compiler == "tcc" && $(i + 1) == "c" && $(i + 2) == "d" && $(i + 3) == ">") {
@@ -228,28 +224,18 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
             if (i < NF) Index_append(i++, FIX)
             continue
         }
-        if ($i == "(" || $i == "[") {
+        if ($i == "(" || $i == "[" || $i == ")" || $i == "]" || $i == "{" || $i == "}") {
             was = $i
             if (i < NF) Index_append(i++, FIX)
             continue
         }
-        if ($i == ")" || $i == "]") {
-            was = $i
-            if (i < NF) Index_append(i++, FIX)
-            continue
-        }
-        if ($i == "," || $i == "?" || $i == "~") {
+        if ($i == ";" || $i == "," || $i == "?" || $i == "~") {
             was = $i
             if (i < NF) Index_append(i++, FIX)
             continue
         }
         if ($i == ":") {
             if ($(i + 1) == ":") { ++i; was = was":" }
-            if (i < NF) Index_append(i++, FIX)
-            continue
-        }
-        if ($i == ";" || $i == "{" || $i == "}") {
-            was = $i
             if (i < NF) Index_append(i++, FIX)
             continue
         }
@@ -285,9 +271,9 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                     --i; break
                 }
                 if (i < NF) Index_append(i++, FIX)
-                if (hash == "#") hash = "# "zahl
-                was = zahl
-if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+                if (hash == "#") { was = "#"; hash = "# "zahl }
+                else was = "zahl"
+if (DEBUG == 2) __debug(fileName": Line "z":"i": "was" "zahl)
                 continue
             }
             zahl = $i
@@ -303,9 +289,9 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                     --i; break
                 }
                 if (i < NF) Index_append(i++, FIX)
-                if (hash == "#") hash = "# "zahl
-                was = zahl
-if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+                if (hash == "#") { was = "#"; hash = "# "zahl }
+                else was = "zahl"
+if (DEBUG == 2) __debug(fileName": Line "z":"i": "was" "zahl)
                 continue
             }
             if ($(i + 1) == ".") {
@@ -337,28 +323,30 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
                 if ($(i + 1) ~ /[xX]/) { ++i; zahl = zahl $i }
             }
             if (i < NF) Index_append(i++, FIX)
-            was = zahl
-            if (hash == "#") hash = "# "zahl
-if (DEBUG == 2) __debug(fileName": Line "z":"i": "was)
+            if (hash == "#") { was = "#"; hash = "# "zahl }
+            else was = "zahl"
+if (DEBUG == 2) __debug(fileName": Line "z":"i": "was" "zahl)
             continue
         }
         if (is_CName($i)) {
+            #if (was == "name" && name == "struct") name = "struct "$i
             name = $i
             n = i; while (++n <= NF) {
                 if ($n == "\\" && n == NF) { Index_remove(n--); if (++z <= input["0length"]) Index_append(NF, input[z]); continue }
                 if (is_CName($n, 1)) { name = name $n; continue }
                 --n; break
             }
-            was = name
-            if (hash == "#") hash = "# "name
-if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was)
+            if (hash == "#") { was = "#"; hash = "# "name }
+            else was = "name"
+if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was" "name)
             i = n
             if (i < NF) Index_append(i++, FIX)
             continue
         }
         __warning(fileName": Line "z": Unknown Character X"__HEX(Char_codepoint($i))" "$i); Index_remove(i--)
     }
-
+    # if (NF > 0) Index_prepend(i++, FIX)
+    # if (NF > 0) Index_append(NF, FIX"\n") ; else $1 = "\n"
     parsed[fileName][++parsed[fileName]["0length"]] = $0
 }
     Index_pop()

@@ -312,13 +312,14 @@ function ARGV_length() {
     return ARGC - 1
 }
 
-function Array_printTo(array, to, level,    __,at,h,i,it,l,lt,t) {
+function Array_printTo(array, to, level, description,    __,at,h,i,it,l,lt,t) {
     if ((at = typeof(array)) == "untyped" || at == "unassigned") return
     else if (at != "array") { __error("Array_printTo: array is typeof "at); return }
     if (!length(array)) return
     if ((lt = typeof(level)) == "number") t = String_repeat("\t", level)
     else if (lt != "untyped") { __error("Array_printTo: level is typeof "lt); return }
     if (typeof(to) == "untyped") to = "/dev/stdout"
+    if (typeof(description) == "string") print t description > to
 
     for (i in array)
         if ((it = typeof(array[i])) == "unassigned")
@@ -330,18 +331,18 @@ function Array_printTo(array, to, level,    __,at,h,i,it,l,lt,t) {
             print t i ": " array[i] > to
 }
 
-function Array_print(array, level) {
-    Array_printTo(array, "/dev/stdout", level)
+function Array_print(array, level, description) {
+    Array_printTo(array, "/dev/stdout", level, description)
 }
 
-function Array_error(array, level,    __,et) {
+function Array_error(array, level, description,   __,et) {
     ERRORS; if ((et = typeof(ERRORS)) == "unassigned" || et == "number") ++ERRORS
     else __warning("Array_error: ERRORS is typeof "et)
-    Array_printTo(array, "/dev/stderr", level)
+    Array_printTo(array, "/dev/stderr", level, description)
 }
 
-function Array_debug(array, level) {
-    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr", level)
+function Array_debug(array, level, description) {
+    if ("DEBUG" in SYMTAB && SYMTAB["DEBUG"]) Array_printTo(array, "/dev/stderr", level, description)
 }
 
 function ENVIRON_debug() {
@@ -727,8 +728,8 @@ function String_replace(string, fs, ofs, rs, ors,   __,r) {
     r = Index_pull(string, fs, ofs, rs, ors); return r
 }
 
-function String_split(array, string, sepp) {
-    return array["0length"] = split(string, array, sepp)
+function String_split(array, string, ofs) {
+    return array["0length"] = split(string, array, ofs)
 }
 
 function String_join(array, ofs,    __,at,i,r) {
@@ -748,11 +749,11 @@ function String_repeat(string, times,   __,p,q,r,st,tt) {
     return r
 }
 
-function String_concat(string0, sepp, string1) {
-    if (typeof(string1) == "untyped") { string1 = sepp; sepp = OFS }
+function String_concat(string0, ofs, string1) {
+    if (typeof(string1) == "untyped") { string1 = ofs; ofs = OFS }
     if (typeof(string0) == "untyped" || string0 == "") return string1
     if (typeof(string1) == "untyped" || string1 == "") return string0
-    return string0 sepp string1
+    return string0 ofs string1
 }
 
 function String_startsWith(string0, string1,    __,l0,l1,m,st0,st1) {
@@ -801,7 +802,8 @@ function String_countChars(string, chars,    __,ct,i,l,n,st) {
     return n
 }
 
-function Char_codepoint(char,    __,c,ct,n) {
+function Char_codepoint(char,    __,c,ct,l,n,r) {
+    if ((ct = typeof(char)) == "strnum") char = ""char
     if ((ct = typeof(char)) != "string") { __error("Char_codepoint: char is typeof "ct); return }
     if (typeof(ALLCHARS) == "untyped")
         for (n = 1; n <= 55295; ++n) {
@@ -870,8 +872,7 @@ function Index_pushRange(from, to, fs, ofs, rs, ors,    __,i,m) {
     # new Index
     for (i = from; i <= to && i <= NF; ++i)
         m = String_concat(m, OFS, $i)
-    $0 = m
-    return Index_reset()
+    return Index_reset(m)
 }
 
 function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
@@ -889,16 +890,16 @@ function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
     if (typeof(fs) != "untyped") FS = fs
 
     # new Index
-    if (typeof(new) == "untyped" || typeof(new) == "unassigned") $0 = ""
-    else if (typeof(new) == "array") {
-        Index_push("", fs, ofs, rs, ors)
-        for (z = 1; z <= new["0length"]; ++z)
-            if (z == 1) n = Index_reset(new[1])
-            else n = n ORS (Index_reset(new[z]))
-        Index_pop()
-        $0 = n
-    } else $0 = new
-    return Index_reset()
+    if (typeof(new) == "untyped" || typeof(new) == "unassigned")
+        return Index_reset("")
+    if (typeof(new) == "array") {
+        for (z = 1; z <= new["0length"]; ++z) {
+            if (z == 1) n = new[1]
+            else n = n ORS new[z]
+        }
+        return Index_reset(n)
+    }
+    return Index_reset(new)
 }
 
 function Index_pop(    null,i,r) { # Index
@@ -925,10 +926,17 @@ function Index_pull(new, fs, ofs, rs, ors) {
     return Index_pop()
 }
 
-function Index_pullArray(output, input, fs, ofs,   __,it,ot,z) {
-    if ((it = typeof(input)) != "array") { __error("Index_pullArray: input is typeof "it); return }
+function Index_pullArray(output, input, fs, ofs, rs, ors,   __,array,it,ot,z) {
+    if ((it = typeof(input)) != "array" && it != "string") { __error("Index_pullArray: input is typeof "it); return }
     if ((ot = typeof(output)) != "array") { __error("Index_pullArray: output is typeof "ot); return }
-    Index_push("", fs, ofs)
+    if (it == "string") {
+        Index_push("", fs, ofs, rs, ors)
+        array["0length"] = split(input, array, rs)
+        for (z = 1; z <= array["0length"]; ++z) output[++output["0length"]] = Index_reset(array[z])
+        Index_pop()
+        return
+    }
+    Index_push("", fs, ofs, rs, ors)
     for (z = 1; z <= input["0length"]; ++z) output[++output["0length"]] = Index_reset(input[z])
     Index_pop()
 }
@@ -1000,9 +1008,10 @@ function Index_removeRange(from0, to0,    __,i,r) {
     return r
 }
 
-function Index_getRange(from0, to0,    __,i,r) {
+function Index_getRange(from0, to0, ofs,   __,i,r) {
     if (typeof(to0) == "untyped") to0 = NF
-    for (i = from0; i <= to0; ++i) r = String_concat(r, OFS, $i)
+    if (typeof(ofs) == "untyped") ofs = OFS
+    for (i = from0; i <= to0; ++i) r = String_concat(r, ofs, $i)
     return r
 }
 

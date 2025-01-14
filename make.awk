@@ -356,7 +356,7 @@ if (unseen["0length"]) File_debug(unseen)
     if (!o) { __error("make.awk: No Library built"); return }
 }
 
-function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
+function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,final_libraries,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
 
     for (f = 1; f <= Format["0length"]; ++f) {
@@ -411,7 +411,7 @@ if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names
         options = options" -static"
 
     if (STANDARD == "MINIMAL")
-        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding -pthread"
+        options = options" -nostdlib -nostartfiles -nodefaultlibs -ffreestanding -pthread -l:System.so"
     else # if (STANDARD == "ISO")
         options = options" -lm -ldl -pthread"
 

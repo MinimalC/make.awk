@@ -16,6 +16,7 @@ function C_compile(name, options,   __,a,b,c,l,n,o,p,pre,t,target,x,y,z)
     for (z = 1; z <= precomp["C"][name]["0length"]; ++z) {
         Index_reset(precomp["C"][name][z])
     for (n = 1; n <= NF; ++n) {
+        if ($n == "")  { Index_remove(n--) ; Index_reset() ; continue }
         if ($n ~ REFIX){ $n = " ";      Index_reset() }   # U0001 to U0020
         if ($n == "¢") { $n = "cent";   Index_reset() }   # U00A2
         if ($n == "£") { $n = "Pound";  Index_reset() }   # U00A3
