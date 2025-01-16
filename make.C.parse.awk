@@ -345,8 +345,6 @@ if (DEBUG == 2) __debug(fileName": Line "z":"i".."n": "was" "name)
         }
         __warning(fileName": Line "z": Unknown Character X"__HEX(Char_codepoint($i))" "$i); Index_remove(i--)
     }
-    # if (NF > 0) Index_prepend(i++, FIX)
-    # if (NF > 0) Index_append(NF, FIX"\n") ; else $1 = "\n"
     parsed[fileName][++parsed[fileName]["0length"]] = $0
 }
     Index_pop()

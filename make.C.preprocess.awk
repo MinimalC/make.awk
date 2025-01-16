@@ -521,7 +521,6 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
 
         # fallthrough or make a comment?
         if (NF > 0) { $0 = "/* "$0" */" }
-        # if (NF > 0) Index_append(NF, FIX"\n") ; else $1 = "\n"
         preproc[C][O][ ++preproc[C][O]["0length"] ] = $0; continue
     }
 
@@ -559,7 +558,6 @@ __debug(fileName" Line "z": undefine "name"  "rendered)
         }
         lz = 0
 
-        # if (NF > 0) Index_append(NF, FIX"\n") ; else $1 = "\n"
         preproc[C][O][ ++preproc[C][O]["0length"] ] = $0
     }
     Index_pop()

@@ -779,6 +779,7 @@ function String_endsWith(string0, string1,    __,l0,l1,m,st0,st1) {
 function String_trim(string, sepp,    __,i,st) {
     if ((st = typeof(string)) != "string") { __error("String_trim: string is typeof "st); return }
     if (typeof(sepp) == "untyped") sepp = @/[ \t]/
+    # next time do this without Index_push?
     Index_push(string, "", "")
     for (i = 1; i <= NF; ++i) {
         if ($i !~ sepp) break
@@ -802,7 +803,7 @@ function String_countChars(string, chars,    __,ct,i,l,n,st) {
     return n
 }
 
-function Char_codepoint(char,    __,c,ct,l,n,r) {
+function Char_codepoint(char,    __,c,ct,l,n) {
     if ((ct = typeof(char)) == "strnum") char = ""char
     if ((ct = typeof(char)) != "string") { __error("Char_codepoint: char is typeof "ct); return }
     if (typeof(ALLCHARS) == "untyped")
@@ -833,18 +834,42 @@ function String_padRight(string, size, sepp,    __,l,n,st,sizet) {
     return string String_repeat(sepp, n)
 }
 
-function __HEX(number,    __,nt,s) {
-    if ((nt = typeof(number)) != "number") { __error("__HEX: number is typeof "nt); return }
-    s = sprintf("%X", number)
-    if (length(s) % 2 == 1) s = "0"s
-    return s
+function __HEX(number,    __,c,m,n,nt,s) {
+    if ((nt = typeof(number)) == "string") {
+        for (n = 1; n <= length(number); ++n) {
+            c = substr(number, n, 1)
+            s = sprintf("%X", Char_codepoint(c))
+            if (length(s) % 2 == 1) s = "0"s
+            m = m s
+        }
+        return m
+    }
+    if ((nt = typeof(number)) == "strnum") number = 0 + number
+    if ((nt = typeof(number)) == "number") {
+        s = sprintf("%X", number)
+        if (length(s) % 2 == 1) s = "0"s
+        return s
+    }
+    __error("__HEX: number is typeof "nt)
 }
 
-function __hex(number,    __,nt,s) {
-    if ((nt = typeof(number)) != "number") { __error("__hex: number is typeof "nt); return }
-    s = sprintf("%x", number)
-    if (length(s) % 2 == 1) s = "0"s
-    return s
+function __hex(number,    __,c,m,n,nt,s) {
+    if ((nt = typeof(number)) == "string") {
+        for (n = 1; n <= length(number); ++n) {
+            c = substr(number, n, 1)
+            s = sprintf("%x", Char_codepoint(c))
+            if (length(s) % 2 == 1) s = "0"s
+            m = m s
+        }
+        return m
+    }
+    if ((nt = typeof(number)) == "strnum") number = 0 + number
+    if ((nt = typeof(number)) == "number") {
+        s = sprintf("%x", number)
+        if (length(s) % 2 == 1) s = "0"s
+        return s
+    }
+    __error("__hex: number is typeof "nt)
 }
 
 function __AND(n0,n1) { return and(n0,n1) }
@@ -871,7 +896,7 @@ function Index_pushRange(from, to, fs, ofs, rs, ors,    __,i,m) {
 
     # new Index
     for (i = from; i <= to && i <= NF; ++i)
-        m = String_concat(m, OFS, $i)
+        m = String_concat(m, ofs, $i)
     return Index_reset(m)
 }
 
@@ -895,7 +920,7 @@ function Index_push(new, fs, ofs, rs, ors,    __,h,i,n,z) {
     if (typeof(new) == "array") {
         for (z = 1; z <= new["0length"]; ++z) {
             if (z == 1) n = new[1]
-            else n = n ORS new[z]
+            else n = n ors new[z]
         }
         return Index_reset(n)
     }
@@ -941,7 +966,7 @@ function Index_pullArray(output, input, fs, ofs, rs, ors,   __,array,it,ot,z) {
     Index_pop()
 }
 
-function Index_insert(i, value, ifNot,    p, q, r) {
+function Index_insert(i, value, ifNot,    p, q) {
     if (typeof(value) == "untyped") { __error("value is untyped"); return }
     if (typeof(ifNot) == "untyped" || $i != ifNot) {
         ++NF
@@ -949,7 +974,6 @@ function Index_insert(i, value, ifNot,    p, q, r) {
             $q = $(q - 1)
         }
         $i = value
-        r = 1
     }
     return Index_reset()
 }
@@ -1001,9 +1025,10 @@ function Index_remove(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,    nu
     return R
 }
 
-function Index_removeRange(from0, to0,    __,i,r) {
+function Index_removeRange(from0, to0, ofs,   __,i,r) {
     if (typeof(to0) == "untyped") to0 = NF
-    for (i = from0; i <= to0; ++i) { r = String_concat(r, OFS, $i); $i = "CLE\a\r" }
+    if (typeof(ofs) == "untyped") ofs = OFS
+    for (i = from0; i <= to0; ++i) { r = String_concat(r, ofs, $i); $i = "CLE\a\r" }
     Index_reset()
     return r
 }
