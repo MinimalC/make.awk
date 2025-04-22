@@ -7,7 +7,11 @@
 function ASM_precompile(name,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
     if (!precomp["ASM"][name]["0length"] && File_exists(name)) {
+
+        # make.ASM.awk is PROTOTYPE
+
         File_read(precomp["ASM"][name], name)
+
         precomp["ASM"][name]["name"] = name
         return 1
     }

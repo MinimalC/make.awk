@@ -35,11 +35,11 @@ function C_precompile_whitespace(i, newline,   __, n,o,r) {
 
         if ($i ~ /^\n+$/) {
             newline = 1
-#                __debug(" # newline")
+            # __debug(" # newline")
             continue
         }
         if ($i ~ /^\s*$/) {
-#                __debug(" # whitespace")
+            # __debug(" # whitespace")
             continue
         }
         if (newline && $i == "#") {
@@ -49,7 +49,7 @@ function C_precompile_whitespace(i, newline,   __, n,o,r) {
             continue
         }
 
-#                __debug(" # break")
+        # __debug(" # break")
         break
     }
 
@@ -225,7 +225,7 @@ if (DEBUG != 5) {
 
             n = C_precompile_whitespace(i + 1)
 
-            if ("typedef" in AST[level][zeile]) {
+            if (AST[level][zeile]["typedef"]) {
                 type = AST[level][zeile]["type"]
                 if ("pointer" in AST[level][zeile])
                     type = type" "AST[level][zeile]["pointer"]

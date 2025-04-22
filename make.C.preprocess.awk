@@ -179,17 +179,16 @@ function C_preprocess_documentation(text,   __,class,html,i0,i1,split0,split1,re
     }
 }
 
-function C_preprocess(fileName,    original, C,  # parsed, preproc, C_defines, C_keywords
+function C_preprocess(fileName, C,   original, # parsed, preproc, C_defines, C_keywords
     __,a,b,c,d,e,f,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,S,t,u,unsafe,v,w,x,y,z,zZ)
 {
+    if (!original) {
+        original = fileName
+        C_preprocess(C_compiler, C, original)
+    }
+    O = original
     if (!C) C = "C"
     if (typeof(fileName) != "string" || !fileName) { __error("make.awk: C_preprocess without fileName"); return }
-    if (original) O = original
-    else {
-        O = fileName
-        if (C == "C" || C == "ASM") C_preprocess(C_compiler, O, C)
-        else __warning("make.awk: C_preprocess: Unknown "C)
-    }
 
     if (!(fileName in parsed) && ((((c = C"_parse") in FUNCTAB) && !@c(fileName)) || !parsed[fileName]["0length"])) return
 
@@ -336,7 +335,7 @@ if (e > f) __debug(fileName" Line "z": (Level "f") else "(ifExpressions[f]["else
                         #}
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                         zZ = preproc[C][O]["0length"]
-                        C_preprocess(f, O, C)
+                        C_preprocess(f, C, O)
                         C_defines["__FILE__"]["value"] = "\""fileName"\""
                         C_defines["__LINE__"]["value"] = z
                         break
@@ -355,7 +354,7 @@ if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                     #}
 if (DEBUG == 3 || DEBUG == 4) __debug(fileName" Line "z": including "f)
                     zZ = preproc[C][O]["0length"]
-                    C_preprocess(f, O, C)
+                    C_preprocess(f, C, O)
                     C_defines["__FILE__"]["value"] = "\""fileName"\""
                     C_defines["__LINE__"]["value"] = z
                 }

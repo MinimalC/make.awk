@@ -124,7 +124,6 @@ function END_make(    __,f,format,n,name,pre,rendered,seconds) {
     }
     # if (!DEBUG) removeTemp_Directory()
     if (DEBUG) {
-        if (Dictionary_count(CSharp_Types)) { __debug("CSharp_Types: "); Array_debug(CSharp_Types) }
         if (Dictionary_count(C_types)) { __debug("C_types: "); Array_debug(C_types) }
         if (Dictionary_count(C_defines)) { __debug("C_defines: "); for (name in C_defines) {
             rendered = Index_pull(C_defines[name]["value"], REFIX, " ")
@@ -139,7 +138,6 @@ function END_make(    __,f,format,n,name,pre,rendered,seconds) {
         delete document
         delete precomp
         delete compiled
-        delete CSharp_Types
         delete C_types
         delete C_defines
         ARGC_ARGV_debug()
@@ -171,6 +169,7 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
         if (!((C = format"_""parse") in FUNCTAB)) { __error("No function "C); continue }
         parsed[name]["0length"]
         @C(name)
+        ++o
     } }
 
     pre["0length"]
@@ -181,6 +180,8 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
         Index_pullArray(pre, parsed[n], REFIX, DEBUG ? DEFIX : " ")
     }
     File_printTo(pre, TEMP_DIR Project"...C")
+
+    return o
 }
 
 function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
@@ -208,7 +209,8 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             }
         }
     } }
-    if (!o) { __error("make.awk: Nothing preprocessed"); return }
+    if (!o) __error("make.awk: Nothing preprocessed")
+    return o
 }
 
 function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
@@ -244,7 +246,8 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
             ++o
         }
     } }
-    if (!o) { __error("make.awk: Nothing precompiled"); return }
+    if (!o) __error("make.awk: Nothing precompiled")
+    return o
 }
 
 function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
@@ -299,7 +302,8 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             continue
         }
     } }
-    if (!o) { __error("make.awk: Nothing compiled"); return }
+    if (!o) __error("make.awk: Nothing compiled")
+    return o
 }
 
 function make_library(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,names,o,options,p,q,r,s,short,t,u,unseen,v,w,x,y,z) {
@@ -353,7 +357,8 @@ if (unseen["0length"]) File_debug(unseen)
         ++o
     }
 
-    if (!o) { __error("make.awk: No Library built"); return }
+    if (!o) __error("make.awk: No Library built")
+    return o
 }
 
 function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,final_libraries,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
@@ -460,11 +465,14 @@ if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names
             final_options = final_options" -Wl,-soname=\""short"\""
         }
 
-__debug("C_link_executable: "C_linker" "short) # final_options
+    __debug("C_link_executable: "C_linker" "short) # final_options
         unseen["0length"]
         __pipe(C_linker, final_options, unseen)
-if (unseen["0length"]) File_debug(unseen)
+    if (unseen["0length"]) File_debug(unseen)
+
+        ++o
     } }
 
-    # ++o if (!o) { __error("make.awk: No executable linked"); return }
+    if (!o) __error("make.awk: No executable linked")
+    return o
 }

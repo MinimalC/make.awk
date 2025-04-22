@@ -134,7 +134,7 @@ function __BEGIN(controller, action, usage,
             if (i > 1 && action) {
                 # if (!a && ((c = "configure_"controller"_awk") in FUNCTAB)) { a = 1; @c() }
                 if (!((make = controller"_"action) in FUNCTAB)) { __error(controller".awk: Unknown method "make); exit }
-                @make(config);
+                if (!@make(config)) exit
                 if ("next" in config) delete config["next"]; else delete config # Array_clear(config)
             }
             action = ARGV[i]
@@ -188,7 +188,7 @@ function __BEGIN(controller, action, usage,
     }
     # if (!a && ((c = "configure_"controller"_awk") in FUNCTAB)) { a = 1; @c() }
     if (!((make = controller"_"action) in FUNCTAB)) __error(controller".awk: Unknown method "make)
-    else @make(config)
+    else if (!@make(config)) exit
 
     if (typeof(ERRORS) == "number" && ERRORS) exit
     exit 1
