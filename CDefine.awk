@@ -1,4 +1,4 @@
-#!/usr/bin/awk -f
+#!/usr/bin/gawk -f
 
 @include "run.awk"
 @include "make.CDefine.awk"

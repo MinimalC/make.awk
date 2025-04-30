@@ -1,4 +1,4 @@
-#!/usr/bin/awk -f
+#!/usr/bin/gawk -f
 # Public Domain. Gemeinfrei
 
 @include "run.awk"

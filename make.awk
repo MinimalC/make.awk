@@ -1,4 +1,4 @@
-#!/usr/bin/awk -f
+#!/usr/bin/gawk -f
 # Gemeinfrei. Public Domain.
 
 @include "run.awk"
@@ -63,6 +63,8 @@ function BEGIN_make(    __,c,usage) {
 
     Format["h"] = "C"
     Format["c"] = "C"
+    Format["H"] = "C"
+    Format["C"] = "C"
     Format["S"] = "ASM"
     Format["ASM"] = "ASM"
 
@@ -89,7 +91,7 @@ function BEGIN_make(    __,c,usage) {
 
     createTemp_Directory(".make")
 
-    usage =\
+    USAGE =\
     "make.awk project=Program [options] [preprocess] [precompile] Program.c [compile]\n"\
     "\n"\
     "Options:\n"\
@@ -101,7 +103,7 @@ function BEGIN_make(    __,c,usage) {
     "    +enableComments for not removing comments\n"\
     "    -DDEBUG or +DDEBUG for boolean true 1 or false 0, or DDEBUG=3 for the value 3"
 
-    __BEGIN("make", "compile", usage)
+    __BEGIN("make", "compile", USAGE)
 }
 
 function END_make(    __,f,format,n,name,pre,rendered,seconds) {
@@ -216,7 +218,8 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
 function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
 
     config["next"]
-    if (!Project) { __error("make.awk: Project undefined"); return }
+    if (!config["files"]["0length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(config["files"][1])
 
     for (f = Format["0length"]; f; --f) {
         format = Format[f]
@@ -253,7 +256,8 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
 function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
 
     config["next"]
-    if (!Project) { __error("make.awk: Project undefined"); return }
+    if (!config["files"]["0length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(config["files"][1])
 
     for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
@@ -309,6 +313,9 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
 function make_library(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,names,o,options,p,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
 
+    if (!config["files"]["0length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(config["files"][1])
+
     for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
     for (s = 1; s <= compiled[format]["0length"]; ++s) {
@@ -363,6 +370,9 @@ if (unseen["0length"]) File_debug(unseen)
 
 function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,final_libraries,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
+
+    if (!config["files"]["0length"]) { __error(USAGE); return }
+    if (!Project) Project = get_FileNameNoExt(config["files"][1])
 
     for (f = 1; f <= Format["0length"]; ++f) {
         format = Format[f]
