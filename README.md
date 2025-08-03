@@ -31,4 +31,4 @@ with a Project.awk BEGIN { __BEGIN("command") } and function Project_command(con
 run.awk make.awk +debug executable Project.c 1>&2 2>.Project...report
 ```
 
-This command now creates an executable file `Project` and a file `.Project...report`, which is reporting issues and define's.
+This command creates a folder `.make`, an executable file `Project`, and a file `.Project...report`, which is reporting issues and define's.

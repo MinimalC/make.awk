@@ -168,10 +168,10 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
         name = config["files"][n]
         if (format != Format[get_FileNameExt(name)]) continue
 
-        if (!((C = format"_""parse") in FUNCTAB)) { __error("No function "C); continue }
+        if (!((C = format"_""parse") in FUNCTAB)) { __error("No function "C); ++u; continue }
         parsed[name]["0length"]
         @C(name)
-        ++o
+        # ++o
     } }
 
     pre["0length"]
@@ -183,7 +183,7 @@ function make_parse(config,    __,a,b,c,C,d,e,f,format,m,n,name,o,p,pre,z) {
     }
     File_printTo(pre, TEMP_DIR Project"...C")
 
-    return o
+    return !u # o
 }
 
 function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
@@ -202,17 +202,17 @@ function make_preprocess(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
 
         if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); ++u; continue }
             if (preproc[format][name]["0length"]) {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
                 File_printTo(pre, TEMP_DIR short"..."format)
-                ++o
+                # ++o
             }
         }
     } }
-    if (!o) __error("make.awk: Nothing preprocessed")
-    return o
+    # if (!o) __error("make.awk: Nothing preprocessed")
+    return !u
 }
 
 function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
@@ -231,7 +231,7 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
 
         if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); ++u; continue }
             if (preproc[format][name]["0length"]) {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
@@ -241,16 +241,16 @@ function make_precompile(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name
 
         if ((C = format"_""precompile") in FUNCTAB && !precomp[format][name]["0length"]) {
             if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
-            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); ++u; continue }
             if (!precomp[format][name]["0length"]) continue
             pre["0length"]; Array_clear(pre)
             Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
             File_printTo(pre, TEMP_DIR short"..."format)
-            ++o
+            # ++o
         }
     } }
-    if (!o) __error("make.awk: Nothing precompiled")
-    return o
+    # if (!o) __error("make.awk: Nothing precompiled")
+    return !u
 }
 
 function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name,o,p,pre,q,r,s,short,t,u,v,w,x,y,z) {
@@ -269,7 +269,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
 
         if ((C = format"_""preprocess") in FUNCTAB && !preproc[format][name]["0length"]) {
             if ((c = format"_""prepare_preprocess") in FUNCTAB) @c(config)
-            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); List_remove(config["files"], n--); ++u; continue }
             if (preproc[format][name]["0length"]) {
                 pre["0length"]; Array_clear(pre)
                 Index_pullArray(pre, preproc[format][name], REFIX, DEBUG ? DEFIX : " ")
@@ -279,7 +279,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
 
         if ((C = format"_""precompile") in FUNCTAB && !precomp[format][name]["0length"]) {
             if ((c = format"_""prepare_precompile") in FUNCTAB) @c(config)
-            if (!@C(name)) { __error("make.awk: No "C" "name); continue }
+            if (!@C(name)) { __error("make.awk: No "C" "name); ++u; continue }
             if (!precomp[format][name]["0length"]) continue
             pre["0length"]; Array_clear(pre)
             Index_pullArray(pre, precomp[format][name], REFIX, DEBUG ? DEFIX : " ")
@@ -288,7 +288,7 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
 
         compiled[format][name]["0length"]
         if (!((C = format"_""compile") in FUNCTAB)) { __error("make.awk: No function "C); continue }
-        if (!@C(name, "-shared -fPIC")) { __error("make.awk: No "C" "name); continue }
+        if (!@C(name, "-shared -fPIC")) { __error("make.awk: No "C" "name); ++u; continue }
         if (format == "C" && precomp["ASM"][name]["0length"]) {
             file = precomp["ASM"][name]["file"] = TEMP_DIR short"...ASM"
             File_printTo(precomp["ASM"][name], file, "\n", "\n")
@@ -302,12 +302,12 @@ function make_compile(config,    __,a,b,c,C,d,e,f,file,format,g,h,i,k,l,m,n,name
             file = compiled[format][name]["file"] = TEMP_DIR short"...o"
             File_printTo(compiled[format][name], file, "\n", "\n", 1)
             compiled[format][ ++compiled[format]["0length"] ] = name
-            ++o
+            # ++o
             continue
         }
     } }
-    if (!o) __error("make.awk: Nothing compiled")
-    return o
+    # if (!o) __error("make.awk: Nothing compiled")
+    return !u
 }
 
 function make_library(config,    __,a,b,c,C,d,e,f,format,g,h,i,j,k,l,m,n,name,names,o,options,p,q,r,s,short,t,u,unseen,v,w,x,y,z) {
