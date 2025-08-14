@@ -15,7 +15,7 @@ function set_make_asm(wert) { ASM_compiler = wert }
 function set_make_ld(wert) { C_linker = wert }
 function set_make_shared(wert) { C_link_shared = wert }
 function set_make_enableComments(wert) { enable_Comments = wert }
-function set_make_doc(wert) { documentation = wert }
+function set_make_doc(wert) { Documentation = wert }
 
 function set_make_std(wert) {
     if (typeof(wert) == "untyped" || typeof(wert) == "number" && !wert) STANDARD = "MINIMAL"
@@ -74,6 +74,8 @@ function BEGIN_make(    __,c,usage) {
 
     STANDARD = "ISO"
 
+    if (!Documentation) Documentation = "html"
+
     if ("PROCESSOR_ARCHITECTURE" in ENVIRON) {
         PLATFORM = "Windows"
         ARCHITECTURE = ENVIRON["PROCESSOR_ARCHITECTURE"]
@@ -106,24 +108,8 @@ function BEGIN_make(    __,c,usage) {
     __BEGIN("make", "compile", USAGE)
 }
 
-function END_make(    __,f,format,n,name,pre,rendered,seconds) {
+function END_make(    __,f,file,format,i,list,n,name,position,pre,rendered,seconds) {
 
-    if (Project && documentation) {
-        pre["0length"] # Array_clear(pre)
-        for (f = 1; f <= Format["0length"]; ++f) {
-            format = Format[f]
-        for (name in document[format]) {
-            if (name ~ /^[0-9]/) continue
-            if (document[format][name]["0length"]) {
-                __debug("Documenting "name)
-                Index_pullArray(pre, document[format][name])
-            }
-        } }
-        if (pre["0length"]) {
-            File_printTo(pre, TEMP_DIR Project"..."(documentation == 1 ? "txt" : documentation))
-        }
-        else __error("make.awk: Nothing documented.")
-    }
     # if (!DEBUG) removeTemp_Directory()
     if (DEBUG) {
         if (Dictionary_count(C_types)) { __debug("C_types: "); Array_debug(C_types) }
@@ -366,6 +352,56 @@ if (unseen["0length"]) File_debug(unseen)
 
     if (!o) __error("make.awk: No Library built")
     return o
+}
+
+function make_document(config,    __,a,b,bad,c,C,d,e,f,file,format,g,h,i,j,k,l,m,n,name,o,old,p,position,pre,q,r,s,t,u,v,w,x,y,z) {
+if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
+
+    if (!Project) Project = get_FileNameNoExt(config["files"][1])
+
+    pre["0length"] # Array_clear(pre)
+    position = 0
+    file["0length"]
+    if (Documentation == "html") {
+        f = File_exists("include/"Project".html")
+        if (!f) f = File_exists("source/"Project".html")
+        if (f) {
+            File_read(file, f)
+            for (position = 1; position <= file["0length"]; ++position) {
+                if (file[position] ~ /%DOCUMENTATION%/) break
+                pre[ ++pre["0length"] ] = file[position]
+            }
+            if (position > file["0length"]) position = 0
+            old = pre["0length"]
+        }
+    }
+    for (f = 1; f <= Format["0length"]; ++f) {
+        format = Format[f]
+    for (name in document[format]) {
+        if (name ~ /^[0-9]/) continue
+        if (document[format][name]["0length"]) {
+            __debug("Documenting "name)
+            for (l = 1; l <= document[format][name]["0length"]; ++l)
+                pre[ ++pre["0length"] ] = document[format][name][l]
+        }
+    } }
+    if (Documentation == "html") {
+        if (position) {
+            if (pre["0length"] == old) bad = 1
+            while (++position <= file["0length"])
+                pre[ ++pre["0length"] ] = file[position]
+        }
+    }
+
+    if (!bad && pre["0length"]) {
+        n = TEMP_DIR Project"..."Documentation
+        File_remove(n, 1)
+        File_printTo(pre, n)
+    }
+    else
+        __error("make.awk: Nothing documented.")
+
+    return 1 # continue
 }
 
 function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,final_libraries,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {

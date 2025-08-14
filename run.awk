@@ -8,7 +8,7 @@ END { END_run() }
 
 function BEGIN_run(    __,a,argi,config,f,file,fileName,i,includeDir,input,o,output,options,r,runDir,u,usage,unseen,w,workingDir) {
     LC_ALL="C"
-    PROCINFO["sorted_in"] = "@ind_num_asc"
+    PROCINFO["sorted_in"] = "@ind_str_asc"
     # IGNORECASE = 1
 
     FS="";OFS="";RS="\0";ORS="\n"
@@ -473,7 +473,7 @@ function File_contains(fileName, string,    __,i,r,y) {
 
 function File_remove(fileName, force) {
     if (!fileName) { __error("File_remove: no fileName"); return }
-    if (!system("rm"(force ? " -f" : "")" '"fileName"'")) return 1
+    if (!system("rm"(force ? " -f" : "")" "fileName)) return 1
 }
 
 function get_FileNameArray(file, name,  __,path) {
@@ -1102,6 +1102,7 @@ function File_printFTo(file, to, format, rs, ors, noLastORS,    __,z) {
     }
     fflush(to)
     Index_pop()
+    if (to != "/dev/stdout" && to != "/dev/stderr") close(to)
 }
 
 function File_print(file, rs, ors, noLastORS) {
@@ -1138,6 +1139,12 @@ function File_toString(file, ors,    __,r,z) {
 function File_clearLines(file, regex,    __,i) {
     for (i = 1; i <= file["0length"]; ++i)
         if (file[i] ~ regex) file[i] = ""
+}
+
+function File_replaceLines(file, regex, replacement,   __,i) {
+    if (typeof(replacement) == "untyped") replacement = ""
+    for (i = 1; i <= file["0length"]; ++i)
+        if (file[i] ~ regex) file[i] = replacement
 }
 
 function __gawk(options, input, output, directory, variables) {

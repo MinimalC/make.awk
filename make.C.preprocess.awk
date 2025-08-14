@@ -156,31 +156,34 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
 
 function C_preprocess_documentation(text,   __,class,html,i0,i1,split0,split1,reture) {
 
-    if (documentation == 1 || documentation == "txt") {
+    if (Documentation == 1 || Documentation == "txt") {
         return text
     }
-    if (documentation == "html") {
+    if (Documentation == "html") {
         String_split(split0, text, "\n")
         for (i0 = 1; i0 <= split0["0length"]; ++i0) {
-            html = ""; class = ""
+            html = "div"; class = "text"
             String_split(split1, split0[i0], " ")
             for (i1 = 1; i1 <= split1["0length"]; ++i1) {
-                if (split1[i1] == "function") { html = "h3"; break }
-                if (split1[i1] == "struct") { html = "h2"; break }
-                if (split1[i1] == "class") { html = "h2"; break }
-                if (split1[i1] == "interface") { html = "h2"; break }
-                if (split1[i1] == "argument") { html = "div"; class = "argument"; break }
-                if (split1[i1] == "returns") { html = "div"; class = "returns"; break }
+                if (split1[i1] ~ /^[fF]unction$/) { class = "function"; break }
+                if (split1[i1] ~ /^[sS]truct$/) { class = "struct"; break }
+                if (split1[i1] ~ /^[sS]tatic$/) { class = "static"; break }
+                if (split1[i1] ~ /^[cC]lass$/) { class = "class"; break }
+                if (split1[i1] ~ /^[oO]bject$/) { class = "object"; break }
+                if (split1[i1] ~ /^[iI]nterface$/) { class = "interface"; break }
+                if (split1[i1] ~ /^[aA]rguments?$/) { class = "argument"; break }
+                if (split1[i1] ~ /^[rR]eturns?$/) { class = "returns"; break }
+                if (split1[i1] ~ /^[eE]xec?$/) { class = "executable"; break }
+                if (split1[i1] ~ /^[eE]xecutables?$/) { class = "executable"; break }
             }
-            if (html) reture = String_concat(reture, "\n", "<"html (class?" class=\""class"\"":"")">"split0[i0]"</"html">")
-            else reture = String_concat(reture, "\n", split0[i0])
+            reture = String_concat(reture, "\n", "    <"html (class?" class=\""class"\"":"")">"split0[i0]"</"html">")
         }
-        return "<div class=\"comment\">"reture"</div>"
+        return "<div class=\"block\">\n"reture"\n</div>"
     }
 }
 
 function C_preprocess(fileName, C,   original, # parsed, preproc, C_defines, C_keywords
-    __,a,b,c,d,e,f,g,h,i,ifExpressions,j,k,l,lz,m,n,name,o,O,OLD_defines,p,q,r,rendered,s,S,t,u,unsafe,v,w,x,y,z,zZ)
+    __,a,b,c,d,e,f,file,g,h,i,ifExpressions,j,k,l,lz,m,n,nodoc,name,o,O,OLD_defines,p,position,q,r,rendered,s,S,t,u,unsafe,v,w,x,y,z,zZ)
 {
     if (!original) {
         original = fileName
@@ -208,22 +211,20 @@ function C_preprocess(fileName, C,   original, # parsed, preproc, C_defines, C_k
 
         C_defines["__LINE__"]["value"] = z
 
-    if (documentation)
         for (n = 1; n <= NF; ++n)
             if ($n ~ /^\/\*\*/ && $n ~ /\*\/$/)
-                document[C][O][ ++document[C][O]["0length"] ] = C_preprocess_documentation(substr($n, 4, length($n) - 6))
+                document[C][fileName][ ++document[C][fileName]["0length"] ] = C_preprocess_documentation(substr($n, 4, length($n) - 6))
 
     for (i = 1; i <= NF; ++i) {
         if ($i ~ /^\s*$/) continue
         if ($i == "#") break
     }
-    if (i <= NF) {
+    if (i <= NF)
         for (n = 1; n <= NF; ++n) {
             if ($n ~ /^\s*$/) Index_remove(n--) # clean
             if ($n == "#") continue
             break
         }
-    }
 
     if ($1 == "#") {
         if ($2 == "ifdef") {
