@@ -78,7 +78,7 @@ function C_compiler_coprocess(final_options, input, output, target,    a,b,c,com
             options = options" -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm"
         }
     }
-__debug("C_compile: "C_compiler" "output["name"]" "final_options) # " "options
+__error("C_compile: "C_compiler" "output["name"]" "final_options) # " "options
     options = options" -o "TEMP_DIR".make.o "TEMP_DIR".make.c"
     input["0length"]
     File_printTo(input, TEMP_DIR".make.c")

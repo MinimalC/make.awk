@@ -15,7 +15,7 @@ function C_prepare_preprocess(config, C,    __,a,b,c,d,dir,e,f,file,g,h,i,input,
 {
     if (!C) C = "C"
 
-    if (typeof(C_keywords) == "untyped") {
+    if (C == "C" && typeof(C_keywords) == "untyped") {
         C_keywords["struct"]
         C_keywords["union"]
         C_keywords["enum"]

@@ -3,6 +3,21 @@
 
 @include "run.awk"
 
+#function ASM_parse(fileName, input) {
+#    if ( !input["0length"] ) if (!fileName || !File_read(input, fileName)) return
+#    parsed[fileName]["name"] = fileName
+#    # make.ASM.awk is PROTOTYPE
+#    List_copy(input, parsed[fileName])
+#    return 1
+#}
+
+#function ASM_prepare_preprocess(config, C) {
+#   C_prepare_preprocess(config, "ASM")
+#}
+
+#function ASM_preprocess(fileName, C,   original) {
+#   return C_preprocess(fileName, "ASM", original)
+#}
 
 function ASM_precompile(name,    __,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) {
 
@@ -25,7 +40,7 @@ function ASM_compile(name,   __,a,b,c,d,directory,e,f,g,h,i,j,k,l,m,n,o,options,
     # output is compiled["ASM"][name]["0length"]
 
     short = get_FileNameNoExt(name)
-__debug("ASM_compile: "ASM_compiler" "short)
+__error("ASM_compile: "ASM_compiler" "short)
 
     directory = get_DirectoryName(name)
     options = "-I "directory" -o "TEMP_DIR".make.o "name
