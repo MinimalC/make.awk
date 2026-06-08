@@ -15,7 +15,6 @@ function set_make_asm(wert) { ASM_compiler = wert }
 function set_make_ld(wert) { C_linker = wert }
 function set_make_shared(wert) { C_link_shared = wert }
 function set_make_enableComments(wert) { enable_Comments = wert }
-function set_make_doc(wert) { Documentation = wert }
 
 function set_make_std(wert) {
     if (typeof(wert) == "untyped" || typeof(wert) == "number" && !wert) STANDARD = "MINIMAL"
@@ -355,56 +354,6 @@ if (unseen["0length"]) File_debug(unseen)
     return make_library_count
 }
 
-function make_document(config,    __,a,b,bad,c,C,d,e,f,file,format,g,h,i,j,k,l,m,n,name,o,old,p,position,pre,q,r,s,t,u,v,w,x,y,z) {
-if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
-
-    if (!Project) Project = get_FileNameNoExt(config["files"][1])
-
-    pre["0length"] # Array_clear(pre)
-    position = 0
-    file["0length"]
-    if (Documentation == "html") {
-        f = File_exists("include/"Project".html")
-        if (!f) f = File_exists("source/"Project".html")
-        if (f) {
-            File_read(file, f)
-            for (position = 1; position <= file["0length"]; ++position) {
-                if (file[position] ~ /%DOCUMENTATION%/) break
-                pre[ ++pre["0length"] ] = file[position]
-            }
-            if (position > file["0length"]) position = 0
-            old = pre["0length"]
-        }
-    }
-    for (f = 1; f <= Format["0length"]; ++f) {
-        format = Format[f]
-    for (name in document[format]) {
-        if (name ~ /^[0-9]/) continue
-        if (document[format][name]["0length"]) {
-            __debug("Documenting "name)
-            for (l = 1; l <= document[format][name]["0length"]; ++l)
-                pre[ ++pre["0length"] ] = document[format][name][l]
-        }
-    } }
-    if (Documentation == "html") {
-        if (position) {
-            if (pre["0length"] == old) bad = 1
-            while (++position <= file["0length"])
-                pre[ ++pre["0length"] ] = file[position]
-        }
-    }
-
-    if (!bad && pre["0length"]) {
-        n = TEMP_DIR Project"..."Documentation
-        File_remove(n, 1)
-        File_printTo(pre, n)
-    }
-    else
-        __error("make.awk: Nothing documented.")
-
-    return 1 # continue
-}
-
 function make_executable(config,    __,a,b,c,C,C_target,d,e,empty,f,f0,file,final_options,final_libraries,format,g,h,i,j,k,l,m,n,n0,name,names,o,options,p,pre,q,r,s,short,t,u,unseen,v,w,x,y,z) {
 if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
 
@@ -556,4 +505,104 @@ if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names
 
     if (!o) __error("make.awk: No executable linked")
     return o
+}
+
+function make_document_txt(config,    __,a,b,bad,c,C,d,e,f,file,format,g,h,i,j,k,l,m,n,name,o,old,p,position,pre,q,r,s,t,u,v,w,x,y,z) {
+
+    pre["0length"]
+    file["0length"]
+    for (f = 1; f <= Format["0length"]; ++f) {
+        format = Format[f]
+    for (name in document[format]) {
+        if (name ~ /^[0-9]/) continue
+        if (document[format][name]["0length"]) {
+            for (l = 1; l <= document[format][name]["0length"]; ++l)
+                pre[ ++pre["0length"] ] = document[format][name][l]
+        }
+    } }
+    if (!bad && pre["0length"]) {
+        n = TEMP_DIR Project"...txt"
+        File_remove(n, 1)
+        File_printTo(pre, n)
+    }
+}
+
+function make_document_html(config,    __,a,b,bad,c,class,C,d,e,f,file,format,g,h,html,i,i0,i1,j,k,l,m,n,name,o,old,p,position,pre,q,r,reture,s,split0,split1,t,u,v,w,x,y,z) {
+
+    pre["0length"]
+    file["0length"]
+    f = File_exists("include/"Project".html")
+    if (!f) f = File_exists("source/"Project".html")
+    if (f) {
+        File_read(file, f)
+        for (position = 1; position <= file["0length"]; ++position) {
+            if (file[position] ~ /%DOCUMENTATION%/) break
+            pre[ ++pre["0length"] ] = file[position]
+        }
+        if (position > file["0length"]) position = 0
+        old = pre["0length"]
+    }
+    for (f = 1; f <= Format["0length"]; ++f) {
+        format = Format[f]
+    for (name in document[format]) {
+        if (name ~ /^[0-9]/) continue
+        if (document[format][name]["0length"]) {
+
+            for (l = 1; l <= document[format][name]["0length"]; ++l) {
+
+                reture = ""
+                String_split(split0, document[format][name][l], "\n")
+                for (i0 = 1; i0 <= split0["0length"]; ++i0) {
+                    html = "div"; class = "text"
+                    String_split(split1, split0[i0], " ")
+                    for (i1 = 1; i1 <= split1["0length"]; ++i1) {
+                        if (split1[i1] ~ /^[fF]unction$/) { class = "function"; break }
+                        if (split1[i1] ~ /^[sS]truct$/) { class = "struct"; break }
+                        if (split1[i1] ~ /^[sS]tatic$/) { class = "static"; break }
+                        if (split1[i1] ~ /^[cC]lass$/) { class = "class"; break }
+                        if (split1[i1] ~ /^[oO]bject$/) { class = "object"; break }
+                        if (split1[i1] ~ /^[iI]nterface$/) { class = "interface"; break }
+                        if (split1[i1] ~ /^[aA]rguments?$/) { class = "argument"; break }
+                        if (split1[i1] ~ /^[rR]eturns?$/) { class = "returns"; break }
+                        if (split1[i1] ~ /^[eE]xec?$/) { class = "executable"; break }
+                        if (split1[i1] ~ /^[eE]xecutables?$/) { class = "executable"; break }
+                    }
+                    if (split0[i0] || split0[i0] !~ /\s*/)
+                        reture = String_concat(reture, "\n", "    <"html (class?" class=\""class"\"":"")">"split0[i0]"</"html">")
+                }
+                if (reture || reture !~ /\s*/)
+                    pre[ ++pre["0length"] ] = "<div class=\"block\">\n"reture"\n</div>"
+            }
+        }
+    } }
+    if (position) {
+        if (pre["0length"] == old) bad = 1
+        while (++position <= file["0length"])
+            pre[ ++pre["0length"] ] = file[position]
+    }
+    if (!bad && pre["0length"]) {
+        n = TEMP_DIR Project"...html"
+        File_remove(n, 1)
+        File_printTo(pre, n)
+    }
+}
+
+function make_document(config,    __,a,b,bad,c,C,d,e,f,file,format,g,h,i,j,k,l,m,n,name,o,old,p,position,pre,q,r,s,t,u,v,w,x,y,z) {
+if (config["names"]["0length"]) { __debug("Unknown "); Array_debug(config["names"]) }
+
+    if (!Project) Project = get_FileNameNoExt(config["files"][1])
+
+    for (f = 1; f <= Format["0length"]; ++f) {
+        format = Format[f]
+    for (name in document[format]) {
+        if (name ~ /^[0-9]/) continue
+        if (document[format][name]["0length"]) {
+            __debug("Documenting "name)
+        }
+    } }
+
+    make_document_txt(config)
+    make_document_html(config)
+
+    return 1 # continue
 }
